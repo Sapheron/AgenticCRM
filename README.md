@@ -328,6 +328,8 @@ This project is licensed under the **MIT License**.
 
 ## ⭐ Star History
 
+## ⭐ Star History
+
 [![Star History Chart](https://api.star-history.com/svg?repos=Sapheron/Open-Agent-CRM&type=Date)](https://star-history.com/#Sapheron/Open-Agent-CRM&Date)
 
 ![Repo Size](https://img.shields.io/github/repo-size/Sapheron/Open-Agent-CRM)
