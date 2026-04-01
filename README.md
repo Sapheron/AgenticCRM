@@ -1,7 +1,5 @@
 # Open Agent CRM
 
-# Open Agent CRM
-
 ![License](https://img.shields.io/github/license/Sapheron/Open-Agent-CRM)
 ![Stars](https://img.shields.io/github/stars/Sapheron/Open-Agent-CRM)
 ![Forks](https://img.shields.io/github/forks/Sapheron/Open-Agent-CRM)
@@ -10,12 +8,6 @@
 ![Last Commit](https://img.shields.io/github/last-commit/Sapheron/Open-Agent-CRM)
 
 **Open-source, self-hosted AI CRM with WhatsApp integration, team inbox, lead management, deal pipelines, automation, and multi-agent workflows.**
-
-<p align="center">
-  <a href="https://github.com/Sapheron/Open-Agent-CRM/issues">Report Bug</a> •
-  <a href="https://github.com/Sapheron/Open-Agent-CRM/issues">Request Feature</a> •
-  <a href="https://github.com/Sapheron/Open-Agent-CRM/discussions">Discussions</a>
-</p>
 
 Built for businesses that want a production-ready customer communication and CRM platform powered by AI agents, real-time messaging, automation, and self-hosted infrastructure.
 
@@ -334,11 +326,9 @@ This project is licensed under the **MIT License**.
 
 ---
 
-![License](https://img.shields.io/github/license/Sapheron/Open-Agent-CRM)
-![Stars](https://img.shields.io/github/stars/Sapheron/Open-Agent-CRM)
-![Forks](https://img.shields.io/github/forks/Sapheron/Open-Agent-CRM)
-![Issues](https://img.shields.io/github/issues/Sapheron/Open-Agent-CRM)
-![Contributors](https://img.shields.io/github/contributors/Sapheron/Open-Agent-CRM?cacheSeconds=60)
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Sapheron/Open-Agent-CRM&type=Date)](https://star-history.com/#Sapheron/Open-Agent-CRM&Date)
 
 ![Repo Size](https://img.shields.io/github/repo-size/Sapheron/Open-Agent-CRM)
 ![Code Size](https://img.shields.io/github/languages/code-size/Sapheron/Open-Agent-CRM)
@@ -352,7 +342,3 @@ This project is licensed under the **MIT License**.
   <a href="https://github.com/Sapheron/Open-Agent-CRM">Documentation</a>
 </p>
 
-
-## ⭐ Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Sapheron/Open-Agent-CRM&type=Date)](https://star-history.com/#Sapheron/Open-Agent-CRM&Date)
