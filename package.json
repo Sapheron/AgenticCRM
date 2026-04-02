@@ -1,6 +1,8 @@
 {
   "name": "whatsapp-ai-crm",
+  "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -25,5 +27,13 @@
     "prettier": "^3.5.0",
     "turbo": "^2.5.0",
     "typescript": "^6.0.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "multer": "^2.0.0",
+      "lodash": "^4.17.21",
+      "picomatch": "^4.0.0",
+      "glob": "^10.4.0"
+    }
   }
 }
