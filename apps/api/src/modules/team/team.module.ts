@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
-// TODO: full implementation in Stage 4
-@Module({})
+import { TeamController } from './team.controller';
+import { TeamService } from './team.service';
+
+@Module({
+  controllers: [TeamController],
+  providers: [TeamService],
+  exports: [TeamService],
+})
 export class TeamModule {}

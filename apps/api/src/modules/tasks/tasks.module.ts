@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
-// TODO: full implementation in Stage 4
-@Module({})
+import { TasksController } from './tasks.controller';
+import { TasksService } from './tasks.service';
+
+@Module({
+  controllers: [TasksController],
+  providers: [TasksService],
+  exports: [TasksService],
+})
 export class TasksModule {}

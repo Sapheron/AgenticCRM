@@ -59,10 +59,17 @@ async function bootstrap() {
     });
   }
 
-  const port = process.env.API_PORT ?? 3001;
+  // ── Health check (used by Docker healthcheck) ─────────────────────────────
+  const expressApp = app.getHttpAdapter().getInstance() as import('express').Application;
+  expressApp.get('/api/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  // ── Raw body for webhook signature verification ────────────────────────────
+  app.useBodyParser('json', { limit: '10mb' });
+
+  const port = process.env.API_PORT ?? 3000;
   await app.listen(port);
-  console.log(`🚀 API running on http://localhost:${port}/api`);
-  console.log(`📚 Swagger at http://localhost:${port}/api/docs`);
+  console.log(`API running on http://localhost:${port}/api`);
+  console.log(`Swagger at http://localhost:${port}/api/docs`);
 }
 
 bootstrap();
