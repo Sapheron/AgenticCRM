@@ -94,7 +94,7 @@ export class InboundMonitor {
       },
     });
 
-    let isNewConversation = false;
+    let _isNewConversation = false;
     if (!conversation) {
       conversation = await prisma.conversation.create({
         data: {
@@ -104,7 +104,7 @@ export class InboundMonitor {
           status: 'OPEN',
         },
       });
-      isNewConversation = true;
+      _isNewConversation = true;
     }
 
     // Upload media to MinIO if present

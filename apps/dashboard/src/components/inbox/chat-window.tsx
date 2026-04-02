@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { useInboxStore } from '@/stores/inbox.store';
 import { cn } from '@/lib/utils';
-import { Send, Bot, User, MoreVertical, UserCheck, CheckCheck } from 'lucide-react';
+import { Send, Bot, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/utils';
 

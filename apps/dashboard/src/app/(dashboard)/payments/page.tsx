@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api-client';
-import { formatCurrency, formatRelativeTime, cn } from '@/lib/utils';
+import { formatCurrency, formatRelativeTime } from '@/lib/utils';
 import { CreditCard, ExternalLink } from 'lucide-react';
 
 interface Payment {
@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PaymentsPage() {
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
 
   const { data, isLoading } = useQuery({
     queryKey: ['payments', page],

@@ -233,7 +233,7 @@ function WhatsAppStep({ onNext }: { onNext: () => void }) {
 
 function AiStep({ onNext }: { onNext: () => void }) {
   const [provider, setProvider] = useState('GEMINI');
-  const [model, setModel] = useState('gemini-2.0-flash');
+  const [model] = useState('gemini-2.5-flash');
   const [apiKey, setApiKey] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);

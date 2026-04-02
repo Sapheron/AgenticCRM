@@ -111,7 +111,7 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
   );
 
   const tools = getTools(aiConfig.toolCallingEnabled);
-  let iterationMessages: ChatMessage[] = [...messages];
+  const iterationMessages: ChatMessage[] = [...messages];
   let totalTokens = 0;
   let escalated = false;
 
@@ -153,7 +153,7 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
           },
         });
 
-        const { result, escalate, paymentLinkUrl } = await executeTool(toolCall, {
+        const { result, escalate } = await executeTool(toolCall, {
           companyId,
           contactId,
           conversationId,

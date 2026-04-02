@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { useWhatsAppQr } from '@/hooks/use-whatsapp-qr';
@@ -146,7 +145,7 @@ export default function WhatsAppSettingsPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <Smartphone size={40} className="mx-auto text-gray-300 mb-3" />
           <p className="text-gray-500 font-medium">No WhatsApp accounts connected</p>
-          <p className="text-sm text-gray-400 mt-1">Click "Add Account" to connect your first WhatsApp number</p>
+          <p className="text-sm text-gray-400 mt-1">Click &ldquo;Add Account&rdquo; to connect your first WhatsApp number</p>
         </div>
       ) : (
         <div className="space-y-4">

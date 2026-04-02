@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Webhook, Copy, CheckCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,7 +39,7 @@ const WEBHOOK_DOCS: Record<string, { label: string; path: string; events: string
   },
 };
 
-function WebhookRow({ gateway, info }: { gateway: string; info: typeof WEBHOOK_DOCS[string] }) {
+function WebhookRow({ gateway: _gateway, info }: { gateway: string; info: typeof WEBHOOK_DOCS[string] }) {
   const [copied, setCopied] = useState(false);
   const url = `${API_BASE}${info.path}`;
 

@@ -121,7 +121,7 @@ export default function TeamSettingsPage() {
         {isLoading ? (
           <div className="p-8 text-center text-gray-400">Loading…</div>
         ) : members.map((member) => {
-          const RoleIcon = ROLE_ICONS[member.role] ?? User;
+          const _RoleIcon = ROLE_ICONS[member.role] ?? User;
           return (
             <div key={member.id} className="flex items-center gap-4 p-4">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">

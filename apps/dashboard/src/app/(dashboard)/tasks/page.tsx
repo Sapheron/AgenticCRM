@@ -29,7 +29,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function TasksPage() {
   const [showOverdue, setShowOverdue] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({

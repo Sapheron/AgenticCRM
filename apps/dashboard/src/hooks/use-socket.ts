@@ -9,7 +9,7 @@ let socket: Socket | null = null;
 
 export function useSocket() {
   const { accessToken } = useAuthStore();
-  const { addMessage, upsertConversation, setTyping } = useInboxStore();
+  const { addMessage, setTyping } = useInboxStore();
   const initialized = useRef(false);
 
   useEffect(() => {

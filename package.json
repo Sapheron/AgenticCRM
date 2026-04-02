@@ -16,11 +16,11 @@
     "dev:whatsapp": "turbo dev --filter=whatsapp",
     "dev:worker": "turbo dev --filter=worker",
     "dev:dashboard": "turbo dev --filter=dashboard",
-    "db:migrate": "turbo db:migrate --filter=database",
-    "db:seed": "turbo db:seed --filter=database",
-    "db:studio": "turbo db:studio --filter=database",
-    "db:generate": "turbo db:generate --filter=database",
-    "db:push": "turbo db:push --filter=database"
+    "db:migrate": "turbo db:migrate --filter=@wacrm/database",
+    "db:seed": "turbo db:seed --filter=@wacrm/database",
+    "db:studio": "turbo db:studio --filter=@wacrm/database",
+    "db:generate": "turbo db:generate --filter=@wacrm/database",
+    "db:push": "turbo db:push --filter=@wacrm/database"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
