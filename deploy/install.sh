@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║          OpenAgent CRM — One-Command Installer                             ║
-# ║          https://openagentcrm.sapheron.in                                  ║
+# ║          https://openagentcrm.sapheron.com                                  ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
@@ -11,7 +11,7 @@ BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
 # ── Config ────────────────────────────────────────────────────────────────────
 INSTALL_DIR="${INSTALL_DIR:-/opt/openagentcrm}"
-REPO_URL="${REPO_URL:-https://github.com/yourorg/whatsapp-ai-crm}"
+REPO_URL="${REPO_URL:-https://github.com/Sapheron/Open-Agent-CRM.git}"
 COMPOSE_FILE="$INSTALL_DIR/deploy/docker-compose.yml"
 TOTAL_STEPS=8
 
@@ -392,7 +392,7 @@ echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE restart${NC}"
 echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE down${NC}"
 echo ""
 echo -e "  ${BOLD}Reinstall / update anytime:${NC}"
-echo -e "  ${CYAN}curl -fsSL https://openagentcrm.sapheron.in/install.sh | bash${NC}"
+echo -e "  ${CYAN}curl -fsSL https://openagentcrm.sapheron.com/install.sh | bash${NC}"
 echo ""
 echo -e "${GREEN}${BOLD}══════════════════════════════════════════════════════${NC}"
 echo ""

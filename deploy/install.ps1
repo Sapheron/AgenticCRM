@@ -1,8 +1,8 @@
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║          OpenAgent CRM — Windows Installer (PowerShell)                    ║
-# ║          https://openagentcrm.sapheron.in                                  ║
+# ║          https://openagentcrm.sapheron.com                                  ║
 # ║                                                                              ║
-# ║  Run:  powershell -c "irm https://openagentcrm.sapheron.in/install.ps1 | iex"║
+# ║  Run:  powershell -c "irm https://openagentcrm.sapheron.com/install.ps1 | iex"║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 
 # ── Config ────────────────────────────────────────────────────────────────────
 $InstallDir   = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { "C:\openagentcrm" }
-$RepoUrl      = if ($env:REPO_URL)    { $env:REPO_URL    } else { "https://github.com/yourorg/whatsapp-ai-crm" }
+$RepoUrl      = if ($env:REPO_URL)    { $env:REPO_URL    } else { "https://github.com/Sapheron/Open-Agent-CRM.git" }
 $ComposeFile  = "$InstallDir\deploy\docker-compose.yml"
 $TotalSteps   = 8
 
@@ -338,5 +338,5 @@ Write-Host "  docker compose -f $ComposeFile ps" -ForegroundColor Cyan
 Write-Host "  docker compose -f $ComposeFile restart" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Reinstall / update anytime:" -ForegroundColor White
-Write-Host "  powershell -c `"irm https://openagentcrm.sapheron.in/install.ps1 | iex`"" -ForegroundColor Cyan
+Write-Host "  powershell -c `"irm https://openagentcrm.sapheron.com/install.ps1 | iex`"" -ForegroundColor Cyan
 Write-Host ""
