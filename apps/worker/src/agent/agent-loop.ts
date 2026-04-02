@@ -149,6 +149,7 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
             action: 'AI_TOOL_CALL',
             entityType: 'conversation',
             entityId: conversationId,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             newValue: { tool: toolCall.name, args: toolCall.arguments } as any,
           },
         });

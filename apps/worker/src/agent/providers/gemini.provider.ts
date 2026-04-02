@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, type Content, type Tool as GeminiTool } from '@google/generative-ai';
+import { GoogleGenerativeAI, type Content } from '@google/generative-ai';
 import type { AiProvider, ChatMessage, ToolDefinition, ChatResponse } from './provider.interface';
 
 export class GeminiProvider implements AiProvider {
@@ -32,6 +32,7 @@ export class GeminiProvider implements AiProvider {
         ? [{ functionDeclarations: tools.map((t) => ({
             name: t.name,
             description: t.description,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             parameters: t.parameters as any,
           })) }]
         : undefined,

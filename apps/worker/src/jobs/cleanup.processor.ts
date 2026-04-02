@@ -34,10 +34,12 @@ export function startCleanupProcessor(): Worker {
 
       let closedCount = 0;
       for (const conv of idleConvs) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nextState = transitionFsm(conv.status as any, 'idle_7_days');
         if (nextState) {
           await prisma.conversation.update({
             where: { id: conv.id },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             data: { status: nextState as any },
           });
           closedCount++;

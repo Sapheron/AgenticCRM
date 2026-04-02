@@ -31,6 +31,7 @@ export function startPaymentCheckProcessor(): Worker {
       });
 
       // 2. Nudge for payments created 2h ago, not yet nudged, not yet paid
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const toNudge = await (prisma.payment as any).findMany({
         where: {
           status: 'PENDING',
@@ -56,6 +57,7 @@ export function startPaymentCheckProcessor(): Worker {
           text: nudgeText,
         }));
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma.payment as any).update({
           where: { id: payment.id },
           data: { nudgeSentAt: new Date() },

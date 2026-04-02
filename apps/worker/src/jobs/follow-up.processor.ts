@@ -38,6 +38,7 @@ export function startFollowUpProcessor(): Worker {
         logger.info({ conversationId: conv.id, companyId: conv.companyId }, 'Follow-up needed');
 
         // Notify assigned agent or all admins
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma as any).notification?.create?.({
           data: {
             companyId: conv.companyId,

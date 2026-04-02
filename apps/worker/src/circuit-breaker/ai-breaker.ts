@@ -38,6 +38,7 @@ function getBreaker(companyId: string) {
 
     breakers.set(companyId, breaker);
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return breakers.get(companyId)!;
 }
 
