@@ -20,7 +20,7 @@
 
 **A Sapheron Project** · Powered by **TechnoTaLim Platform and Services LLP**
 
-Developed by **[ASHIK K I](https://github.com/ashikki)**
+Developed by **[ASHIK K I](https://github.com/ashik-k-i)**
 
 ---
 
