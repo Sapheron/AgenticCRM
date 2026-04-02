@@ -74,7 +74,7 @@ export class LeadsService {
         estimatedValue: dto.estimatedValue,
         currency: dto.currency ?? 'INR',
         notes: dto.notes,
-        customFields: dto.customFields ?? {},
+        customFields: (dto.customFields ?? {}) as any,
         assignedAgentId: dto.assignedAgentId,
       },
     });
@@ -82,7 +82,7 @@ export class LeadsService {
 
   async update(companyId: string, id: string, dto: Partial<CreateLeadDto>) {
     await this.get(companyId, id);
-    return prisma.lead.update({ where: { id }, data: dto });
+    return prisma.lead.update({ where: { id }, data: dto as any });
   }
 
   async updateStatus(companyId: string, id: string, status: LeadStatus) {
@@ -90,7 +90,7 @@ export class LeadsService {
     const data: Record<string, unknown> = { status };
     if (status === 'WON') data.wonAt = new Date();
     if (status === 'LOST') data.lostAt = new Date();
-    return prisma.lead.update({ where: { id }, data });
+    return prisma.lead.update({ where: { id }, data: data as any });
   }
 
   async remove(companyId: string, id: string) {

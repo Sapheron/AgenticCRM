@@ -45,7 +45,7 @@ export class InboundMonitor {
     logger.info({ accountId: this.accountId }, 'Inbound monitor started');
   }
 
-  private async handleMessage(msg: Parameters<InstanceType<typeof InboundMonitor>['handleMessage']>[0]) {
+  private async handleMessage(msg: any) {
     const normalized = normalizeMessage(msg as Parameters<typeof normalizeMessage>[0]);
     if (!normalized) return;
 
@@ -109,10 +109,10 @@ export class InboundMonitor {
 
     // Upload media to MinIO if present
     let mediaUrl: string | undefined;
-    if (normalized.mediaData?.buffer && normalized.mediaData.mimetype) {
+    if (normalized.mediaData && (normalized.mediaData as any).buffer && normalized.mediaData.mimetype) {
       try {
         const ext = mimeToExtension(normalized.mediaData.mimetype);
-        mediaUrl = await uploadMedia(normalized.mediaData.buffer, normalized.mediaData.mimetype, ext);
+        mediaUrl = await uploadMedia((normalized.mediaData as any).buffer, normalized.mediaData.mimetype, ext);
         logger.info({ mediaUrl }, 'Media uploaded to MinIO');
       } catch (err: unknown) {
         logger.error({ err }, 'Failed to upload media to MinIO');

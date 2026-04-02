@@ -65,7 +65,7 @@ export class ContactsService {
         lastName: dto.lastName,
         email: dto.email,
         tags: dto.tags ?? [],
-        customFields: dto.customFields ?? {},
+        customFields: (dto.customFields ?? {}) as any,
         notes: dto.notes,
       },
       update: {
@@ -82,7 +82,7 @@ export class ContactsService {
     await this.get(companyId, id); // throws if not found
     return prisma.contact.update({
       where: { id },
-      data: { ...dto, updatedAt: new Date() },
+      data: { ...(dto as any), updatedAt: new Date() },
     });
   }
 

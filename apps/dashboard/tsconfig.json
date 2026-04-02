@@ -23,6 +23,8 @@
       ]
     },
     "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
     "isolatedModules": true
   },
   "include": [

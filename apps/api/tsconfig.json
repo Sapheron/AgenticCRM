@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "strictPropertyInitialization": false,
+    "declaration": false,
+    "declarationMap": false,
     "paths": {
       "@wacrm/database": ["../../packages/database/src/index.ts"],
       "@wacrm/shared": ["../../packages/shared/src/index.ts"]

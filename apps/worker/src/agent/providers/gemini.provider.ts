@@ -32,7 +32,7 @@ export class GeminiProvider implements AiProvider {
         ? [{ functionDeclarations: tools.map((t) => ({
             name: t.name,
             description: t.description,
-            parameters: t.parameters as GeminiTool['functionDeclarations'][0]['parameters'],
+            parameters: t.parameters as any,
           })) }]
         : undefined,
     });

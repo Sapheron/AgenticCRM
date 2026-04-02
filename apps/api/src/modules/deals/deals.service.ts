@@ -49,13 +49,13 @@ export class DealsService {
 
   async create(companyId: string, dto: CreateDealDto) {
     return prisma.deal.create({
-      data: { companyId, ...dto, stage: 'LEAD_IN' },
+      data: { companyId, ...(dto as any), stage: 'LEAD_IN' },
     });
   }
 
   async update(companyId: string, id: string, dto: Partial<CreateDealDto>) {
     await this.get(companyId, id);
-    return prisma.deal.update({ where: { id }, data: dto });
+    return prisma.deal.update({ where: { id }, data: dto as any });
   }
 
   async moveStage(companyId: string, id: string, stage: DealStage) {

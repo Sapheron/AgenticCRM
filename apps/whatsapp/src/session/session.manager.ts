@@ -87,7 +87,7 @@ export async function startSession(accountId: string): Promise<void> {
       if (connection === 'close') {
         activeSockets.delete(accountId);
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
-        const reason = DisconnectReason[statusCode as keyof typeof DisconnectReason] ?? 'unknown';
+        const reason = (DisconnectReason as any)[statusCode] ?? 'unknown';
 
         logger.warn({ accountId, statusCode, reason }, 'WhatsApp disconnected');
 
@@ -102,7 +102,7 @@ export async function startSession(accountId: string): Promise<void> {
           },
         });
 
-        await publishDisconnected(accountId, reason);
+        await publishDisconnected(accountId, String(reason));
 
         if (shouldReconnect) {
           const backoffMs = Math.min(5000 * 2 ** (await getConsecutiveErrors(accountId)), 60000);

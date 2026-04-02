@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["DATABASE_URL", "DIRECT_DATABASE_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -20,10 +21,12 @@
       "dependsOn": ["^build"]
     },
     "db:migrate": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL", "DIRECT_DATABASE_URL"]
     },
     "db:seed": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL"]
     },
     "db:studio": {
       "cache": false,
@@ -33,7 +36,8 @@
       "outputs": ["node_modules/.prisma/**"]
     },
     "db:push": {
-      "cache": false
+      "cache": false,
+      "env": ["DATABASE_URL", "DIRECT_DATABASE_URL"]
     }
   }
 }

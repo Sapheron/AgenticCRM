@@ -31,7 +31,7 @@ export function useSocket() {
       setTyping(conversationId, false);
     });
 
-    socket.on('conversation.updated', ({ conversationId, changes }: { conversationId: string; changes: Partial<Parameters<typeof upsertConversation>[0]> }) => {
+    socket.on('conversation.updated', ({ conversationId, changes }: { conversationId: string; changes: any }) => {
       // Update conversation in store
       useInboxStore.getState().upsertConversation({
         ...useInboxStore.getState().conversations.find((c) => c.id === conversationId)!,

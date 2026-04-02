@@ -149,7 +149,7 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
             action: 'AI_TOOL_CALL',
             entityType: 'conversation',
             entityId: conversationId,
-            newValue: { tool: toolCall.name, args: toolCall.arguments },
+            newValue: { tool: toolCall.name, args: toolCall.arguments } as any,
           },
         });
 

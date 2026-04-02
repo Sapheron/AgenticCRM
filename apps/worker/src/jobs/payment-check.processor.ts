@@ -31,7 +31,7 @@ export function startPaymentCheckProcessor(): Worker {
       });
 
       // 2. Nudge for payments created 2h ago, not yet nudged, not yet paid
-      const toNudge = await prisma.payment.findMany({
+      const toNudge = await (prisma.payment as any).findMany({
         where: {
           status: 'PENDING',
           nudgeSentAt: null,
@@ -56,7 +56,7 @@ export function startPaymentCheckProcessor(): Worker {
           text: nudgeText,
         }));
 
-        await prisma.payment.update({
+        await (prisma.payment as any).update({
           where: { id: payment.id },
           data: { nudgeSentAt: new Date() },
         });

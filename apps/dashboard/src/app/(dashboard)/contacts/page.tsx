@@ -75,7 +75,7 @@ export default function ContactsPage() {
                         {(contact.displayName ?? contact.firstName ?? '?')[0].toUpperCase()}
                       </div>
                       <span className="text-sm font-medium text-gray-900">
-                        {contact.displayName ?? `${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim() || 'Unknown'}
+                        {(contact.displayName ?? `${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim()) || 'Unknown'}
                       </span>
                     </div>
                   </td>

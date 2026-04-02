@@ -62,7 +62,7 @@ export async function sendTextMessage(
     });
 
     logger.info({ accountId, toPhone, waMessageId: result?.key.id }, 'Message sent');
-    return { success: true, waMessageId: result?.key.id };
+    return { success: true, waMessageId: result?.key?.id ?? undefined };
   } catch (err: unknown) {
     logger.error({ accountId, toPhone, err }, 'Failed to send message');
     return { success: false, error: (err as Error).message };
@@ -96,7 +96,7 @@ export async function sendMediaMessage(
       result = await sock.sendMessage(jid, { document: { url: mediaUrl }, mimetype: mimeType, caption });
     }
 
-    return { success: true, waMessageId: result?.key.id };
+    return { success: true, waMessageId: result?.key?.id ?? undefined };
   } catch (err: unknown) {
     return { success: false, error: (err as Error).message };
   }

@@ -50,7 +50,7 @@ export async function usePostgresAuthState(accountId: string): Promise<{
               : value;
           }
         }
-        return data;
+        return data as any;
       },
       set: async (data) => {
         for (const [category, categoryData] of Object.entries(data)) {
