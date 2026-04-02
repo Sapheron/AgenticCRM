@@ -34,8 +34,8 @@
     "helmet": "^7.0.0",
     "pino": "^9.0.0",
     "pino-http": "^10.0.0",
-    "@wacrm/database": "*",
-    "@wacrm/shared": "*"
+    "@wacrm/database": "workspace:*",
+    "@wacrm/shared": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

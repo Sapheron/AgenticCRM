@@ -9,8 +9,8 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "@wacrm/database": "*",
-    "@wacrm/shared": "*",
+    "@wacrm/database": "workspace:*",
+    "@wacrm/shared": "workspace:*",
     "bullmq": "^5.4.2",
     "ioredis": "^5.3.2",
     "openai": "^4.47.0",

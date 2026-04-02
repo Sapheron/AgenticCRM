@@ -1,292 +1,398 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║          OpenAgent CRM — One-Command Installer                             ║
+# ║          https://openagentcrm.sapheron.in                                  ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
-# ─── Colors ───────────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
+# ── Colors ────────────────────────────────────────────────────────────────────
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
+BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/wacrm}"
+# ── Config ────────────────────────────────────────────────────────────────────
+INSTALL_DIR="${INSTALL_DIR:-/opt/openagentcrm}"
 REPO_URL="${REPO_URL:-https://github.com/yourorg/whatsapp-ai-crm}"
 COMPOSE_FILE="$INSTALL_DIR/deploy/docker-compose.yml"
 TOTAL_STEPS=8
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-step()  { echo -e "\n${BOLD}${BLUE}[STEP $1/$TOTAL_STEPS]${NC} $2"; }
-ok()    { echo -e "  ${GREEN}✅ $1${NC}"; }
+# ── Helpers ───────────────────────────────────────────────────────────────────
+step()  { echo -e "\n${BOLD}${CYAN}┌─[${NC}${BOLD} STEP $1/$TOTAL_STEPS — $2 ${CYAN}]${NC}"; }
+ok()    { echo -e "  ${GREEN}✔  $1${NC}"; }
 warn()  { echo -e "  ${YELLOW}⚠  $1${NC}"; }
-fail()  { echo -e "  ${RED}✗  $1${NC}"; exit 1; }
-info()  { echo -e "  ${BLUE}ℹ  $1${NC}"; }
-
-# Ask user if they want to skip a completed step
-maybe_skip() {
-  local reason="$1"
-  ok "$reason"
-  read -rp "  ⏭  Skip this step? [Y/n]: " choice
-  [[ "${choice:-Y}" =~ ^[Yy]$ ]] && return 0 || return 1
-}
-
-# Generate a random hex string
+fail()  { echo -e "\n  ${RED}✖  ERROR: $1${NC}\n"; exit 1; }
+info()  { echo -e "  ${BLUE}→  $1${NC}"; }
 rand_hex() { openssl rand -hex "${1:-32}"; }
 
-# ─── STEP 1: OS Check ─────────────────────────────────────────────────────────
-step 1 "Check operating system"
-OS=$(uname -s)
-if [[ "$OS" == "Linux" ]]; then
-  if [[ -f /etc/os-release ]]; then
-    DISTRO=$(. /etc/os-release && echo "$NAME $VERSION_ID")
-    ok "Detected: $DISTRO"
-  else
-    warn "Linux detected but /etc/os-release not found"
+# Idempotency helper — shows what's done and asks to skip or redo
+ask_skip() {
+  local msg="$1"
+  ok "Already done: $msg"
+  if [[ "${CI:-false}" == "true" ]] || [[ "${FORCE:-false}" == "true" ]]; then
+    return 0  # auto-skip in CI / force mode
   fi
-elif [[ "$OS" == "Darwin" ]]; then
-  ok "Detected: macOS $(sw_vers -productVersion) (dev mode)"
-else
-  fail "Unsupported OS: $OS. Please use Ubuntu 20.04+, Debian 11+, or macOS."
-fi
+  while true; do
+    read -rp "  $(echo -e "${YELLOW}Skip this step?${NC}") [Y/n]: " choice
+    case "${choice:-Y}" in
+      [Yy]*) return 0 ;;
+      [Nn]*) return 1 ;;
+      *) echo "  Please answer Y or n." ;;
+    esac
+  done
+}
 
-# ─── STEP 2: Docker Check ─────────────────────────────────────────────────────
-step 2 "Check Docker"
-DOCKER_OK=true
-if ! command -v docker &>/dev/null; then
-  warn "Docker not found"
-  DOCKER_OK=false
+# ── Banner ────────────────────────────────────────────────────────────────────
+echo ""
+echo -e "${CYAN}${BOLD}"
+echo "  ╔═══════════════════════════════════════════════════╗"
+echo "  ║        OpenAgent CRM — Installer v1.0            ║"
+echo "  ║    WhatsApp AI CRM • Self-hosted • Open Source    ║"
+echo "  ╚═══════════════════════════════════════════════════╝"
+echo -e "${NC}"
+echo -e "  Install dir: ${BLUE}$INSTALL_DIR${NC}"
+echo -e "  Repo:        ${BLUE}$REPO_URL${NC}"
+echo ""
+
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 1 — OS CHECK
+# ════════════════════════════════════════════════════════════════════════════
+step 1 "Operating system"
+
+OS=$(uname -s)
+ARCH=$(uname -m)
+
+case "$OS" in
+  Linux)
+    if [[ -f /etc/os-release ]]; then
+      source /etc/os-release
+      DISTRO="${PRETTY_NAME:-Linux}"
+    else
+      DISTRO="Linux"
+    fi
+    ok "OS: $DISTRO ($ARCH)"
+    ;;
+  Darwin)
+    MACOS_VER=$(sw_vers -productVersion)
+    ok "OS: macOS $MACOS_VER ($ARCH) — development mode"
+    warn "For production, use Ubuntu 22.04+ on a VPS"
+    ;;
+  *)
+    fail "Unsupported OS: $OS. Use Ubuntu 22.04+, Debian 12+, or macOS."
+    ;;
+esac
+
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 2 — DOCKER
+# ════════════════════════════════════════════════════════════════════════════
+step 2 "Docker & Docker Compose"
+
+if command -v docker &>/dev/null; then
+  DOCKER_VER=$(docker --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if ask_skip "Docker $DOCKER_VER is installed"; then
+    ok "Using Docker $DOCKER_VER"
+  else
+    info "Reinstall skipped — remove manually if needed"
+  fi
+else
+  info "Docker not found — installing..."
   if [[ "$OS" == "Linux" ]]; then
-    info "Installing Docker..."
     curl -fsSL https://get.docker.com | sh
     if command -v systemctl &>/dev/null; then
-      systemctl enable docker --quiet
-      systemctl start docker --quiet
+      systemctl enable --now docker
+      # Add current user to docker group
+      usermod -aG docker "${SUDO_USER:-$USER}" 2>/dev/null || true
     fi
     ok "Docker installed"
-    DOCKER_OK=true
   else
-    fail "Please install Docker Desktop from https://docker.com/products/docker-desktop"
+    fail "Install Docker Desktop from https://docker.com/products/docker-desktop then re-run"
   fi
-fi
-
-if [[ "$DOCKER_OK" == "true" ]]; then
-  DOCKER_VER=$(docker --version | cut -d' ' -f3 | tr -d ',')
-  ok "Docker $DOCKER_VER found"
 fi
 
 if ! docker compose version &>/dev/null 2>&1; then
-  warn "Docker Compose plugin not found"
+  info "Installing Docker Compose plugin..."
   if [[ "$OS" == "Linux" ]]; then
-    apt-get install -y docker-compose-plugin 2>/dev/null || true
+    apt-get install -y docker-compose-plugin 2>/dev/null || \
+      fail "Could not install docker-compose-plugin. Install manually: https://docs.docker.com/compose/install/"
   else
-    fail "Please update Docker Desktop to get the Compose plugin"
+    fail "Update Docker Desktop to get the Compose plugin"
   fi
 fi
+
 COMPOSE_VER=$(docker compose version --short 2>/dev/null || echo "unknown")
-ok "Docker Compose $COMPOSE_VER found"
+ok "Docker Compose $COMPOSE_VER ready"
 
-# ─── STEP 3: Configuration ────────────────────────────────────────────────────
-step 3 "Configuration"
-mkdir -p "$INSTALL_DIR"
-cd "$INSTALL_DIR"
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 3 — CODE
+# ════════════════════════════════════════════════════════════════════════════
+step 3 "Download / update code"
 
-# Clone or update repo
-if [[ -d ".git" ]]; then
-  if maybe_skip "Repo already cloned at $INSTALL_DIR"; then
-    ok "Using existing repo"
+if [[ -d "$INSTALL_DIR/.git" ]]; then
+  if ask_skip "Code already at $INSTALL_DIR"; then
+    ok "Using existing code"
   else
     info "Pulling latest changes..."
-    git pull origin main
-    ok "Repo updated"
+    git -C "$INSTALL_DIR" pull origin main
+    ok "Code updated"
   fi
 else
-  info "Cloning repo..."
-  git clone "$REPO_URL" .
-  ok "Repo cloned to $INSTALL_DIR"
+  info "Cloning repository..."
+  git clone "$REPO_URL" "$INSTALL_DIR"
+  ok "Code cloned to $INSTALL_DIR"
 fi
 
-# .env setup
-if [[ -f ".env" ]]; then
-  if maybe_skip ".env file already exists"; then
+cd "$INSTALL_DIR"
+
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 4 — ENVIRONMENT CONFIG
+# ════════════════════════════════════════════════════════════════════════════
+step 4 "Environment configuration"
+
+if [[ -f "$INSTALL_DIR/.env" ]]; then
+  if ask_skip ".env already configured"; then
     ok "Using existing .env"
   else
-    collect_and_generate_env
+    write_env
   fi
 else
-  collect_and_generate_env
+  write_env
 fi
 
-collect_and_generate_env() {
+write_env() {
   echo ""
-  info "Let's configure your installation:"
-  echo ""
-
-  read -rp "  Domain (e.g. crm.company.com): " DOMAIN
-  read -rp "  Admin email: " ADMIN_EMAIL
-  read -rp "  Admin password (min 8 chars): " -s ADMIN_PASSWORD
-  echo ""
-  read -rp "  DB password: " -s DB_PASSWORD
+  echo -e "  ${BOLD}Configure your installation:${NC}"
   echo ""
 
+  read -rp "  $(echo -e "${CYAN}Domain${NC}") (e.g. crm.company.com): " DOMAIN
+  [[ -z "$DOMAIN" ]] && fail "Domain is required"
+
+  read -rp "  $(echo -e "${CYAN}Admin email${NC}"): " ADMIN_EMAIL
+  [[ -z "$ADMIN_EMAIL" ]] && fail "Admin email is required"
+
+  while true; do
+    read -rsp "  $(echo -e "${CYAN}Admin password${NC}") (min 8 chars): " ADMIN_PASSWORD
+    echo ""
+    [[ ${#ADMIN_PASSWORD} -ge 8 ]] && break
+    warn "Password must be at least 8 characters"
+  done
+
+  read -rsp "  $(echo -e "${CYAN}Database password${NC}"): " DB_PASSWORD
+  echo ""
+  [[ -z "$DB_PASSWORD" ]] && DB_PASSWORD=$(rand_hex 16)
+
+  MINIO_SECRET=$(rand_hex 16)
   JWT_SECRET=$(rand_hex 32)
+  REFRESH_TOKEN_SECRET=$(rand_hex 32)
   ENCRYPTION_KEY=$(rand_hex 32)
+  GRAFANA_PASSWORD=$(rand_hex 12)
+  ACME_EMAIL="${ADMIN_EMAIL}"
 
-  cat > .env << ENVEOF
-# ─── APP ────────────────────────────────────────
+  cat > "$INSTALL_DIR/.env" << ENVEOF
+# ── OpenAgent CRM — Environment ──────────────────────────────────────────────
+# Generated by installer on $(date -u '+%Y-%m-%d %H:%M UTC')
+# DO NOT add AI/payment keys here — configure those from the dashboard.
+
+# ── App ──────────────────────────────────────────────────────────────────────
 NODE_ENV=production
 DOMAIN=${DOMAIN}
 ADMIN_EMAIL=${ADMIN_EMAIL}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
 
-# ─── DATABASE ────────────────────────────────────
+# ── Database ─────────────────────────────────────────────────────────────────
 DATABASE_URL=postgresql://crm:${DB_PASSWORD}@pgbouncer:5432/wacrm
 DIRECT_DATABASE_URL=postgresql://crm:${DB_PASSWORD}@postgres:5432/wacrm
 DB_USER=crm
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=wacrm
 
-# ─── REDIS ────────────────────────────────────────
+# ── Redis ─────────────────────────────────────────────────────────────────────
 REDIS_URL=redis://redis:6379
 
-# ─── JWT ──────────────────────────────────────────
+# ── JWT ──────────────────────────────────────────────────────────────────────
 JWT_SECRET=${JWT_SECRET}
+REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
-# ─── ENCRYPTION ───────────────────────────────────
+# ── Encryption (AES-256-GCM for API keys stored in DB) ───────────────────────
 ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
-# ─── MINIO ────────────────────────────────────────
+# ── MinIO ────────────────────────────────────────────────────────────────────
 MINIO_ENDPOINT=minio
 MINIO_PORT=9000
+MINIO_USE_SSL=false
 MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=$(rand_hex 16)
+MINIO_SECRET_KEY=${MINIO_SECRET}
 MINIO_BUCKET=wacrm-media
+MINIO_PUBLIC_URL=https://${DOMAIN}/media
 
-# ─── OBSERVABILITY ────────────────────────────────
-GRAFANA_PASSWORD=$(rand_hex 12)
+# ── Observability ────────────────────────────────────────────────────────────
+GRAFANA_PASSWORD=${GRAFANA_PASSWORD}
 LOG_LEVEL=info
 
-# ─── BACKUP ───────────────────────────────────────
-BACKUP_RETENTION_DAYS=30
+# ── Traefik ──────────────────────────────────────────────────────────────────
+ACME_EMAIL=${ACME_EMAIL}
+
+# ── Ports (internal) ─────────────────────────────────────────────────────────
+API_PORT=3000
+DASHBOARD_PORT=3001
 ENVEOF
 
-  ok ".env created"
+  ok ".env written to $INSTALL_DIR/.env"
+  info "Grafana password: ${GRAFANA_PASSWORD} (save this!)"
 }
 
-# ─── STEP 4: Pull images ──────────────────────────────────────────────────────
-step 4 "Pull / build Docker images"
-if maybe_skip "Images already pulled (skip to save time)"; then
-  ok "Skipping image pull"
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 5 — PULL / BUILD IMAGES
+# ════════════════════════════════════════════════════════════════════════════
+step 5 "Docker images"
+
+IMAGES_EXIST=$(docker images --format "{{.Repository}}" 2>/dev/null | grep -c "openagentcrm" || true)
+
+if [[ "$IMAGES_EXIST" -gt 0 ]]; then
+  if ask_skip "Images already built/pulled ($IMAGES_EXIST found)"; then
+    ok "Using cached images"
+  else
+    info "Rebuilding images..."
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build --quiet
+    ok "Images rebuilt"
+  fi
 else
-  docker compose -f "$COMPOSE_FILE" pull --quiet 2>/dev/null || true
-  docker compose -f "$COMPOSE_FILE" build --quiet
+  info "Pulling pre-built images (or building locally)..."
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" pull --quiet 2>/dev/null || true
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build --quiet
   ok "Images ready"
 fi
 
-# ─── STEP 5: Start infrastructure ─────────────────────────────────────────────
-step 5 "Start infrastructure services"
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 6 — START INFRASTRUCTURE
+# ════════════════════════════════════════════════════════════════════════════
+step 6 "Infrastructure services (postgres, redis, minio)"
 
-INFRA_RUNNING=$(docker compose -f "$COMPOSE_FILE" ps -q postgres redis minio pgbouncer 2>/dev/null | wc -l)
+INFRA_RUNNING=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  ps -q postgres redis minio pgbouncer 2>/dev/null | wc -l | tr -d ' ')
+
 if [[ "$INFRA_RUNNING" -ge 4 ]]; then
-  if maybe_skip "Infrastructure services already running"; then
+  if ask_skip "Infrastructure services already running ($INFRA_RUNNING containers)"; then
     ok "Using running infrastructure"
   else
-    docker compose -f "$COMPOSE_FILE" up -d postgres redis minio pgbouncer
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+      up -d postgres redis minio pgbouncer
+    ok "Infrastructure restarted"
   fi
 else
-  info "Starting postgres, redis, minio, pgbouncer..."
-  docker compose -f "$COMPOSE_FILE" up -d postgres redis minio pgbouncer
+  info "Starting infrastructure services..."
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+    up -d postgres redis minio pgbouncer
 
-  info "Waiting for services to be healthy..."
-  sleep 5
+  info "Waiting for health checks (up to 60s)..."
   for svc in postgres redis; do
-    for i in {1..20}; do
-      STATUS=$(docker compose -f "$COMPOSE_FILE" ps --format json "$svc" 2>/dev/null | python3 -c "import sys,json; data=sys.stdin.read(); print(json.loads(data)[0].get('Health','') if data.strip().startswith('[') else json.loads(data).get('Health',''))" 2>/dev/null || echo "unknown")
-      if [[ "$STATUS" == "healthy" ]]; then
+    for i in $(seq 1 20); do
+      HEALTH=$(docker inspect \
+        "$(docker compose -f "$COMPOSE_FILE" ps -q "$svc" 2>/dev/null)" \
+        --format '{{.State.Health.Status}}' 2>/dev/null || echo "starting")
+      if [[ "$HEALTH" == "healthy" ]]; then
         ok "$svc is healthy"
         break
       fi
+      [[ $i -eq 20 ]] && warn "$svc health check timed out (may still be starting)"
       sleep 3
     done
   done
 fi
 
-# ─── STEP 6: Run migrations ───────────────────────────────────────────────────
-step 6 "Run database migrations"
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 7 — DATABASE MIGRATIONS & SEED
+# ════════════════════════════════════════════════════════════════════════════
+step 7 "Database migrations & seed"
 
-MIGRATION_STATUS=$(docker compose -f "$COMPOSE_FILE" run --rm api sh -c "cd packages/database && npx prisma migrate status --schema=prisma/schema.prisma 2>&1 | tail -1" 2>/dev/null || echo "error")
+MIGRATION_DONE=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  run --rm api sh -c \
+  "npx prisma migrate status --schema=packages/database/prisma/schema.prisma 2>&1 | grep -c 'Database schema is up to date'" \
+  2>/dev/null || echo "0")
 
-if echo "$MIGRATION_STATUS" | grep -q "Database schema is up to date"; then
-  if maybe_skip "Migrations already up to date"; then
+if [[ "$MIGRATION_DONE" -gt 0 ]]; then
+  if ask_skip "Migrations already up to date"; then
     ok "Migrations current"
   else
-    docker compose -f "$COMPOSE_FILE" run --rm api sh -c "cd packages/database && npx prisma migrate deploy --schema=prisma/schema.prisma"
+    info "Re-running migrations..."
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+      run --rm api sh -c \
+      "npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma"
     ok "Migrations applied"
   fi
 else
-  info "Running migrations..."
-  docker compose -f "$COMPOSE_FILE" run --rm api sh -c "cd packages/database && npx prisma migrate deploy --schema=prisma/schema.prisma"
+  info "Running database migrations..."
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+    run --rm api sh -c \
+    "npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma"
   ok "Migrations applied"
 fi
 
-# ─── STEP 7: Seed database ────────────────────────────────────────────────────
-step 7 "Seed database"
+USER_COUNT=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  run --rm api sh -c \
+  "node -e \"const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.user.count().then(n=>{console.log(n);p.\$disconnect()})\"" \
+  2>/dev/null | tail -1 || echo "0")
 
-ADMIN_EXISTS=$(docker compose -f "$COMPOSE_FILE" run --rm api sh -c "cd packages/database && node -e \"const {prisma}=require('./src/client'); prisma.user.count().then(n=>process.exit(n>0?0:1)).catch(()=>process.exit(1))\"" 2>/dev/null && echo "yes" || echo "no")
-
-if [[ "$ADMIN_EXISTS" == "yes" ]]; then
-  if maybe_skip "Admin user already exists"; then
+if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
+  if ask_skip "Admin user already seeded ($USER_COUNT users found)"; then
     ok "Skipping seed"
   else
-    docker compose -f "$COMPOSE_FILE" run --rm api sh -c "cd packages/database && npx ts-node prisma/seed.ts"
-    ok "Database seeded"
+    info "Re-seeding..."
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+      run --rm api sh -c "npx tsx packages/database/prisma/seed.ts"
+    ok "Database re-seeded"
   fi
 else
-  info "Seeding database..."
-  source .env 2>/dev/null || true
-  docker compose -f "$COMPOSE_FILE" run --rm \
-    -e ADMIN_EMAIL="${ADMIN_EMAIL}" \
-    -e ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
-    api sh -c "cd packages/database && npx ts-node prisma/seed.ts"
+  info "Seeding database with admin user..."
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+    run --rm api sh -c "npx tsx packages/database/prisma/seed.ts"
   ok "Database seeded"
 fi
 
-# ─── STEP 8: Start application ────────────────────────────────────────────────
-step 8 "Start application services"
+# ════════════════════════════════════════════════════════════════════════════
+# STEP 8 — START APPLICATION
+# ════════════════════════════════════════════════════════════════════════════
+step 8 "Start application"
 
-info "Starting api, whatsapp, worker, dashboard, traefik..."
-docker compose -f "$COMPOSE_FILE" up -d
+info "Starting all services..."
+docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" up -d
 
-info "Waiting for application to be healthy..."
-sleep 10
-
-APP_OK=true
-for svc in api dashboard; do
-  STATUS=$(docker compose -f "$COMPOSE_FILE" ps --format "{{.Status}}" "$svc" 2>/dev/null || echo "unknown")
-  if echo "$STATUS" | grep -qi "healthy\|up"; then
-    ok "$svc is up"
-  else
-    warn "$svc may not be healthy yet (check: docker compose logs $svc)"
-    APP_OK=false
+info "Waiting for application to be ready (up to 30s)..."
+for i in $(seq 1 10); do
+  HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+    "http://localhost:3000/api/health" 2>/dev/null || echo "000")
+  if [[ "$HTTP_CODE" == "200" ]]; then
+    ok "API is healthy"
+    break
   fi
+  [[ $i -eq 10 ]] && warn "API health check timed out — check logs with: docker compose logs api"
+  sleep 3
 done
 
-# ─── DONE ─────────────────────────────────────────────────────────────────────
+DOMAIN_VAL=$(grep -E "^DOMAIN=" "$INSTALL_DIR/.env" | cut -d= -f2 2>/dev/null || echo "localhost")
+
+# ════════════════════════════════════════════════════════════════════════════
+# DONE
+# ════════════════════════════════════════════════════════════════════════════
 echo ""
-echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-if [[ "$APP_OK" == "true" ]]; then
-  echo -e "${GREEN}${BOLD}✅  WhatsApp AI CRM is ready!${NC}"
-else
-  echo -e "${YELLOW}${BOLD}⚠   Setup complete but some services may need attention${NC}"
-fi
-echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-DOMAIN_VAL=$(grep -E "^DOMAIN=" .env | cut -d= -f2 2>/dev/null || echo "localhost")
+echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}${BOLD}║   ✅  OpenAgent CRM is ready!                       ║${NC}"
+echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  Dashboard:  ${BLUE}https://${DOMAIN_VAL}${NC}"
-echo -e "  API Docs:   ${BLUE}https://${DOMAIN_VAL}/api/docs${NC}"
-echo -e "  Grafana:    ${BLUE}https://${DOMAIN_VAL}/grafana${NC}"
+echo -e "  ${BOLD}Dashboard:${NC}   ${BLUE}https://${DOMAIN_VAL}${NC}"
+echo -e "  ${BOLD}API Docs:${NC}    ${BLUE}https://${DOMAIN_VAL}/api/docs${NC}"
+echo -e "  ${BOLD}Grafana:${NC}     ${BLUE}https://${DOMAIN_VAL}/grafana${NC}"
 echo ""
-echo -e "  ${YELLOW}Next step:${NC} Open the dashboard and complete the setup wizard"
-echo -e "  ${YELLOW}(takes ~3 minutes to configure WhatsApp, AI, and payments)${NC}"
+echo -e "  ${YELLOW}${BOLD}Next step:${NC} Open the dashboard and complete the 6-step setup wizard"
+echo -e "  ${YELLOW}(configure WhatsApp, AI provider, and payment gateway from the UI)${NC}"
 echo ""
-echo -e "  Useful commands:"
-echo -e "  ${BLUE}docker compose -f $COMPOSE_FILE logs -f api${NC}"
-echo -e "  ${BLUE}docker compose -f $COMPOSE_FILE ps${NC}"
-echo -e "  ${BLUE}docker compose -f $COMPOSE_FILE restart${NC}"
+echo -e "  ${BOLD}Useful commands:${NC}"
+echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE logs -f api${NC}"
+echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE ps${NC}"
+echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE restart${NC}"
+echo -e "  ${CYAN}docker compose -f $COMPOSE_FILE down${NC}"
 echo ""
-echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "  ${BOLD}Reinstall / update anytime:${NC}"
+echo -e "  ${CYAN}curl -fsSL https://openagentcrm.sapheron.in/install.sh | bash${NC}"
+echo ""
+echo -e "${GREEN}${BOLD}══════════════════════════════════════════════════════${NC}"
+echo ""

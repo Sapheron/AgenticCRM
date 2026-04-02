@@ -195,6 +195,23 @@ services:
       - traefik.http.services.grafana.loadbalancer.server.port=3000
     restart: unless-stopped
 
+  # ─── Installer scripts server ────────────────────────────────
+  # Serves install.sh and install.ps1 at https://${DOMAIN}/install.sh
+  # and https://${DOMAIN}/install.ps1
+  installer:
+    image: nginx:alpine
+    volumes:
+      - ./install.sh:/usr/share/nginx/html/install.sh:ro
+      - ./install.ps1:/usr/share/nginx/html/install.ps1:ro
+      - ./nginx-installer.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.installer.rule=Host(`${DOMAIN}`) && (Path(`/install.sh`) || Path(`/install.ps1`))
+      - traefik.http.routers.installer.entrypoints=websecure
+      - traefik.http.routers.installer.tls.certresolver=le
+      - traefik.http.services.installer.loadbalancer.server.port=80
+    restart: unless-stopped
+
   # ─── Nightly backup ───────────────────────────────────────────
   backup:
     image: postgres:16-alpine
