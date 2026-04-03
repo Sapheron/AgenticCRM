@@ -29,7 +29,13 @@ export class MessagesController {
     if (!redisUrl) {
       throw new Error('REDIS_URL is missing from environment! Cannot connect to background worker.');
     }
-    this.redis = new Redis(redisUrl);
+    this.redis = new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      reconnectOnError: () => true,
+    });
+    this.redis.on('error', (err) => {
+      console.error('[MessagesController] Redis Connection Error:', err.message);
+    });
   }
 
   @Post('send')
