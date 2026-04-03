@@ -344,18 +344,44 @@ USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
+SEED_SCRIPT_JS=$(cat << 'EOF'
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+const prisma = new PrismaClient();
+const email = process.env.ADMIN_EMAIL || "admin@example.com";
+const pwd = process.env.ADMIN_PASSWORD || "changeme123";
+const rawName = process.env.COMPANY_NAME || "My Company";
+const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+(async () => {
+  let company = await prisma.company.findUnique({ where: { slug } });
+  if (!company) company = await prisma.company.create({ data: { name: rawName, slug, email, timezone: "UTC", isActive: true, setupDone: false } });
+  let user = await prisma.user.findUnique({ where: { companyId_email: { companyId: company.id, email } } });
+  if (!user) {
+    const hash = await bcrypt.hash(pwd, 12);
+    await prisma.user.create({ data: { companyId: company.id, email, passwordHash: hash, firstName: "Admin", lastName: "User", role: "ADMIN", isActive: true } });
+  }
+  if (!await prisma.aiConfig.findUnique({ where: { companyId: company.id } })) {
+    await prisma.aiConfig.create({ data: { companyId: company.id, autoReplyEnabled: false, toolCallingEnabled: true } });
+  }
+  if (!await prisma.paymentConfig.findUnique({ where: { companyId: company.id } })) {
+    await prisma.paymentConfig.create({ data: { companyId: company.id } });
+  }
+})().finally(() => prisma.$disconnect());
+EOF
+)
+
 if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
   if ask_skip "Admin user already seeded ($USER_COUNT users found)"; then
     ok "Skipping seed"
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-      run --rm api sh -c "rm -f node_modules/.bin/tsx && npx --yes tsx@4 prisma/seed.ts"
+      run --rm api node -e "$SEED_SCRIPT_JS"
     ok "Database re-seeded"
   fi
 else
   info "Seeding admin user..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-    run --rm api sh -c "rm -f node_modules/.bin/tsx && npx --yes tsx@4 prisma/seed.ts"
+    run --rm api node -e "$SEED_SCRIPT_JS"
   ok "Admin user created"
 fi
 
