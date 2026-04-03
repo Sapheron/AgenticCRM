@@ -339,13 +339,13 @@ fi
 # Seed
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "cd packages/database && node -e \"const {PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.user.count().then(n=>{console.log(n);p.\$disconnect()}).catch(()=>console.log(0))\"" \
+  "cd packages/database && node -e \"const {PrismaClient}=require('./generated/client');const p=new PrismaClient();p.user.count().then(n=>{console.log(n);p.\$disconnect()}).catch(()=>console.log(0))\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
 SEED_SCRIPT_JS=$(cat << 'EOF'
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("./generated/client");
 const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 const email = process.env.ADMIN_EMAIL || "admin@example.com";
