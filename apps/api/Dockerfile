@@ -33,10 +33,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs
 
-COPY --from=installer --chown=nestjs:nodejs /app/apps/api/dist ./dist
-COPY --from=installer --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=installer --chown=nestjs:nodejs /app/packages ./packages
-
+COPY --from=installer --chown=nestjs:nodejs /app ./
 USER nestjs
 EXPOSE 3000
-CMD ["node", "dist/apps/api/src/main.js"]
+CMD ["node", "apps/api/dist/apps/api/src/main.js"]
