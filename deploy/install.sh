@@ -314,7 +314,7 @@ step 7 "Database migrations, seed & start"
 # Migrations
 MIGRATION_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "./node_modules/.bin/prisma migrate status --schema=prisma/schema.prisma 2>&1 | grep -c 'Database schema is up to date'" \
+  "npx --yes prisma@6 migrate status --schema=prisma/schema.prisma 2>&1 | grep -c 'Database schema is up to date'" \
   2>/dev/null || echo "0")
 MIGRATION_DONE=$(echo "$MIGRATION_RES" | grep -o '[0-9]\+' | tail -1)
 MIGRATION_DONE=${MIGRATION_DONE:-0}
@@ -325,14 +325,14 @@ if [[ "$MIGRATION_DONE" -gt 0 ]]; then
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
       run --rm api sh -c \
-      "./node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma"
+      "npx --yes prisma@6 migrate deploy --schema=prisma/schema.prisma"
     ok "Migrations applied"
   fi
 else
   info "Running database migrations..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
     run --rm api sh -c \
-    "./node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma"
+    "npx --yes prisma@6 migrate deploy --schema=prisma/schema.prisma"
   ok "Migrations applied"
 fi
 
@@ -349,13 +349,13 @@ if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
     ok "Skipping seed"
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-      run --rm api sh -c "./node_modules/.bin/tsx prisma/seed.ts"
+      run --rm api sh -c "npx --yes tsx@4 prisma/seed.ts"
     ok "Database re-seeded"
   fi
 else
   info "Seeding admin user..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-    run --rm api sh -c "./node_modules/.bin/tsx prisma/seed.ts"
+    run --rm api sh -c "npx --yes tsx@4 prisma/seed.ts"
   ok "Admin user created"
 fi
 
