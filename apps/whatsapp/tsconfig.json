@@ -1,7 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "@wacrm/database": ["../../packages/database/src/index.ts"],
+      "@wacrm/shared": ["../../packages/shared/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

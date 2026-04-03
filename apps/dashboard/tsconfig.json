@@ -20,7 +20,9 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ]
+      ],
+      "@wacrm/database": ["../../packages/database/src/index.ts"],
+      "@wacrm/shared": ["../../packages/shared/src/index.ts"]
     },
     "noEmit": true,
     "declaration": false,
