@@ -15,10 +15,16 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TeamModule } from './modules/team/team.module';
 import { BroadcastModule } from './modules/broadcast/broadcast.module';
 import { WsGatewayModule } from './gateway/ws-gateway.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    BullModule.forRoot({
+      connection: {
+        url: (process.env.REDIS_URL || '').trim(),
+      },
+    }),
     ThrottlerModule.forRoot([
       {
         ttl: parseInt(process.env.API_RATE_LIMIT_TTL_MS ?? '60000'),
