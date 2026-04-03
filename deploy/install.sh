@@ -5,6 +5,8 @@
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 set -euo pipefail
 
+main() {
+
 # ── Colors ────────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
@@ -494,3 +496,9 @@ echo -e "  3. Open ${CYAN}https://YOUR_DOMAIN${NC} — log in and complete the s
 echo ""
 echo -e "${GREEN}${BOLD}══════════════════════════════════════════════════════════════${NC}"
 echo ""
+
+} # end main()
+
+# Execute — wrapping in main() ensures the entire script is downloaded
+# and parsed before any code runs (critical for curl|bash installs).
+main "$@"
