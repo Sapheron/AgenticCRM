@@ -18,17 +18,10 @@ services:
       dockerfile: apps/api/Dockerfile
     ports:
       - "127.0.0.1:3000:3000"
+    env_file:
+      - ../.env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_DATABASE_URL=${DIRECT_DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-15m}
-      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-7d}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - DOMAIN=${DOMAIN:-localhost}
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,9 +42,10 @@ services:
       dockerfile: apps/dashboard/Dockerfile
     ports:
       - "127.0.0.1:3001:3001"
+    env_file:
+      - ../.env
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${API_PUBLIC_URL:-http://localhost:3000}
     depends_on:
       - api
     restart: unless-stopped
@@ -62,17 +56,10 @@ services:
     build:
       context: ..
       dockerfile: apps/whatsapp/Dockerfile
+    env_file:
+      - ../.env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio}
-      - MINIO_PORT=${MINIO_PORT:-9000}
-      - MINIO_USE_SSL=${MINIO_USE_SSL:-false}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=${MINIO_BUCKET:-wacrm-media}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,12 +75,10 @@ services:
     build:
       context: ..
       dockerfile: apps/worker/Dockerfile
+    env_file:
+      - ../.env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
       postgres:
         condition: service_healthy
