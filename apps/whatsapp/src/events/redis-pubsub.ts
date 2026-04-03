@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL!;
+const redisUrl = (process.env.REDIS_URL || '').trim();
 
 export const publisher = new Redis(redisUrl, { lazyConnect: true });
 

@@ -29,14 +29,13 @@ const logger = pino({
     : undefined,
 });
 
-const redisUrl = process.env.REDIS_URL!;
+const redis = new Redis((process.env.REDIS_URL || '').trim(), { lazyConnect: true });
 
 async function main() {
   logger.info('Worker service starting');
 
   // Connect Redis client for publisher init
-  const redis = new Redis(redisUrl);
-  await redis.ping();
+  await redis.connect();
   logger.info('Redis connected');
 
   // Start all workers
@@ -54,11 +53,11 @@ async function main() {
   logger.info('All workers started');
 
   // Schedule recurring jobs via BullMQ repeatable jobs
-  const reminderQueue    = new Queue(QUEUES.REMINDER,       { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
-  const followUpQueue    = new Queue(QUEUES.FOLLOW_UP,      { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
-  const cleanupQueue     = new Queue(QUEUES.CLEANUP,        { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
-  const paymentCheckQ    = new Queue(QUEUES.PAYMENT_CHECK,  { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
-  const warmupResetQueue = new Queue(QUEUES.WARMUP_RESET,   { connection: new Redis(redisUrl, { maxRetriesPerRequest: null }) });
+  const reminderQueue    = new Queue(QUEUES.REMINDER,       { connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }) });
+  const followUpQueue    = new Queue(QUEUES.FOLLOW_UP,      { connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }) });
+  const cleanupQueue     = new Queue(QUEUES.CLEANUP,        { connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }) });
+  const paymentCheckQ    = new Queue(QUEUES.PAYMENT_CHECK,  { connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }) });
+  const warmupResetQueue = new Queue(QUEUES.WARMUP_RESET,   { connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }) });
 
   await scheduleReminderJob(reminderQueue);
 

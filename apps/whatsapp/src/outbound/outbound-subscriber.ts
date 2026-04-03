@@ -12,7 +12,8 @@ import { prisma } from '@wacrm/database';
 import { sendTextMessage, sendMediaMessage } from './sender';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const redisUrl = process.env.REDIS_URL!;
+const redisUrl = (process.env.REDIS_URL || '').trim();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
 
 interface OutboundPayload {

@@ -17,7 +17,7 @@ const logger = pino({
     : undefined,
 });
 
-const redisUrl = process.env.REDIS_URL!;
+const redisUrl = (process.env.REDIS_URL || '').trim();
 
 // Commands from API: { command: 'start'|'stop', accountId: string }
 const COMMAND_CHANNEL = 'wa:command';
