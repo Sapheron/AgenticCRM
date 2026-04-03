@@ -105,6 +105,8 @@ services:
     image: edoburu/pgbouncer:latest
     environment:
       - DATABASE_URL=postgres://${DB_USER:-crm}:${DB_PASSWORD:-crm_pass}@postgres:5432/${DB_NAME:-wacrm}
+      - LISTEN_PORT=6432
+      - PGB_PORT=6432
       - POOL_MODE=transaction
       - MAX_CLIENT_CONN=200
       - DEFAULT_POOL_SIZE=20
