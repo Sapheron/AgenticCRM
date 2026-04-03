@@ -119,7 +119,7 @@ services:
 
   # ─── PgBouncer ────────────────────────────────────────────────
   pgbouncer:
-    image: edoburu/pgbouncer:1.22.1
+    image: edoburu/pgbouncer:latest
     environment:
       - DATABASE_URL=postgres://${DB_USER:-crm}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-wacrm}
       - POOL_MODE=transaction
