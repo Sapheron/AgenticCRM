@@ -258,14 +258,14 @@ if [[ "$IMAGES_EXIST" -gt 0 ]]; then
     ok "Using cached images"
   else
     info "Rebuilding images..."
-    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build --quiet
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build
     ok "Images rebuilt"
   fi
 else
   info "Pulling pre-built images..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" pull --quiet 2>/dev/null || true
   info "Building any missing images..."
-  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build --quiet
+  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" build
   ok "Images ready"
 fi
 
