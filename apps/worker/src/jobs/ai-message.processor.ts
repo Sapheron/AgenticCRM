@@ -5,7 +5,7 @@ import { QUEUES } from '@wacrm/shared';
 import { runAgentLoop } from '../agent/agent-loop';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL!;
 
 export function startAiMessageWorker() {
   const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });

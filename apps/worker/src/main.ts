@@ -29,7 +29,7 @@ const logger = pino({
     : undefined,
 });
 
-const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL!;
 
 async function main() {
   logger.info('Worker service starting');

@@ -20,7 +20,7 @@ import type { ChatMessage } from './providers/provider.interface';
 import Redis from 'ioredis';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { lazyConnect: true });
+const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
 
 const AI_CONFIG_TTL = 600; // 10 min cache
 const MAX_TOOL_ITERATIONS = 5;

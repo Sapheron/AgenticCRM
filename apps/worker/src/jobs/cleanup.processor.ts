@@ -12,7 +12,7 @@ import { QUEUES } from '@wacrm/shared';
 import { transitionFsm } from '@wacrm/shared';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const connection = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: null });
 
 export function startCleanupProcessor(): Worker {
   const worker = new Worker(

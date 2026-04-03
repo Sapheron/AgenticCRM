@@ -18,7 +18,7 @@ import { prisma } from '@wacrm/database';
 import { QUEUES } from '@wacrm/shared';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const connection = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: null });
 
 const WARMUP_DAILY_LIMITS = [50, 100, 200, 500, 1000, 99999];
 

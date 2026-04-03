@@ -21,7 +21,7 @@ class SendMessageBody {
 @UseGuards(JwtAuthGuard, CompanyScopeGuard)
 @Controller('messages')
 export class MessagesController {
-  private readonly redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379');
+  private readonly redis = new Redis(process.env.REDIS_URL!);
 
   constructor(private readonly svc: MessagesService) {}
 

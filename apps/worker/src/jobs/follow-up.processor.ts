@@ -10,7 +10,7 @@ import { prisma } from '@wacrm/database';
 import { QUEUES } from '@wacrm/shared';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const connection = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', { maxRetriesPerRequest: null });
+const connection = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: null });
 
 const FOLLOW_UP_THRESHOLD_MINUTES = Number(process.env.FOLLOW_UP_THRESHOLD_MINUTES ?? 30);
 

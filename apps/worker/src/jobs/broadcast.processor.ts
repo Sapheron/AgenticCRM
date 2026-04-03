@@ -6,7 +6,7 @@ import { prisma } from '@wacrm/database';
 import { sleep } from '@wacrm/shared';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL!;
 
 export function startBroadcastWorker() {
   const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });

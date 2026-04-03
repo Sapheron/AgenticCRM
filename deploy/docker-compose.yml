@@ -89,6 +89,8 @@ services:
   # ─── PostgreSQL 16 ────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
+    env_file:
+      - ../.env
     environment:
       - POSTGRES_USER=${DB_USER:-crm}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -105,6 +107,8 @@ services:
   # ─── PgBouncer ────────────────────────────────────────────────
   pgbouncer:
     image: edoburu/pgbouncer:latest
+    env_file:
+      - ../.env
     environment:
       - DATABASE_URL=postgres://${DB_USER:-crm}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-wacrm}
       - POOL_MODE=transaction
@@ -136,6 +140,8 @@ services:
     ports:
       - "127.0.0.1:9000:9000"   # S3 API
       - "127.0.0.1:9001:9001"   # MinIO Console UI
+    env_file:
+      - ../.env
     environment:
       - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
@@ -163,6 +169,8 @@ services:
     image: grafana/grafana:latest
     ports:
       - "127.0.0.1:3002:3000"
+    env_file:
+      - ../.env
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana
@@ -176,6 +184,8 @@ services:
   # ─── Nightly PostgreSQL backup ────────────────────────────────
   backup:
     image: postgres:16-alpine
+    env_file:
+      - ../.env
     entrypoint: |
       sh -c "
         while true; do
