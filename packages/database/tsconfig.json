@@ -1,8 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./src"
   },
-  "include": ["src/**/*", "prisma/**/*", "generated/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
