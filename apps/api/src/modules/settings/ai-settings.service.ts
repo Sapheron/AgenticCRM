@@ -100,7 +100,7 @@ export class AiSettingsService {
   async test(companyId: string) {
     const config = await prisma.aiConfig.findUnique({ where: { companyId } });
     if (!config || !config.apiKeyEncrypted) {
-      throw new BadRequestException('AI provider is not configured yet');
+      return { ok: false, error: 'AI provider is not configured. Please save your settings before testing.' };
     }
 
     const apiKey = decrypt(config.apiKeyEncrypted);
