@@ -7,7 +7,7 @@ import { transitionFsm } from '@wacrm/shared';
 export class ConversationsService {
   async list(
     companyId: string,
-    opts: { status?: ConversationStatus | string; agentId?: string; search?: string; page?: any; limit?: any },
+    opts: { status?: ConversationStatus | string; agentId?: string; search?: string; page?: string | number; limit?: string | number },
   ) {
     const page = Number(opts.page) || 1;
     const limit = Math.min(Number(opts.limit) || 50, 100);

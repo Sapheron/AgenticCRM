@@ -15,7 +15,7 @@ export interface CreateContactDto {
 
 @Injectable()
 export class ContactsService {
-  async list(companyId: string, opts: { search?: string; tag?: string; status?: string | string[]; page?: any; limit?: any }) {
+  async list(companyId: string, opts: { search?: string; tag?: string; status?: string | string[]; page?: string | number; limit?: string | number }) {
     const page = Number(opts.page) || 1;
     const limit = Math.min(Number(opts.limit) || 50, 100);
     const skip = (page - 1) * limit;

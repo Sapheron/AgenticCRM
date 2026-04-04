@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { prisma } from '@wacrm/database';
 import type { AiProvider } from '@wacrm/database';
 import { encrypt, decrypt } from '@wacrm/shared';

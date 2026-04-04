@@ -18,12 +18,12 @@ export class TasksService {
   async list(
     companyId: string,
     opts: {
-      status?: any;
+      status?: string | TaskStatus | TaskStatus[];
       assignedAgentId?: string;
       contactId?: string;
       dealId?: string;
       overdue?: boolean;
-      page?: any;
+      page?: string | number;
     },
   ) {
     const page = Number(opts.page) || 1;
