@@ -23,12 +23,14 @@ export class WhatsAppSettingsService {
     });
   }
 
-  async createAccount(companyId: string, phoneNumber: string) {
+  async createAccount(companyId: string, phoneNumber?: string) {
+    const id = `wa_${Math.random().toString(36).substring(2, 11)}`;
     return prisma.whatsAppAccount.create({
       data: {
+        id,
         companyId,
-        phoneNumber,
-        status: 'DISCONNECTED',
+        phoneNumber: phoneNumber || `PENDING-${id}`,
+        status: 'QR_PENDING',
       },
     });
   }

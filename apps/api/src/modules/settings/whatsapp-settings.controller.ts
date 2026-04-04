@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { WhatsAppSettingsService } from './whatsapp-settings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompanyScopeGuard } from '../../common/guards/company-scope.guard';
@@ -8,8 +8,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@wacrm/database';
 
 class CreateAccountBody {
-  @IsString() @MinLength(7)
-  phoneNumber: string;
+  @IsString() @IsOptional()
+  phoneNumber?: string;
 }
 
 @ApiTags('whatsapp')
