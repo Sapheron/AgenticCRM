@@ -44,7 +44,13 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       const token =
         (client.handshake.auth?.token as string) ||
+        (client.handshake.query?.token as string) ||
         (client.handshake.headers?.authorization?.replace('Bearer ', '') ?? '');
+
+      if (!token) {
+        this.logger.warn(`Unauthorized WS: No token provided (Client: ${client.id})`);
+        return client.disconnect();
+      }
 
       const payload = this.jwt.verify<{ sub: string; cid: string }>(token, {
         secret: process.env.JWT_SECRET,
@@ -57,8 +63,9 @@ export class WsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.data.userId = payload.sub;
 
       this.logger.debug(`Client connected: ${client.id} → room ${room}`);
-    } catch {
-      this.logger.warn(`Unauthorized WS connection attempt: ${client.id}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Unauthorized WS: Invalid token (Client: ${client.id}, Error: ${msg})`);
       client.disconnect();
     }
   }

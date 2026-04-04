@@ -15,7 +15,7 @@ class CreateAccountBody {
 @ApiTags('whatsapp')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, CompanyScopeGuard)
-@Controller('settings/whatsapp')
+@Controller('settings/whatsapp/accounts')
 export class WhatsAppSettingsController {
   constructor(private readonly svc: WhatsAppSettingsService) {}
 
