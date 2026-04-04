@@ -7,15 +7,17 @@ import { transitionFsm } from '@wacrm/shared';
 export class ConversationsService {
   async list(
     companyId: string,
-    opts: { status?: ConversationStatus; agentId?: string; search?: string; page?: number; limit?: number },
+    opts: { status?: ConversationStatus | string; agentId?: string; search?: string; page?: any; limit?: any },
   ) {
-    const page = opts.page ?? 1;
-    const limit = Math.min(opts.limit ?? 30, 100);
+    const page = Number(opts.page) || 1;
+    const limit = Math.min(Number(opts.limit) || 50, 100);
     const skip = (page - 1) * limit;
 
     const where = {
       companyId,
-      ...(opts.status ? { status: opts.status } : {}),
+      ...(opts.status
+        ? { status: { in: (typeof opts.status === 'string' ? opts.status.split(',') : [opts.status]) as ConversationStatus[] } }
+        : {}),
       ...(opts.agentId ? { assignedAgentId: opts.agentId } : {}),
       ...(opts.search
         ? {

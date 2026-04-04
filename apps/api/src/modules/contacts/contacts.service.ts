@@ -15,15 +15,16 @@ export interface CreateContactDto {
 
 @Injectable()
 export class ContactsService {
-  async list(companyId: string, opts: { search?: string; tag?: string; page?: number; limit?: number }) {
-    const page = opts.page ?? 1;
-    const limit = Math.min(opts.limit ?? 50, 100);
+  async list(companyId: string, opts: { search?: string; tag?: string; status?: string | string[]; page?: any; limit?: any }) {
+    const page = Number(opts.page) || 1;
+    const limit = Math.min(Number(opts.limit) || 50, 100);
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Record<string, any> = {
       companyId,
       deletedAt: null,
       ...(opts.tag ? { tags: { has: opts.tag } } : {}),
+      ...(opts.status ? { status: opts.status } : {}),
       ...(opts.search
         ? {
             OR: [

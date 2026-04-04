@@ -17,7 +17,8 @@ export interface CreateBroadcastDto {
 export class BroadcastService {
   constructor(@InjectQueue(QUEUES.BROADCAST) private readonly broadcastQueue: Queue) {}
 
-  async list(companyId: string, page = 1) {
+  async list(companyId: string, pageRaw: any = 1) {
+    const page = Number(pageRaw) || 1;
     const limit = 20;
     const [items, total] = await Promise.all([
       prisma.broadcast.findMany({

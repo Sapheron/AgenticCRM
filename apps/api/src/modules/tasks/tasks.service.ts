@@ -18,19 +18,25 @@ export class TasksService {
   async list(
     companyId: string,
     opts: {
-      status?: TaskStatus;
+      status?: any;
       assignedAgentId?: string;
       contactId?: string;
       dealId?: string;
       overdue?: boolean;
-      page?: number;
+      page?: any;
     },
   ) {
-    const page = opts.page ?? 1;
+    const page = Number(opts.page) || 1;
     const limit = 50;
     const where: Record<string, unknown> = {
       companyId,
-      ...(opts.status ? { status: opts.status } : {}),
+      ...(opts.status
+        ? {
+            status: typeof opts.status === 'string' && opts.status.includes(',')
+              ? { in: opts.status.split(',') as TaskStatus[] }
+              : opts.status,
+          }
+        : {}),
       ...(opts.assignedAgentId ? { assignedAgentId: opts.assignedAgentId } : {}),
       ...(opts.contactId ? { contactId: opts.contactId } : {}),
       ...(opts.dealId ? { dealId: opts.dealId } : {}),
