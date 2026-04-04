@@ -30,7 +30,7 @@ echo " - All Database volumes (Messages, Contacts, Leads)"
 echo " - All WhatsApp session data"
 echo " - The installation directory (/opt/openagentcrm)"
 echo ""
-read -p "Are you sure you want to proceed? [y/N]: " confirm
+read -p "Are you sure you want to proceed? [y/N]: " confirm </dev/tty
 if [[ ! $confirm =~ ^[Yy]$ ]]; then
     echo "Uninstall cancelled."
     exit 0
