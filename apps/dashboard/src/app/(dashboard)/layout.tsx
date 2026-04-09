@@ -7,13 +7,13 @@ import { useSocket } from '@/hooks/use-socket';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Bot, Users, TrendingUp, Briefcase, CheckSquare,
+  MessageSquare, Users, TrendingUp, Briefcase, CheckSquare,
   BarChart3, Settings, Megaphone, LogOut, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/inbox', icon: Bot, label: 'AI Chats' },
+  { href: '/chat', icon: MessageSquare, label: 'AI Chat' },
   { href: '/contacts', icon: Users, label: 'Contacts' },
   { href: '/leads', icon: TrendingUp, label: 'Leads' },
   { href: '/deals', icon: Briefcase, label: 'Deals' },

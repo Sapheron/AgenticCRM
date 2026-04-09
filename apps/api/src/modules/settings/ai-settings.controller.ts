@@ -8,7 +8,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User, AiProvider } from '@wacrm/database';
 
 class UpsertAiConfigBody implements UpsertAiConfigDto {
-  @IsEnum(['GEMINI','OPENAI','ANTHROPIC','GROQ','OLLAMA','OPENROUTER','CUSTOM'])
+  @IsEnum(['GEMINI','OPENAI','ANTHROPIC','GROQ','DEEPSEEK','XAI','MISTRAL','TOGETHER','MOONSHOT','OLLAMA','OPENROUTER','CUSTOM'])
   provider: AiProvider;
 
   @IsString()

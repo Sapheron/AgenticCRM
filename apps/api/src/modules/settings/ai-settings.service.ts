@@ -16,6 +16,17 @@ export interface UpsertAiConfigDto {
   toolCallingEnabled?: boolean;
 }
 
+// Base URLs for OpenAI-compatible providers
+export const PROVIDER_BASE_URLS: Partial<Record<AiProvider, string>> = {
+  GROQ: 'https://api.groq.com/openai/v1',
+  DEEPSEEK: 'https://api.deepseek.com/v1',
+  XAI: 'https://api.x.ai/v1',
+  MISTRAL: 'https://api.mistral.ai/v1',
+  TOGETHER: 'https://api.together.xyz/v1',
+  MOONSHOT: 'https://api.moonshot.ai/v1',
+  OPENROUTER: 'https://openrouter.ai/api/v1',
+};
+
 // Models available per provider — updated April 2026
 export const PROVIDER_MODELS: Record<AiProvider, string[]> = {
   GEMINI: [
@@ -36,25 +47,50 @@ export const PROVIDER_MODELS: Record<AiProvider, string[]> = {
   ANTHROPIC: [
     'claude-opus-4-6',
     'claude-sonnet-4-6',
+    'claude-sonnet-4-5',
     'claude-haiku-4-5-20251001',
   ],
   GROQ: [
     'llama-3.3-70b-versatile',
     'deepseek-r1-distill-llama-70b',
     'qwen-qwq-32b',
-    'llama-3.1-70b-versatile',
     'llama-3.1-8b-instant',
     'mixtral-8x7b-32768',
     'gemma2-9b-it',
   ],
+  DEEPSEEK: [
+    'deepseek-chat',
+    'deepseek-reasoner',
+  ],
+  XAI: [
+    'grok-4',
+    'grok-3',
+    'grok-3-mini',
+    'grok-3-fast',
+  ],
+  MISTRAL: [
+    'mistral-large-latest',
+    'mistral-medium-latest',
+    'mistral-small-latest',
+    'codestral-latest',
+  ],
+  TOGETHER: [
+    'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    'deepseek-ai/DeepSeek-V3',
+    'deepseek-ai/DeepSeek-R1',
+  ],
+  MOONSHOT: [
+    'kimi-k2.5',
+    'kimi-k2-turbo',
+  ],
   OLLAMA: ['llama3.3', 'llama3.1', 'mistral', 'phi4', 'gemma3', 'deepseek-r1', 'qwen2.5'],
   OPENROUTER: [
+    'auto',
     'google/gemini-2.5-pro',
     'openai/gpt-4.1',
     'anthropic/claude-sonnet-4-6',
     'deepseek/deepseek-r1',
     'meta-llama/llama-3.3-70b-instruct',
-    'auto',
   ],
   CUSTOM: ['custom'],
 };
@@ -145,17 +181,18 @@ export class AiSettingsService {
         return this.pingOpenAI(model, apiKey);
       case 'ANTHROPIC':
         return this.pingAnthropic(model, apiKey);
-      case 'GROQ':
-        return this.pingOpenAI(model, apiKey, 'https://api.groq.com/openai/v1');
       case 'OLLAMA':
         return this.pingOpenAI(model, apiKey, baseUrl ?? 'http://localhost:11434/v1');
-      case 'OPENROUTER':
-        return this.pingOpenAI(model, apiKey, 'https://openrouter.ai/api/v1');
       case 'CUSTOM':
         if (!baseUrl) throw new Error('baseUrl is required for CUSTOM provider');
         return this.pingOpenAI(model, apiKey, baseUrl);
-      default:
-        throw new Error(`Unknown provider: ${provider}`);
+      default: {
+        // All other providers (GROQ, DEEPSEEK, XAI, MISTRAL, TOGETHER, MOONSHOT, OPENROUTER)
+        // use OpenAI-compatible APIs with their specific base URL
+        const providerUrl = PROVIDER_BASE_URLS[provider];
+        if (!providerUrl) throw new Error(`Unknown provider: ${provider}`);
+        return this.pingOpenAI(model, apiKey, providerUrl);
+      }
     }
   }
 

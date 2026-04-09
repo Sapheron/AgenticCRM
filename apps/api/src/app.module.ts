@@ -14,6 +14,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TeamModule } from './modules/team/team.module';
 import { BroadcastModule } from './modules/broadcast/broadcast.module';
+import { AiChatModule } from './modules/ai-chat/ai-chat.module';
 import { WsGatewayModule } from './gateway/ws-gateway.module';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -44,6 +45,7 @@ import { BullModule } from '@nestjs/bullmq';
     AnalyticsModule,
     TeamModule,
     BroadcastModule,
+    AiChatModule,
     WsGatewayModule,
   ],
 })

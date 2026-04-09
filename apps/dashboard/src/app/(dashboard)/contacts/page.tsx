@@ -72,7 +72,7 @@ export default function ContactsPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 shrink-0">
-                        {(contact.displayName ?? contact.firstName ?? '?')[0].toUpperCase()}
+                        {((contact.displayName || contact.firstName || '?')[0] ?? '?').toUpperCase()}
                       </div>
                       <span className="text-sm font-medium text-gray-900">
                         {(contact.displayName ?? `${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim()) || 'Unknown'}
@@ -88,7 +88,7 @@ export default function ContactsPage() {
                   <td className="px-4 py-3 text-sm text-gray-600">{contact.email ?? '—'}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
-                      {contact.tags.map((tag) => (
+                      {(contact.tags ?? []).map((tag) => (
                         <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                           {tag}
                         </span>

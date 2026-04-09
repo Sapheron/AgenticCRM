@@ -6,7 +6,11 @@ import api from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Bot, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-const PROVIDERS = ['GEMINI', 'OPENAI', 'ANTHROPIC', 'GROQ', 'OLLAMA', 'OPENROUTER'];
+const PROVIDERS = [
+  'GEMINI', 'OPENAI', 'ANTHROPIC', 'GROQ', 'DEEPSEEK',
+  'XAI', 'MISTRAL', 'TOGETHER', 'MOONSHOT',
+  'OLLAMA', 'OPENROUTER', 'CUSTOM',
+];
 
 export default function AiSettingsPage() {
   const [provider, setProvider] = useState('GEMINI');
