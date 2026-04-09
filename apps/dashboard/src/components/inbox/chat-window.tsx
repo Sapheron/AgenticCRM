@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { useInboxStore } from '@/stores/inbox.store';
 import { cn } from '@/lib/utils';
-import { Send, Bot, CheckCheck } from 'lucide-react';
+import { Bot, CheckCheck, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatRelativeTime } from '@/lib/utils';
 
@@ -28,7 +28,6 @@ interface Message {
 }
 
 export function ChatWindow({ conversation }: { conversation: Conversation }) {
-  const [messageText, setMessageText] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
   const { messages: storeMessages, setMessages, typingConversations } = useInboxStore();
@@ -40,6 +39,7 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
       const res = await api.get<{ data: Message[] }>(`/conversations/${conversation.id}/messages`);
       return res.data.data;
     },
+    refetchInterval: 10000,
   });
 
   useEffect(() => {
@@ -52,20 +52,6 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messagesLength, isTyping]);
-
-  const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      await api.post(`/messages/send`, {
-        conversationId: conversation.id,
-        text,
-      });
-    },
-    onSuccess: () => {
-      setMessageText('');
-      void qc.invalidateQueries({ queryKey: ['messages', conversation.id] });
-    },
-    onError: () => toast.error('Failed to send message'),
-  });
 
   const toggleAiMutation = useMutation({
     mutationFn: async () => {
@@ -90,11 +76,8 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
   });
 
   const displayMessages = storeMessages[conversation.id] ?? [];
-
-  const handleSend = () => {
-    if (!messageText.trim()) return;
-    sendMutation.mutate(messageText.trim());
-  };
+  const contactName = conversation.contact?.displayName ?? conversation.contact?.phoneNumber ?? 'Unknown';
+  const contactInitial = contactName[0] ?? '#';
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -102,13 +85,11 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
       <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-            {conversation.contact.displayName?.[0] ?? '#'}
+            {contactInitial}
           </div>
           <div>
-            <p className="font-semibold text-sm text-gray-900">
-              {conversation.contact.displayName ?? conversation.contact.phoneNumber}
-            </p>
-            <p className="text-xs text-gray-500">{conversation.contact.phoneNumber} · {conversation.status}</p>
+            <p className="font-semibold text-sm text-gray-900">{contactName}</p>
+            <p className="text-xs text-gray-500">{conversation.contact?.phoneNumber ?? ''} · {conversation.status ?? ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -134,7 +115,21 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
         </div>
       </div>
 
-      {/* Messages */}
+      {/* AI Status Banner */}
+      {conversation.aiEnabled && (
+        <div className="bg-green-50 border-b border-green-200 px-4 py-2 flex items-center gap-2 text-green-700 text-xs">
+          <Bot size={14} />
+          <span className="font-medium">AI is handling this conversation automatically</span>
+        </div>
+      )}
+      {conversation.status === 'WAITING_HUMAN' && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2 text-amber-700 text-xs">
+          <Clock size={14} />
+          <span className="font-medium">AI escalated — waiting for human agent</span>
+        </div>
+      )}
+
+      {/* Messages (read-only) */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {displayMessages.map((msg) => (
           <div
@@ -146,20 +141,18 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
                 'max-w-xs lg:max-w-md px-3 py-2 rounded-2xl text-sm',
                 msg.direction === 'INBOUND'
                   ? 'bg-white text-gray-900 rounded-tl-sm shadow-sm'
-                  : msg.isAiGenerated
-                  ? 'bg-green-100 text-green-900 rounded-tr-sm'
-                  : 'bg-green-600 text-white rounded-tr-sm',
+                  : 'bg-green-100 text-green-900 rounded-tr-sm',
               )}
             >
-              {msg.isAiGenerated && (
+              {msg.direction === 'OUTBOUND' && (
                 <div className="flex items-center gap-1 mb-1">
                   <Bot size={10} className="text-green-600" />
                   <span className="text-xs text-green-600 font-medium">AI</span>
                 </div>
               )}
-              <p className="whitespace-pre-wrap">{msg.body ?? `[${msg.type}]`}</p>
-              <p className={cn('text-xs mt-1 opacity-60')}>
-                {formatRelativeTime(msg.createdAt)}
+              <p className="whitespace-pre-wrap">{msg.body ?? `[${msg.type ?? 'message'}]`}</p>
+              <p className="text-xs mt-1 opacity-60">
+                {msg.createdAt ? formatRelativeTime(msg.createdAt) : ''}
               </p>
             </div>
           </div>
@@ -183,32 +176,6 @@ export function ChatWindow({ conversation }: { conversation: Conversation }) {
           </div>
         )}
         <div ref={bottomRef} />
-      </div>
-
-      {/* Message input */}
-      <div className="bg-white border-t px-4 py-3">
-        <div className="flex items-end gap-3">
-          <textarea
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
-            rows={1}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500 max-h-32"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!messageText.trim() || sendMutation.isPending}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-xl p-2 transition shrink-0"
-          >
-            <Send size={16} />
-          </button>
-        </div>
       </div>
     </div>
   );

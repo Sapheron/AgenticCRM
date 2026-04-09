@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { useInboxStore } from '@/stores/inbox.store';
 import { formatRelativeTime, cn } from '@/lib/utils';
-import { Search, Bot, User } from 'lucide-react';
+import { Search, Bot, MessageSquare } from 'lucide-react';
 import { ChatWindow } from '@/components/inbox/chat-window';
 
 export default function InboxPage() {
@@ -34,7 +34,7 @@ export default function InboxPage() {
       {/* Conversation list */}
       <div className="w-80 bg-white border-r flex flex-col shrink-0">
         <div className="p-4 border-b">
-          <h1 className="font-semibold text-gray-900 mb-3">Inbox</h1>
+          <h1 className="font-semibold text-gray-900 mb-3">AI Chats</h1>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -58,12 +58,12 @@ export default function InboxPage() {
             >
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center shrink-0 text-sm font-medium text-gray-600">
-                  {conv.contact.displayName?.[0] ?? conv.contact.phoneNumber[1]}
+                  {conv.contact?.displayName?.[0] ?? conv.contact?.phoneNumber?.[0] ?? '#'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="font-medium text-sm text-gray-900 truncate">
-                      {conv.contact.displayName ?? conv.contact.phoneNumber}
+                      {conv.contact?.displayName ?? conv.contact?.phoneNumber ?? 'Unknown'}
                     </span>
                     {conv.lastMessageAt && (
                       <span className="text-xs text-gray-400 shrink-0 ml-2">
@@ -94,8 +94,9 @@ export default function InboxPage() {
         ) : (
           <div className="h-full flex items-center justify-center text-gray-400">
             <div className="text-center">
-              <User size={48} className="mx-auto mb-3 opacity-30" />
-              <p>Select a conversation</p>
+              <MessageSquare size={48} className="mx-auto mb-3 opacity-30" />
+              <p className="font-medium">Select a conversation</p>
+              <p className="text-sm mt-1">AI handles all replies automatically</p>
             </div>
           </div>
         )}

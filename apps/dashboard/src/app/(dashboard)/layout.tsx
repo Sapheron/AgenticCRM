@@ -1,19 +1,19 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth.store';
 import { useSocket } from '@/hooks/use-socket';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  MessageSquare, Users, TrendingUp, Briefcase, CheckSquare,
+  Bot, Users, TrendingUp, Briefcase, CheckSquare,
   BarChart3, Settings, Megaphone, LogOut, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/inbox', icon: MessageSquare, label: 'Inbox' },
+  { href: '/inbox', icon: Bot, label: 'AI Chats' },
   { href: '/contacts', icon: Users, label: 'Contacts' },
   { href: '/leads', icon: TrendingUp, label: 'Leads' },
   { href: '/deals', icon: Briefcase, label: 'Deals' },
@@ -27,17 +27,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, logout, user } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch — auth state comes from localStorage
+  useEffect(() => setMounted(true), []);
 
   // Initialize WebSocket
   useSocket();
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (mounted && !isAuthenticated()) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [mounted, isAuthenticated, router]);
 
-  if (!isAuthenticated()) return null;
+  if (!mounted || !isAuthenticated()) return null;
 
   const handleLogout = () => {
     logout();
