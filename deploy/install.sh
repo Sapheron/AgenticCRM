@@ -356,14 +356,14 @@ if [[ "$MIGRATION_DONE" -gt 0 ]]; then
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
       run --rm api sh -c \
-      "prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
+      "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
     ok "Database schema pushed"
   fi
 else
   info "Running database schema push..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
     run --rm api sh -c \
-    "prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
+    "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
   ok "Database schema pushed"
 fi
 
