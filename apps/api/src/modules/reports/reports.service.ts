@@ -3,7 +3,7 @@ import { prisma } from '@wacrm/database';
 
 @Injectable()
 export class ReportsService {
-  async list(companyId: string, filters: Record<string, any>) {
+  async list(companyId: string, _filters: Record<string, any>) {
     return prisma.customReport.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' } });
   }
 

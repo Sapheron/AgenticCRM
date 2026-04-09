@@ -3,7 +3,7 @@ import { prisma } from '@wacrm/database';
 
 @Injectable()
 export class WorkflowsService {
-  async list(companyId: string, filters: Record<string, any>) {
+  async list(companyId: string, _filters: Record<string, any>) {
     return prisma.workflow.findMany({
       where: { companyId },
       include: { _count: { select: { executions: true } } },

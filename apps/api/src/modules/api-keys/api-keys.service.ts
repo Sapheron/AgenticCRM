@@ -4,7 +4,7 @@ import { randomBytes, createHash } from 'crypto';
 
 @Injectable()
 export class ApiKeysService {
-  async list(companyId: string, filters: Record<string, any>) {
+  async list(companyId: string, _filters: Record<string, any>) {
     return prisma.apiKey.findMany({
       where: { companyId },
       select: { id: true, name: true, prefix: true, scopes: true, isActive: true, lastUsedAt: true, expiresAt: true, createdAt: true },

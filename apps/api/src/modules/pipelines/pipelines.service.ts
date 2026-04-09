@@ -3,7 +3,7 @@ import { prisma } from '@wacrm/database';
 
 @Injectable()
 export class PipelinesService {
-  async list(companyId: string, filters: Record<string, any>) {
+  async list(companyId: string, _filters: Record<string, any>) {
     return prisma.pipeline.findMany({
       where: { companyId },
       include: { stages: { orderBy: { sortOrder: 'asc' } } },
