@@ -19,7 +19,9 @@ export async function usePostgresAuthState(accountId: string): Promise<{
   let keys: Record<string, Record<string, unknown>> = {};
 
   if (account?.sessionDataEnc) {
-    const parsed = JSON.parse(account.sessionDataEnc.toString(), BufferJSON.reviver) as {
+    const raw = account.sessionDataEnc;
+    const jsonStr = Buffer.isBuffer(raw) ? raw.toString('utf-8') : Buffer.from(raw).toString('utf-8');
+    const parsed = JSON.parse(jsonStr, BufferJSON.reviver) as {
       creds: AuthenticationState['creds'];
       keys: Record<string, Record<string, unknown>>;
     };
