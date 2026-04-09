@@ -366,36 +366,64 @@ else
 fi
 
 # Seed
-# Prisma 7 requires the PrismaPg adapter — use the project's built client which has it configured
+# Use raw pg queries for seeding — avoids Prisma client runtime resolution issues in Docker
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "node -e \"const {prisma}=require('./packages/database/dist/client');prisma.user.count().then(n=>{console.log(n);prisma.\\\$disconnect()}).catch(()=>{console.log(0);process.exit(0)})\"" \
+  "node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
 SEED_SCRIPT_JS=$(cat << 'EOF'
-const { prisma } = require("./packages/database/dist/client");
+const { Client } = require("pg");
 const bcrypt = require("bcryptjs");
+const { randomUUID } = require("crypto");
+const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
 const email = process.env.ADMIN_EMAIL || "admin@example.com";
 const pwd = process.env.ADMIN_PASSWORD || "changeme123";
 const rawName = process.env.COMPANY_NAME || "My Company";
 const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
 (async () => {
-  let company = await prisma.company.findUnique({ where: { slug } });
-  if (!company) company = await prisma.company.create({ data: { name: rawName, slug, email, timezone: "UTC", isActive: true, setupDone: false } });
-  let user = await prisma.user.findUnique({ where: { companyId_email: { companyId: company.id, email } } });
-  if (!user) {
+  await db.connect();
+  // Company
+  let res = await db.query('SELECT id FROM "Company" WHERE slug=$1', [slug]);
+  let companyId;
+  if (res.rows.length > 0) {
+    companyId = res.rows[0].id;
+  } else {
+    companyId = randomUUID();
+    await db.query(
+      'INSERT INTO "Company" (id,name,slug,email,timezone,"isActive","setupDone","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,NOW(),NOW())',
+      [companyId, rawName, slug, email, "UTC", true, false]
+    );
+  }
+  // Admin user
+  res = await db.query('SELECT id FROM "User" WHERE "companyId"=$1 AND email=$2', [companyId, email]);
+  if (res.rows.length === 0) {
     const hash = await bcrypt.hash(pwd, 12);
-    await prisma.user.create({ data: { companyId: company.id, email, passwordHash: hash, firstName: "Admin", lastName: "User", role: "ADMIN", isActive: true } });
+    await db.query(
+      'INSERT INTO "User" (id,"companyId",email,"passwordHash","firstName","lastName",role,"isActive","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())',
+      [randomUUID(), companyId, email, hash, "Admin", "User", "ADMIN", true]
+    );
   }
-  if (!await prisma.aiConfig.findUnique({ where: { companyId: company.id } })) {
-    await prisma.aiConfig.create({ data: { companyId: company.id, autoReplyEnabled: false, toolCallingEnabled: true } });
+  // AI config
+  res = await db.query('SELECT id FROM "AiConfig" WHERE "companyId"=$1', [companyId]);
+  if (res.rows.length === 0) {
+    await db.query(
+      'INSERT INTO "AiConfig" (id,"companyId","autoReplyEnabled","toolCallingEnabled","createdAt","updatedAt") VALUES ($1,$2,$3,$4,NOW(),NOW())',
+      [randomUUID(), companyId, false, true]
+    );
   }
-  if (!await prisma.paymentConfig.findUnique({ where: { companyId: company.id } })) {
-    await prisma.paymentConfig.create({ data: { companyId: company.id } });
+  // Payment config
+  res = await db.query('SELECT id FROM "PaymentConfig" WHERE "companyId"=$1', [companyId]);
+  if (res.rows.length === 0) {
+    await db.query(
+      'INSERT INTO "PaymentConfig" (id,"companyId","createdAt","updatedAt") VALUES ($1,$2,NOW(),NOW())',
+      [randomUUID(), companyId]
+    );
   }
-})().finally(() => prisma.$disconnect());
+  console.log("Seed complete");
+})().finally(() => db.end());
 EOF
 )
 
