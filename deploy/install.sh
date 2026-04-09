@@ -369,13 +369,13 @@ fi
 # Use raw pg queries for seeding — avoids Prisma client runtime resolution issues in Docker
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
+  "node -e \"const{Client}=require('/app/packages/database/node_modules/pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
 SEED_SCRIPT_JS=$(cat << 'EOF'
-const { Client } = require("pg");
+const { Client } = require("/app/packages/database/node_modules/pg");
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
 const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
