@@ -356,30 +356,29 @@ if [[ "$MIGRATION_DONE" -gt 0 ]]; then
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
       run --rm api sh -c \
-      "DATABASE_URL=\$DIRECT_DATABASE_URL prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma"
+      "prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
     ok "Database schema pushed"
   fi
 else
   info "Running database schema push..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
     run --rm api sh -c \
-    "DATABASE_URL=\$DIRECT_DATABASE_URL prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma"
+    "prisma db push --accept-data-loss --skip-generate --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
   ok "Database schema pushed"
 fi
 
 # Seed
+# Prisma 7 requires the PrismaPg adapter — use the project's built client which has it configured
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "cd packages/database && node -e \"process.env.DATABASE_URL=process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL;const {PrismaClient}=require('./generated/client');const p=new PrismaClient();p.user.count().then(n=>{console.log(n);p.\$disconnect()}).catch(()=>console.log(0))\"" \
+  "node -e \"const {prisma}=require('./packages/database/dist/client');prisma.user.count().then(n=>{console.log(n);prisma.\\\$disconnect()}).catch(()=>{console.log(0);process.exit(0)})\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
 SEED_SCRIPT_JS=$(cat << 'EOF'
-process.env.DATABASE_URL = process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL;
-const { PrismaClient } = require("./generated/client");
+const { prisma } = require("./packages/database/dist/client");
 const bcrypt = require("bcryptjs");
-const prisma = new PrismaClient();
 const email = process.env.ADMIN_EMAIL || "admin@example.com";
 const pwd = process.env.ADMIN_PASSWORD || "changeme123";
 const rawName = process.env.COMPANY_NAME || "My Company";
@@ -407,13 +406,13 @@ if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
     ok "Skipping seed"
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-      run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'cd packages/database && node -e "$SEED_SCRIPT_JS"'
+      run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'node -e "$SEED_SCRIPT_JS"'
     ok "Database re-seeded"
   fi
 else
   info "Seeding admin user..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-    run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'cd packages/database && node -e "$SEED_SCRIPT_JS"'
+    run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'node -e "$SEED_SCRIPT_JS"'
   ok "Admin user created"
 fi
 

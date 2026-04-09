@@ -13,12 +13,12 @@
   "scripts": {
     "build": "prisma generate && tsc",
     "db:generate": "prisma generate",
-    "db:migrate": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate dev'",
-    "db:migrate:deploy": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate deploy'",
-    "db:push": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma db push'",
+    "db:migrate": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate dev --url \"$DATABASE_URL\"'",
+    "db:migrate:deploy": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate deploy --url \"$DATABASE_URL\"'",
+    "db:push": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma db push --url \"$DATABASE_URL\"'",
     "db:seed": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; tsx prisma/seed.ts'",
     "db:studio": "prisma studio",
-    "db:reset": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate reset --force'"
+    "db:reset": "bash -c 'if [ -z \"$DATABASE_URL\" ]; then echo \"ERROR: DATABASE_URL not set\"; exit 1; fi; prisma migrate reset --force --url \"$DATABASE_URL\"'"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",
