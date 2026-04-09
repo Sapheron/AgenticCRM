@@ -9,6 +9,7 @@ import { Bot, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 const PROVIDERS = [
   'GEMINI', 'OPENAI', 'ANTHROPIC', 'GROQ', 'DEEPSEEK',
   'XAI', 'MISTRAL', 'TOGETHER', 'MOONSHOT',
+  'GLM', 'QWEN', 'STEPFUN',
   'OLLAMA', 'OPENROUTER', 'CUSTOM',
 ];
 

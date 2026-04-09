@@ -18,6 +18,9 @@ const OPENAI_COMPAT_URLS: Record<string, string> = {
   MISTRAL: 'https://api.mistral.ai/v1',
   TOGETHER: 'https://api.together.xyz/v1',
   MOONSHOT: 'https://api.moonshot.ai/v1',
+  GLM: 'https://open.bigmodel.cn/api/paas/v4',
+  QWEN: 'https://dashscope-intl.aliyuncs.com/v1',
+  STEPFUN: 'https://api.stepfun.com/v1',
   OPENROUTER: 'https://openrouter.ai/api/v1',
 };
 

@@ -941,6 +941,9 @@ exports.AiProvider = exports.$Enums.AiProvider = {
   MISTRAL: 'MISTRAL',
   TOGETHER: 'TOGETHER',
   MOONSHOT: 'MOONSHOT',
+  GLM: 'GLM',
+  QWEN: 'QWEN',
+  STEPFUN: 'STEPFUN',
   OLLAMA: 'OLLAMA',
   OPENROUTER: 'OPENROUTER',
   CUSTOM: 'CUSTOM'

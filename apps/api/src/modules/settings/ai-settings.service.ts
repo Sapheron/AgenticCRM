@@ -24,6 +24,9 @@ export const PROVIDER_BASE_URLS: Partial<Record<AiProvider, string>> = {
   MISTRAL: 'https://api.mistral.ai/v1',
   TOGETHER: 'https://api.together.xyz/v1',
   MOONSHOT: 'https://api.moonshot.ai/v1',
+  GLM: 'https://open.bigmodel.cn/api/paas/v4',
+  QWEN: 'https://dashscope-intl.aliyuncs.com/v1',
+  STEPFUN: 'https://api.stepfun.com/v1',
   OPENROUTER: 'https://openrouter.ai/api/v1',
 };
 
@@ -93,6 +96,27 @@ export const PROVIDER_MODELS: Record<AiProvider, string[]> = {
     'kimi-k2-thinking',
     'kimi-k2-thinking-turbo',
     'kimi-k2-turbo',
+  ],
+  GLM: [
+    'glm-5.1',
+    'glm-5',
+    'glm-5-turbo',
+    'glm-4.7',
+    'glm-4.7-flash',
+    'glm-4.6',
+    'glm-4.5',
+    'glm-4.5-flash',
+  ],
+  QWEN: [
+    'qwen-max',
+    'qwen-plus',
+    'qwen3.5',
+    'qwen-2.5-vl-72b-instruct',
+  ],
+  STEPFUN: [
+    'step-2-16k',
+    'step-1-200k',
+    'step-1-32k',
   ],
   OLLAMA: ['llama3.3', 'llama3.1', 'mistral', 'phi4', 'gemma3', 'deepseek-r1', 'qwen2.5'],
   OPENROUTER: [
