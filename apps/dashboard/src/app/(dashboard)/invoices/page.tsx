@@ -1,8 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { Plus, Receipt } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Invoice {
   id: string;
@@ -23,6 +25,23 @@ const statusColor: Record<string, string> = {
 };
 
 export default function InvoicesPage() {
+  const [showForm, setShowForm] = useState(false);
+  const [dueDate, setDueDate] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [itemQty, setItemQty] = useState('');
+  const [itemPrice, setItemPrice] = useState('');
+  const qc = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: () => api.post('/invoices', { dueDate, lineItems: [{ name: itemName, quantity: Number(itemQty), unitPrice: Number(itemPrice) }] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success('Invoice created');
+      setShowForm(false); setDueDate(''); setItemName(''); setItemQty(''); setItemPrice('');
+    },
+    onError: () => toast.error('Failed to create invoice'),
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
@@ -35,10 +54,26 @@ export default function InvoicesPage() {
     <div className="h-full flex flex-col">
       <div className="h-11 border-b border-gray-200 px-4 flex items-center justify-between shrink-0 bg-white">
         <span className="text-xs font-semibold text-gray-900">Invoices</span>
-        <button className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
           <Plus size={11} /> Add
         </button>
       </div>
+
+      {showForm && (
+        <div className="border-b border-gray-200 bg-white p-3 space-y-2 shrink-0">
+          <input value={dueDate} onChange={(e) => setDueDate(e.target.value)} placeholder="Due date" type="date" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <div className="flex gap-2">
+            <input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="Item name" className="flex-1 border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+            <input value={itemQty} onChange={(e) => setItemQty(e.target.value)} placeholder="Qty" type="number" className="w-20 border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+            <input value={itemPrice} onChange={(e) => setItemPrice(e.target.value)} placeholder="Unit price" type="number" className="w-28 border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => createMutation.mutate()} disabled={!itemName} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">Create</button>
+            <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="p-8 text-center text-gray-300 text-xs">Loading...</div>

@@ -30,6 +30,10 @@ const PRIORITY_COLORS: Record<string, string> = {
 export default function TasksPage() {
   const [showOverdue, setShowOverdue] = useState(false);
   const [page] = useState(1);
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState('');
+  const [dueAt, setDueAt] = useState('');
+  const [priority, setPriority] = useState('');
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -48,6 +52,16 @@ export default function TasksPage() {
     onError: () => toast.error('Failed'),
   });
 
+  const createMutation = useMutation({
+    mutationFn: () => api.post('/tasks', { title, dueAt, priority }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task created');
+      setShowForm(false); setTitle(''); setDueAt(''); setPriority('');
+    },
+    onError: () => toast.error('Failed to create task'),
+  });
+
   return (
     <div className="h-full flex flex-col">
       <div className="h-11 border-b border-gray-200 px-4 flex items-center justify-between shrink-0 bg-white">
@@ -57,12 +71,30 @@ export default function TasksPage() {
             <input type="checkbox" checked={showOverdue} onChange={(e) => setShowOverdue(e.target.checked)} className="rounded text-violet-500 w-3 h-3" />
             Overdue only
           </label>
-          <button className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
             <Plus size={11} />
             Add
           </button>
         </div>
       </div>
+
+      {showForm && (
+        <div className="border-b border-gray-200 bg-white p-3 space-y-2 shrink-0">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title (required)" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <input value={dueAt} onChange={(e) => setDueAt(e.target.value)} placeholder="Due date" type="datetime-local" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400">
+            <option value="">Select priority...</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="URGENT">Urgent</option>
+          </select>
+          <div className="flex gap-2">
+            <button onClick={() => createMutation.mutate()} disabled={!title} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">Create</button>
+            <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-auto bg-white">
         {isLoading ? (

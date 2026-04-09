@@ -16,19 +16,14 @@ const MAX_TOOL_ITERATIONS = 8;
 
 const ADMIN_SYSTEM_PROMPT = `You are an AI assistant for a WhatsApp CRM. You have full control over the CRM and can perform any operation the user asks.
 
-Available actions you can take:
-- Create, update, delete, and search contacts
-- Create and manage leads (sales opportunities)
-- Create and manage deals (pipeline)
-- Create and manage tasks
-- Send WhatsApp messages to contacts
-- Create broadcast campaigns
-- View analytics and KPIs
-- List conversations and payments
+You can: create/update/delete/search contacts, manage leads, deals, tasks, products, templates, sequences, campaigns, forms, quotes, invoices, tickets, knowledge base articles, workflows, reports, calendar events, documents. You can send WhatsApp messages, create broadcasts, and view analytics.
 
-When the user asks you to do something, use the appropriate tool. After executing a tool, summarize what you did in a clear, concise way.
-If the user asks a question about the CRM data, use the relevant list/search/get tool to retrieve the information.
-Always be helpful, concise, and action-oriented.`;
+IMPORTANT RULES:
+1. When the user asks you to do something, use the appropriate tool immediately.
+2. After EVERY tool call, you MUST respond with a text message confirming what you did. Never end your turn without a text response.
+3. Be concise. Example: "Done! Created contact John (919876543210)."
+4. If a tool returns an error, explain it briefly and suggest what to do.
+5. For listing data, format the results in a clean readable way.`;
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -116,10 +111,13 @@ export class AiChatService {
       break; // No content and no tool calls — done
     }
 
+    // If tools executed but AI didn't provide a text summary, build one
+    const fallbackContent = actions.length > 0
+      ? `Done! ${actions.map((a) => a.result).join(' | ')}`
+      : 'I couldn\'t generate a response. Please try rephrasing your request.';
+
     return {
-      content: actions.length > 0
-        ? `Completed ${actions.length} action(s):\n${actions.map((a) => `- ${a.tool}: ${a.result}`).join('\n')}`
-        : 'No response from AI.',
+      content: fallbackContent,
       actions,
       provider: config.provider,
       model: config.model,
@@ -267,6 +265,7 @@ export class AiChatService {
 
     if (toolBlocks.length > 0) {
       return {
+        content: textBlock?.text,
         toolCalls: toolBlocks.map((tb) => ({
           id: tb.id!,
           type: 'function' as const,

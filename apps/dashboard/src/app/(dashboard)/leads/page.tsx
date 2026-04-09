@@ -36,6 +36,10 @@ const STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATING
 export default function LeadsPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [page, setPage] = useState(1);
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState('');
+  const [estimatedValue, setEstimatedValue] = useState('');
+  const [source, setSource] = useState('');
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -56,15 +60,37 @@ export default function LeadsPage() {
     onError: () => toast.error('Failed to update'),
   });
 
+  const createMutation = useMutation({
+    mutationFn: () => api.post('/leads', { title, estimatedValue: Number(estimatedValue), source }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['leads'] });
+      toast.success('Lead created');
+      setShowForm(false); setTitle(''); setEstimatedValue(''); setSource('');
+    },
+    onError: () => toast.error('Failed to create lead'),
+  });
+
   return (
     <div className="h-full flex flex-col">
       <div className="h-11 border-b border-gray-200 px-4 flex items-center justify-between shrink-0 bg-white">
         <span className="text-xs font-semibold text-gray-900">Leads</span>
-        <button className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
           <Plus size={11} />
           Add
         </button>
       </div>
+
+      {showForm && (
+        <div className="border-b border-gray-200 bg-white p-3 space-y-2 shrink-0">
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lead title (required)" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <input value={estimatedValue} onChange={(e) => setEstimatedValue(e.target.value)} placeholder="Estimated value" type="number" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Source" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <div className="flex gap-2">
+            <button onClick={() => createMutation.mutate()} disabled={!title} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">Create</button>
+            <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="px-3 py-2 flex gap-1 flex-wrap border-b border-gray-100 bg-white shrink-0">

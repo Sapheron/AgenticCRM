@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { Search, Plus, Phone } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Contact {
   id: string;
@@ -19,6 +20,11 @@ interface Contact {
 export default function ContactsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [showForm, setShowForm] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['contacts', search, page],
@@ -28,6 +34,16 @@ export default function ContactsPage() {
       });
       return res.data.data;
     },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => api.post('/contacts', { phoneNumber, displayName, email }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['contacts'] });
+      toast.success('Contact created');
+      setShowForm(false); setPhoneNumber(''); setDisplayName(''); setEmail('');
+    },
+    onError: () => toast.error('Failed to create contact'),
   });
 
   return (
@@ -45,12 +61,24 @@ export default function ContactsPage() {
               className="w-48 pl-7 pr-2 py-1 border border-gray-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 placeholder:text-gray-300"
             />
           </div>
-          <button className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
             <Plus size={11} />
             Add
           </button>
         </div>
       </div>
+
+      {showForm && (
+        <div className="border-b border-gray-200 bg-white p-3 space-y-2 shrink-0">
+          <input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Phone number (required)" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display name" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
+          <div className="flex gap-2">
+            <button onClick={() => createMutation.mutate()} disabled={!phoneNumber} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">Create</button>
+            <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
