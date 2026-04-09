@@ -242,37 +242,49 @@ model WhatsAppAccount {
 // ─── CONTACT ──────────────────────────────────────────────────────────────────
 
 model Contact {
-  id           String    @id @default(cuid())
-  companyId    String
-  phoneNumber  String
-  displayName  String?
-  firstName    String?
-  lastName     String?
-  email        String?
-  avatarUrl    String?
-  tags         String[]
-  customFields Json      @default("{}")
-  notes        String?
-  isBlocked    Boolean   @default(false)
-  optedOut     Boolean   @default(false)
-  optedOutAt   DateTime?
-  lastSeenAt   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
+  id             String    @id @default(cuid())
+  companyId      String
+  phoneNumber    String
+  displayName    String?
+  firstName      String?
+  lastName       String?
+  email          String?
+  avatarUrl      String?
+  tags           String[]
+  customFields   Json      @default("{}")
+  notes          String?
+  lifecycleStage String    @default("SUBSCRIBER")
+  score          Int       @default(0)
+  companyName    String?
+  jobTitle       String?
+  address        String?
+  socialLinks    Json      @default("{}")
+  referredById   String?
+  isBlocked      Boolean   @default(false)
+  optedOut       Boolean   @default(false)
+  optedOutAt     DateTime?
+  lastSeenAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
 
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  conversations Conversation[]
-  leads         Lead[]
-  deals         Deal[]
-  tasks         Task[]
-  payments      Payment[]
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  referredBy     Contact?       @relation("ContactReferrals", fields: [referredById], references: [id])
+  referrals      Contact[]      @relation("ContactReferrals")
+  conversations  Conversation[]
+  leads          Lead[]
+  deals          Deal[]
+  tasks          Task[]
+  payments       Payment[]
+  contactNotes   ContactNote[]
 
   @@unique([companyId, phoneNumber])
   @@index([companyId])
   @@index([phoneNumber])
   @@index([companyId, deletedAt])
   @@index([tags])
+  @@index([companyId, lifecycleStage])
+  @@index([companyId, score])
 }
 
 // ─── CONVERSATION ─────────────────────────────────────────────────────────────
@@ -592,4 +604,84 @@ model WebhookEndpoint {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
+}
+
+// ─── CONTACT NOTE ────────────────────────────────────────────────────────────
+
+model ContactNote {
+  id        String   @id @default(cuid())
+  companyId String
+  contactId String
+  authorId  String?
+  content   String
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+  @@index([companyId])
+}
+
+// ─── TAG ─────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id          String  @id @default(cuid())
+  companyId   String
+  name        String
+  color       String  @default("#8b5cf6")
+  description String?
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+// ─── SEGMENT ─────────────────────────────────────────────────────────────────
+
+model Segment {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  type      String   @default("DYNAMIC") // DYNAMIC or STATIC
+  filters   Json     @default("{}") // For DYNAMIC: filter rules
+  contactIds String[] // For STATIC: manually added contacts
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, name])
+  @@index([companyId])
+}
+
+// ─── CUSTOM FIELD DEFINITION ─────────────────────────────────────────────────
+
+model CustomFieldDefinition {
+  id         String   @id @default(cuid())
+  companyId  String
+  entityType String   // "contact", "lead", "deal"
+  fieldName  String
+  fieldType  String   // "text", "number", "date", "select", "multiselect"
+  options    String[] // For select/multiselect
+  required   Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([companyId, entityType, fieldName])
+  @@index([companyId, entityType])
+}
+
+// ─── NOTIFICATION ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  companyId String
+  userId    String?
+  title     String
+  body      String
+  type      String   @default("info") // info, success, warning, error
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([companyId, userId, read])
+  @@index([companyId, createdAt])
 }

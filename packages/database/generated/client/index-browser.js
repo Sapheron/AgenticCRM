@@ -186,6 +186,13 @@ exports.Prisma.ContactScalarFieldEnum = {
   tags: 'tags',
   customFields: 'customFields',
   notes: 'notes',
+  lifecycleStage: 'lifecycleStage',
+  score: 'score',
+  companyName: 'companyName',
+  jobTitle: 'jobTitle',
+  address: 'address',
+  socialLinks: 'socialLinks',
+  referredById: 'referredById',
   isBlocked: 'isBlocked',
   optedOut: 'optedOut',
   optedOutAt: 'optedOutAt',
@@ -403,6 +410,59 @@ exports.Prisma.WebhookEndpointScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ContactNoteScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  contactId: 'contactId',
+  authorId: 'authorId',
+  content: 'content',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TagScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  name: 'name',
+  color: 'color',
+  description: 'description'
+};
+
+exports.Prisma.SegmentScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  name: 'name',
+  type: 'type',
+  filters: 'filters',
+  contactIds: 'contactIds',
+  count: 'count',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CustomFieldDefinitionScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  entityType: 'entityType',
+  fieldName: 'fieldName',
+  fieldType: 'fieldType',
+  options: 'options',
+  required: 'required',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  userId: 'userId',
+  title: 'title',
+  body: 'body',
+  type: 'type',
+  link: 'link',
+  read: 'read',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -581,7 +641,12 @@ exports.Prisma.ModelName = {
   Payment: 'Payment',
   Broadcast: 'Broadcast',
   AuditLog: 'AuditLog',
-  WebhookEndpoint: 'WebhookEndpoint'
+  WebhookEndpoint: 'WebhookEndpoint',
+  ContactNote: 'ContactNote',
+  Tag: 'Tag',
+  Segment: 'Segment',
+  CustomFieldDefinition: 'CustomFieldDefinition',
+  Notification: 'Notification'
 };
 
 /**

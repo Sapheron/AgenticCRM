@@ -547,6 +547,187 @@ const tools: AdminTool[] = [
       return payments.map((p) => `- ₹${p.amount / 100} | ${p.status} | ${p.description || 'no desc'} | ${p.createdAt.toISOString().split('T')[0]}`).join('\n');
     },
   },
+
+  // ── Phase 1: Contact Management Tools ─────────────────────────────────────
+  {
+    definition: {
+      name: 'add_contact_note',
+      description: 'Add a timestamped note to a contact.',
+      parameters: {
+        type: 'object',
+        properties: {
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string', description: 'Lookup by phone if no contactId' },
+          content: { type: 'string', description: 'Note text' },
+        },
+        required: ['content'],
+      },
+    },
+    execute: async (args, companyId) => {
+      let contactId = args.contactId as string;
+      if (!contactId && args.phoneNumber) {
+        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: args.phoneNumber as string } });
+        if (!c) return 'Contact not found';
+        contactId = c.id;
+      }
+      if (!contactId) return 'Please provide contactId or phoneNumber';
+      await prisma.contactNote.create({ data: { companyId, contactId, content: args.content as string } });
+      return `Note added to contact`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_contact_timeline',
+      description: 'Get the activity timeline for a contact (messages, leads, deals, tasks, payments, notes).',
+      parameters: {
+        type: 'object',
+        properties: {
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      let contactId = args.contactId as string;
+      if (!contactId && args.phoneNumber) {
+        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: args.phoneNumber as string } });
+        if (!c) return 'Contact not found';
+        contactId = c.id;
+      }
+      if (!contactId) return 'Please provide contactId or phoneNumber';
+
+      const [messages, leads, deals, tasks, notes] = await Promise.all([
+        prisma.message.findMany({ where: { companyId, conversation: { contactId } }, select: { direction: true, body: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 10 }),
+        prisma.lead.findMany({ where: { companyId, contactId }, select: { title: true, status: true, createdAt: true } }),
+        prisma.deal.findMany({ where: { companyId, contactId }, select: { title: true, stage: true, value: true, createdAt: true } }),
+        prisma.task.findMany({ where: { companyId, contactId }, select: { title: true, status: true, dueAt: true, createdAt: true } }),
+        prisma.contactNote.findMany({ where: { contactId }, select: { content: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5 }),
+      ]);
+
+      const lines: string[] = [];
+      if (messages.length) lines.push(`Messages (${messages.length}):\n${messages.map((m) => `  ${m.direction}: ${(m.body ?? '').slice(0, 50)}`).join('\n')}`);
+      if (leads.length) lines.push(`Leads: ${leads.map((l) => `${l.title} [${l.status}]`).join(', ')}`);
+      if (deals.length) lines.push(`Deals: ${deals.map((d) => `${d.title} [${d.stage}] ₹${d.value}`).join(', ')}`);
+      if (tasks.length) lines.push(`Tasks: ${tasks.map((t) => `${t.title} [${t.status}]`).join(', ')}`);
+      if (notes.length) lines.push(`Notes:\n${notes.map((n) => `  - ${n.content.slice(0, 80)}`).join('\n')}`);
+      return lines.join('\n\n') || 'No activity found';
+    },
+  },
+  {
+    definition: {
+      name: 'tag_contact',
+      description: 'Add or remove tags from a contact.',
+      parameters: {
+        type: 'object',
+        properties: {
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string' },
+          addTags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
+          removeTags: { type: 'array', items: { type: 'string' }, description: 'Tags to remove' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      let contactId = args.contactId as string;
+      if (!contactId && args.phoneNumber) {
+        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: args.phoneNumber as string } });
+        if (!c) return 'Contact not found';
+        contactId = c.id;
+      }
+      if (!contactId) return 'Please provide contactId or phoneNumber';
+
+      const contact = await prisma.contact.findUnique({ where: { id: contactId } });
+      if (!contact) return 'Contact not found';
+
+      let tags = [...contact.tags];
+      if (args.addTags) tags = [...new Set([...tags, ...(args.addTags as string[])])];
+      if (args.removeTags) tags = tags.filter((t) => !(args.removeTags as string[]).includes(t));
+
+      await prisma.contact.update({ where: { id: contactId }, data: { tags } });
+      return `Tags updated: [${tags.join(', ')}]`;
+    },
+  },
+  {
+    definition: {
+      name: 'merge_contacts',
+      description: 'Merge two contacts. Keeps the first contact and merges data from the second.',
+      parameters: {
+        type: 'object',
+        properties: {
+          keepId: { type: 'string', description: 'Contact ID to keep' },
+          mergeId: { type: 'string', description: 'Contact ID to merge into the first' },
+        },
+        required: ['keepId', 'mergeId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const keep = await prisma.contact.findFirst({ where: { id: args.keepId as string, companyId } });
+      const merge = await prisma.contact.findFirst({ where: { id: args.mergeId as string, companyId } });
+      if (!keep || !merge) return 'One or both contacts not found';
+
+      const mergedTags = [...new Set([...keep.tags, ...merge.tags])];
+      await prisma.contact.update({
+        where: { id: keep.id },
+        data: {
+          tags: mergedTags,
+          displayName: keep.displayName || merge.displayName,
+          email: keep.email || merge.email,
+          score: Math.max(keep.score, merge.score),
+        },
+      });
+      await Promise.all([
+        prisma.conversation.updateMany({ where: { contactId: merge.id }, data: { contactId: keep.id } }),
+        prisma.lead.updateMany({ where: { contactId: merge.id }, data: { contactId: keep.id } }),
+        prisma.deal.updateMany({ where: { contactId: merge.id }, data: { contactId: keep.id } }),
+        prisma.task.updateMany({ where: { contactId: merge.id }, data: { contactId: keep.id } }),
+      ]);
+      await prisma.contact.update({ where: { id: merge.id }, data: { deletedAt: new Date() } });
+      return `Merged contact ${merge.displayName || merge.phoneNumber} into ${keep.displayName || keep.phoneNumber}`;
+    },
+  },
+  {
+    definition: {
+      name: 'import_contacts',
+      description: 'Import contacts from CSV data. Each row needs at least a phone number.',
+      parameters: {
+        type: 'object',
+        properties: {
+          csv: { type: 'string', description: 'CSV text with header row. Must include "phone" column. Optional: "name", "email", "tags" columns.' },
+        },
+        required: ['csv'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const csv = args.csv as string;
+      const lines = csv.trim().split('\n');
+      if (lines.length < 2) return 'CSV needs a header and at least one row';
+
+      const header = lines[0].toLowerCase().split(',').map((h) => h.trim());
+      const phoneIdx = header.findIndex((h) => h.includes('phone'));
+      const nameIdx = header.findIndex((h) => h.includes('name'));
+      const emailIdx = header.findIndex((h) => h.includes('email'));
+
+      if (phoneIdx === -1) return 'CSV must have a "phone" column';
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
+        const phone = cols[phoneIdx];
+        if (!phone) continue;
+        try {
+          await prisma.contact.upsert({
+            where: { companyId_phoneNumber: { companyId, phoneNumber: phone } },
+            create: { companyId, phoneNumber: phone, displayName: nameIdx >= 0 ? cols[nameIdx] : undefined, email: emailIdx >= 0 ? cols[emailIdx] : undefined },
+            update: {},
+          });
+          imported++;
+        } catch { /* skip errors */ }
+      }
+      return `Imported ${imported} of ${lines.length - 1} contacts`;
+    },
+  },
 ];
 
 // ── Exports ─────────────────────────────────────────────────────────────────
