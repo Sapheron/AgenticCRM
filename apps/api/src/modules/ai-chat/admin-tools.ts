@@ -1054,6 +1054,86 @@ const tools: AdminTool[] = [
       return docs.map((d) => `- "${d.name}" [${d.type}] — ${d.createdAt.toISOString().split('T')[0]}`).join('\n');
     },
   },
+
+  // ── Memory ────────────────────────────────────────────────────────────────
+  {
+    definition: {
+      name: 'save_to_memory',
+      description: 'Save important information to long-term memory. Use this when the user shares facts about themselves, their business, products, policies, preferences, or anything they\'d want you to remember in future conversations. Examples: user mentions their interests, hobbies, business hours, pricing, return policies, team members, etc.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short title for this memory (e.g., "User Interests", "Business Hours")' },
+          content: { type: 'string', description: 'The fact or knowledge to remember in detail' },
+          category: { type: 'string', enum: ['general', 'product', 'policy', 'faq', 'instruction'], description: 'Category for organization' },
+        },
+        required: ['title', 'content'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const m = await prisma.aiMemory.create({
+        data: {
+          companyId,
+          title: args.title as string,
+          content: args.content as string,
+          category: (args.category as string) || 'general',
+        },
+      });
+      return `Saved to memory: "${m.title}" [${m.category}]`;
+    },
+  },
+  {
+    definition: {
+      name: 'search_memory',
+      description: 'Search saved memories by keyword or category. Use this to recall facts you previously saved.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Search keyword (matches title or content)' },
+          category: { type: 'string', description: 'Filter by category' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const where: Record<string, unknown> = { companyId, isActive: true };
+      if (args.category) where.category = args.category;
+      if (args.query) {
+        where.OR = [
+          { title: { contains: args.query as string, mode: 'insensitive' as const } },
+          { content: { contains: args.query as string, mode: 'insensitive' as const } },
+        ];
+      }
+      const memories = await prisma.aiMemory.findMany({ where: where as any, take: 10, orderBy: { updatedAt: 'desc' } });
+      if (!memories.length) return 'No memories found';
+      return memories.map((m) => `- [${m.category}] ${m.title}: ${m.content}`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'list_memories',
+      description: 'List all saved memories.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+    execute: async (_args, companyId) => {
+      const memories = await prisma.aiMemory.findMany({ where: { companyId, isActive: true }, orderBy: { category: 'asc' } });
+      if (!memories.length) return 'No memories saved yet';
+      return memories.map((m) => `- [${m.category}] ${m.title}: ${m.content.slice(0, 80)}`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'delete_memory',
+      description: 'Delete a memory by ID.',
+      parameters: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+    },
+    execute: async (args, companyId) => {
+      const m = await prisma.aiMemory.findFirst({ where: { id: args.id as string, companyId } });
+      if (!m) return 'Memory not found';
+      await prisma.aiMemory.delete({ where: { id: m.id } });
+      return `Deleted memory: ${m.title}`;
+    },
+  },
 ];
 
 // ── Core tools (sent to AI to avoid token overflow) ─────────────────────────
@@ -1061,6 +1141,8 @@ const tools: AdminTool[] = [
 // the most useful ~20 tools to avoid overwhelming the context.
 
 const CORE_TOOL_NAMES = new Set([
+  // Memory (priority — for context retention)
+  'save_to_memory', 'search_memory', 'list_memories', 'delete_memory',
   // Contacts
   'create_contact', 'update_contact', 'delete_contact', 'search_contacts', 'get_contact',
   'tag_contact', 'add_contact_note', 'get_contact_timeline',
