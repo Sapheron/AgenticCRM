@@ -23,6 +23,7 @@ import { startPaymentCheckProcessor } from './jobs/payment-check.processor';
 import { startWarmupResetProcessor } from './jobs/warmup-reset.processor';
 import { startMemoryDreamingProcessor, memoryDreamingQueue } from './jobs/memory-dreaming.processor';
 import { startLeadDecayProcessor, leadDecayQueue } from './jobs/lead-decay.processor';
+import { startDealCycleProcessor, dealCycleQueue } from './jobs/deal-cycle.processor';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -54,6 +55,7 @@ async function main() {
   const warmupResetWorker = startWarmupResetProcessor();
   const memoryDreamingWorker = startMemoryDreamingProcessor();
   const leadDecayWorker = startLeadDecayProcessor();
+  const dealCycleWorker = startDealCycleProcessor();
   logger.info('All workers started');
 
   // Schedule recurring jobs via BullMQ repeatable jobs
@@ -79,6 +81,9 @@ async function main() {
   // Lead decay: daily at 03:00 — recalculates scores for stale leads
   const decayQueue = leadDecayQueue();
   await decayQueue.add('lead-decay', {}, { repeat: { pattern: '0 3 * * *' }, jobId: 'lead-decay-recurring' });
+  // Deal cycle housekeeping: daily at 04:00 — backfill cycles, flag overdue/stalled
+  const dCycleQueue = dealCycleQueue();
+  await dCycleQueue.add('deal-cycle', {}, { repeat: { pattern: '0 4 * * *' }, jobId: 'deal-cycle-recurring' });
 
   logger.info('Worker service ready — all workers running');
 
@@ -95,6 +100,7 @@ async function main() {
       warmupResetWorker.close(),
       memoryDreamingWorker.close(),
       leadDecayWorker.close(),
+      dealCycleWorker.close(),
     ]);
     await redis.quit();
     process.exit(0);

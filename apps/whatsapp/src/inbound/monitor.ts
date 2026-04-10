@@ -184,11 +184,48 @@ export class InboundMonitor {
       logger.info({ messageId: storedMessage.id }, 'Message queued for AI processing');
     }
 
-    // ── Lead hooks (best-effort, never block message ingestion) ──────────
+    // ── Lead + deal hooks (best-effort, never block message ingestion) ───
     await this.maybeCreateLead(companyId, contact.id, normalized.body)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead auto-create failed'));
     await this.bumpLeadScore(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead score bump failed'));
+    await this.touchOpenDeals(companyId, contact.id)
+      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'deal touch failed'));
+  }
+
+  /**
+   * For every open deal on this contact, refresh `lastTouchedAt` and drop a
+   * `RESPONDED` activity row so the deal timeline shows the inbound message.
+   * Best-effort — silently no-ops if there are no open deals.
+   */
+  private async touchOpenDeals(companyId: string, contactId: string): Promise<void> {
+    const open = await prisma.deal.findMany({
+      where: {
+        companyId,
+        contactId,
+        deletedAt: null,
+        stage: { notIn: ['WON', 'LOST'] },
+      },
+      select: { id: true },
+    });
+    if (!open.length) return;
+
+    const now = new Date();
+    for (const d of open) {
+      await prisma.deal.update({
+        where: { id: d.id },
+        data: { lastTouchedAt: now },
+      });
+      await prisma.dealActivity.create({
+        data: {
+          dealId: d.id,
+          companyId,
+          type: 'RESPONDED',
+          actorType: 'whatsapp',
+          title: 'Inbound WhatsApp message',
+        },
+      });
+    }
   }
 
   /**

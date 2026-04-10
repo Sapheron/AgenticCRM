@@ -8,6 +8,7 @@ export const QUEUES = {
   CLEANUP: 'cleanup',
   MEMORY_DREAMING: 'memory_dreaming',
   LEAD_DECAY: 'lead_decay',
+  DEAL_CYCLE: 'deal_cycle',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

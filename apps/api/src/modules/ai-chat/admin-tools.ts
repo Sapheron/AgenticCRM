@@ -7,6 +7,8 @@ import Redis from 'ioredis';
 import { MemoryService } from '../memory/memory.service';
 import { LeadsService } from '../leads/leads.service';
 import type { LeadActor } from '../leads/leads.types';
+import { DealsService } from '../deals/deals.service';
+import type { DealActor } from '../deals/deals.types';
 import type { ChatAttachment } from './attachments';
 
 // Memory service is a plain class (no DI deps), so we can instantiate it once
@@ -14,7 +16,9 @@ import type { ChatAttachment } from './attachments';
 // container (like the chat tools) need this.
 const memoryService = new MemoryService();
 const leadsService = new LeadsService();
+const dealsService = new DealsService();
 const AI_ACTOR: LeadActor = { type: 'ai' };
+const AI_DEAL_ACTOR: DealActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -745,89 +749,573 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Deals ─────────────────────────────────────────────────────────────────
-  {
-    definition: {
-      name: 'create_deal',
-      description: 'Create a new deal in the pipeline.',
-      parameters: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', description: 'Deal title' },
-          value: { type: 'number', description: 'Deal value' },
-          contactId: { type: 'string' },
-          phoneNumber: { type: 'string', description: 'Contact phone (if no contactId)' },
-          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
-        },
-        required: ['title'],
-      },
-    },
-    execute: async (args, companyId) => {
-      let contactId = args.contactId as string;
-      if (!contactId && args.phoneNumber) {
-        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: args.phoneNumber as string } });
-        if (c) contactId = c.id;
-      }
-      const deal = await prisma.deal.create({
-        data: {
-          company: { connect: { id: companyId } },
-          title: args.title as string,
-          value: (args.value as number) || 0,
-          ...(contactId ? { contact: { connect: { id: contactId } } } : {}),
-          stage: ((args.stage as string) || 'LEAD_IN') as any,
-          probability: (args.stage as string) === 'WON' ? 100 : 20,
-        } as any,
-      });
-      return `Created deal: "${deal.title}" | Stage: ${deal.stage} | Value: ₹${deal.value} | ID: ${deal.id}`;
-    },
-  },
-  {
-    definition: {
-      name: 'update_deal',
-      description: 'Update a deal stage, value, or notes.',
-      parameters: {
-        type: 'object',
-        properties: {
-          dealId: { type: 'string', description: 'Deal ID' },
-          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
-          value: { type: 'number' },
-          notes: { type: 'string' },
-        },
-        required: ['dealId'],
-      },
-    },
-    execute: async (args, _companyId) => {
-      const data: Record<string, unknown> = {};
-      if (args.stage) {
-        data.stage = args.stage;
-        if (args.stage === 'WON') { data.wonAt = new Date(); data.probability = 100; }
-        if (args.stage === 'LOST') { data.lostAt = new Date(); data.probability = 0; }
-      }
-      if (args.value) data.value = args.value;
-      if (args.notes) data.notes = args.notes;
-      const deal = await prisma.deal.update({ where: { id: args.dealId as string }, data });
-      return `Updated deal "${deal.title}" — stage: ${deal.stage}, value: ₹${deal.value}`;
-    },
-  },
+  // ── Deals (full lifecycle, all routed through DealsService) ───────────────
   {
     definition: {
       name: 'list_deals',
-      description: 'List deals with optional stage filter.',
+      description: 'List deals with rich filters. Use this to find deals by stage, source, priority, value, probability, or text search. Always prefer this over reading deals ad-hoc.',
       parameters: {
         type: 'object',
         properties: {
-          stage: { type: 'string' },
+          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
+          source: { type: 'string', enum: ['LEAD_CONVERSION', 'WHATSAPP', 'MANUAL', 'AI_CHAT', 'REFERRAL', 'CAMPAIGN', 'WEBSITE', 'IMPORT', 'OTHER'] },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          assignedAgentId: { type: 'string', description: 'User ID of the assignee, or "null" for unassigned' },
+          tag: { type: 'string' },
+          search: { type: 'string', description: 'Free-text search over title/notes/contact name/phone' },
+          valueMin: { type: 'number' },
+          probabilityMin: { type: 'number' },
+          nextActionDue: { type: 'boolean', description: 'Only return deals with overdue next-action' },
+          sort: { type: 'string', enum: ['recent', 'value', 'probability', 'next_action', 'expected_close', 'created'] },
           limit: { type: 'number' },
         },
         required: [],
       },
     },
     execute: async (args, companyId) => {
-      const where: Record<string, unknown> = { companyId };
-      if (args.stage) where.stage = args.stage;
-      const deals = await prisma.deal.findMany({ where: where as any, take: (args.limit as number) || 10, orderBy: { createdAt: 'desc' }, include: { contact: { select: { displayName: true, phoneNumber: true } } } });
-      if (!deals.length) return 'No deals found';
-      return deals.map((d) => `- "${d.title}" | ${d.stage} | ₹${d.value} | ${d.probability}% | ${d.contact?.displayName || 'no contact'} | ID: ${d.id}`).join('\n');
+      const result = await dealsService.list(companyId, {
+        stage: args.stage as never,
+        source: args.source as never,
+        priority: args.priority as never,
+        assignedAgentId: args.assignedAgentId === 'null' ? null : (args.assignedAgentId as string | undefined),
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        valueMin: args.valueMin as number | undefined,
+        probabilityMin: args.probabilityMin as number | undefined,
+        nextActionDue: args.nextActionDue as boolean | undefined,
+        sort: args.sort as never,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No deals match those filters.';
+      return [
+        `Found ${result.total} deal(s) (showing ${result.items.length}):`,
+        ...result.items.map((d) => {
+          const contact = d.contact?.displayName ?? d.contact?.phoneNumber ?? '—';
+          return `- "${d.title}" | ${d.stage} | ${d.priority} | ${d.currency} ${d.value} (${d.probability}%) | ${contact} | ID: ${d.id}`;
+        }),
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_deal',
+      description: 'Fetch a deal with its last 10 timeline activities, line items, payments, and tasks.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' } },
+        required: ['dealId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.get(companyId, args.dealId as string);
+      const recent = deal.activities.slice(0, 10);
+      const lines = [
+        `Deal "${deal.title}" (ID: ${deal.id})`,
+        `Stage: ${deal.stage} · Priority: ${deal.priority} · Probability: ${deal.probability}% · Value: ${deal.currency} ${deal.value}`,
+        `Source: ${deal.source} · Tags: ${deal.tags.join(', ') || '—'}`,
+        `Contact: ${deal.contact.displayName ?? deal.contact.phoneNumber} (${deal.contact.phoneNumber})`,
+        deal.assignedAgent ? `Assigned to: ${deal.assignedAgent.firstName} ${deal.assignedAgent.lastName}` : 'Unassigned',
+        deal.expectedCloseAt ? `Expected close: ${deal.expectedCloseAt.toISOString().slice(0, 10)}` : '',
+        deal.nextActionAt ? `Next action: ${deal.nextActionAt.toISOString().slice(0, 16)} — ${deal.nextActionNote ?? ''}` : '',
+        deal.lineItems.length > 0 ? `Line items: ${deal.lineItems.length} (total ${deal.lineItems.reduce((a, i) => a + i.total, 0)})` : '',
+        deal.payments.length > 0 ? `Payments: ${deal.payments.length}` : '',
+        '',
+        'Recent activity:',
+        ...recent.map((a) => `  • ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`),
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_deal',
+      description: 'Create a new deal in the pipeline. Auto-creates a contact from `phoneNumber` if needed.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          value: { type: 'number' },
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string', description: 'Used if no contactId — upserts a contact' },
+          contactName: { type: 'string' },
+          leadId: { type: 'string', description: 'Optional source lead' },
+          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION'] },
+          source: { type: 'string', enum: ['LEAD_CONVERSION', 'WHATSAPP', 'MANUAL', 'AI_CHAT', 'REFERRAL', 'CAMPAIGN', 'WEBSITE', 'IMPORT', 'OTHER'] },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          probability: { type: 'number' },
+          currency: { type: 'string' },
+          expectedCloseAt: { type: 'string', description: 'ISO date' },
+          tags: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+        },
+        required: ['title', 'value'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.create(
+        companyId,
+        {
+          title: args.title as string,
+          value: args.value as number,
+          contactId: args.contactId as string | undefined,
+          phoneNumber: args.phoneNumber as string | undefined,
+          contactName: args.contactName as string | undefined,
+          leadId: args.leadId as string | undefined,
+          stage: args.stage as never,
+          source: args.source as never,
+          priority: args.priority as never,
+          probability: args.probability as number | undefined,
+          currency: args.currency as string | undefined,
+          expectedCloseAt: args.expectedCloseAt as string | undefined,
+          tags: args.tags as string[] | undefined,
+          notes: args.notes as string | undefined,
+        },
+        AI_DEAL_ACTOR,
+      );
+      return `Created deal "${deal.title}" (ID: ${deal.id}, stage: ${deal.stage}, value: ${deal.currency} ${deal.value}, probability: ${deal.probability}%)`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_deal',
+      description: 'Update arbitrary deal fields. Field-level changes are diffed and logged. Use `move_deal_stage` for stage changes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          title: { type: 'string' },
+          value: { type: 'number' },
+          probability: { type: 'number' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          expectedCloseAt: { type: 'string' },
+          nextActionAt: { type: 'string' },
+          nextActionNote: { type: 'string' },
+          notes: { type: 'string' },
+        },
+        required: ['dealId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.update(
+        companyId,
+        args.dealId as string,
+        {
+          title: args.title as string | undefined,
+          value: args.value as number | undefined,
+          probability: args.probability as number | undefined,
+          priority: args.priority as never,
+          tags: args.tags as string[] | undefined,
+          expectedCloseAt: args.expectedCloseAt as string | undefined,
+          nextActionAt: args.nextActionAt as string | undefined,
+          nextActionNote: args.nextActionNote as string | undefined,
+          notes: args.notes as string | undefined,
+        },
+        AI_DEAL_ACTOR,
+      );
+      return `Updated deal "${deal.title}" (stage: ${deal.stage}, value: ${deal.value}, probability: ${deal.probability}%)`;
+    },
+  },
+  {
+    definition: {
+      name: 'move_deal_stage',
+      description: 'Move a deal to a new pipeline stage. Pass `lossReason` from the enum when moving to LOST.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
+          lossReason: { type: 'string', enum: ['PRICE', 'COMPETITOR', 'TIMING', 'NO_BUDGET', 'NO_DECISION', 'WRONG_FIT', 'GHOSTED', 'OTHER'] },
+          lossReasonText: { type: 'string', description: 'Free-text loss explanation' },
+        },
+        required: ['dealId', 'stage'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.moveStage(
+        companyId,
+        args.dealId as string,
+        {
+          stage: args.stage as never,
+          lossReason: args.lossReason as never,
+          lossReasonText: args.lossReasonText as string | undefined,
+        },
+        AI_DEAL_ACTOR,
+      );
+      return `Moved "${deal.title}" → ${deal.stage} (probability: ${deal.probability}%)`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_deal_won',
+      description: 'Convenience wrapper: move a deal to WON.',
+      parameters: { type: 'object', properties: { dealId: { type: 'string' } }, required: ['dealId'] },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.moveStage(companyId, args.dealId as string, { stage: 'WON' }, AI_DEAL_ACTOR);
+      return `Won "${deal.title}" — sales cycle ${deal.salesCycleDays ?? '?'} days`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_deal_lost',
+      description: 'Mark a deal as LOST with a taxonomic reason. ALWAYS pass a reason from the enum.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          reason: { type: 'string', enum: ['PRICE', 'COMPETITOR', 'TIMING', 'NO_BUDGET', 'NO_DECISION', 'WRONG_FIT', 'GHOSTED', 'OTHER'] },
+          note: { type: 'string', description: 'Free-text explanation' },
+        },
+        required: ['dealId', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.moveStage(
+        companyId,
+        args.dealId as string,
+        { stage: 'LOST', lossReason: args.reason as never, lossReasonText: args.note as string | undefined },
+        AI_DEAL_ACTOR,
+      );
+      return `Lost "${deal.title}": ${args.reason as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'reopen_deal',
+      description: 'Reopen a closed (WON or LOST) deal — moves it back to NEGOTIATION.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' }, reason: { type: 'string' } },
+        required: ['dealId', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.reopen(companyId, args.dealId as string, args.reason as string, AI_DEAL_ACTOR);
+      return `Reopened "${deal.title}" → ${deal.stage}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_deal_note',
+      description: 'Add a note to a deal. Appears in the timeline AND is appended to the legacy notes field.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' }, body: { type: 'string' } },
+        required: ['dealId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await dealsService.addNote(companyId, args.dealId as string, args.body as string, AI_DEAL_ACTOR);
+      return `Note added to deal ${args.dealId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'assign_deal',
+      description: 'Assign a deal to a user. Pass userId="null" to unassign.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' }, userId: { type: 'string' } },
+        required: ['dealId', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const deal = await dealsService.assign(companyId, args.dealId as string, userId, AI_DEAL_ACTOR);
+      return userId ? `Assigned deal "${deal.title}" to user ${userId}` : `Unassigned deal "${deal.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_deal_probability',
+      description: 'Set a deal\'s win probability (0-100). Use this when you have qualitative info the stage default doesn\'t capture.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          probability: { type: 'number' },
+          reason: { type: 'string' },
+        },
+        required: ['dealId', 'probability', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.setProbability(
+        companyId,
+        args.dealId as string,
+        args.probability as number,
+        args.reason as string,
+        AI_DEAL_ACTOR,
+      );
+      return `Deal "${deal.title}" probability is now ${deal.probability}%`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_deal_priority',
+      description: 'Set the priority of a deal.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+        },
+        required: ['dealId', 'priority'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.update(companyId, args.dealId as string, { priority: args.priority as never }, AI_DEAL_ACTOR);
+      return `Set priority of "${deal.title}" to ${deal.priority}`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_deal_next_action',
+      description: 'Schedule the next action for a deal.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          when: { type: 'string', description: 'ISO datetime' },
+          note: { type: 'string' },
+        },
+        required: ['dealId', 'when'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const deal = await dealsService.update(
+        companyId,
+        args.dealId as string,
+        { nextActionAt: args.when as string, nextActionNote: args.note as string | undefined },
+        AI_DEAL_ACTOR,
+      );
+      return `Next action for "${deal.title}" set for ${deal.nextActionAt?.toISOString().slice(0, 16)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'tag_deal',
+      description: 'Add or remove tags from a deal.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          add: { type: 'array', items: { type: 'string' } },
+          remove: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['dealId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await dealsService.bulkTag(
+        companyId,
+        [args.dealId as string],
+        (args.add as string[]) ?? [],
+        (args.remove as string[]) ?? [],
+        AI_DEAL_ACTOR,
+      );
+      return result.updated ? `Tagged deal ${args.dealId as string}` : 'No changes';
+    },
+  },
+  {
+    definition: {
+      name: 'get_deal_timeline',
+      description: 'Fetch the activity timeline of a deal (newest first).',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' }, limit: { type: 'number' } },
+        required: ['dealId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await dealsService.getTimeline(companyId, args.dealId as string, (args.limit as number) ?? 20);
+      if (!items.length) return 'No timeline activity yet.';
+      return items
+        .map((a) => `- ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}${a.body ? `\n    ${a.body}` : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'add_deal_line_item',
+      description: 'Add a product/service line item to a deal. Total is auto-computed from quantity, unit price, discount %, and tax %.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          quantity: { type: 'number' },
+          unitPrice: { type: 'number' },
+          discount: { type: 'number', description: 'Percent 0-100' },
+          taxRate: { type: 'number', description: 'Percent 0-100' },
+          productId: { type: 'string', description: 'Optional link to a Product' },
+        },
+        required: ['dealId', 'name', 'unitPrice'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const item = await dealsService.addLineItem(
+        companyId,
+        args.dealId as string,
+        {
+          name: args.name as string,
+          description: args.description as string | undefined,
+          quantity: args.quantity as number | undefined,
+          unitPrice: args.unitPrice as number,
+          discount: args.discount as number | undefined,
+          taxRate: args.taxRate as number | undefined,
+          productId: args.productId as string | undefined,
+        },
+        AI_DEAL_ACTOR,
+      );
+      return `Added line item "${item.name}" to deal ${args.dealId as string} (total: ${item.total})`;
+    },
+  },
+  {
+    definition: {
+      name: 'remove_deal_line_item',
+      description: 'Remove a line item from a deal.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' }, itemId: { type: 'string' } },
+        required: ['dealId', 'itemId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await dealsService.removeLineItem(companyId, args.dealId as string, args.itemId as string, AI_DEAL_ACTOR);
+      return `Removed line item ${args.itemId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'list_deal_line_items',
+      description: 'List all line items for a deal.',
+      parameters: {
+        type: 'object',
+        properties: { dealId: { type: 'string' } },
+        required: ['dealId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await dealsService.getLineItems(companyId, args.dealId as string);
+      if (!items.length) return 'No line items.';
+      return items
+        .map((i) => `- ${i.name} | qty ${i.quantity} × ${i.unitPrice} - ${i.discount}% disc + ${i.taxRate}% tax = ${i.total} (${i.id})`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_move_deal_stage',
+      description: 'Move many deals to the same stage at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealIds: { type: 'array', items: { type: 'string' } },
+          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
+          lossReason: { type: 'string', enum: ['PRICE', 'COMPETITOR', 'TIMING', 'NO_BUDGET', 'NO_DECISION', 'WRONG_FIT', 'GHOSTED', 'OTHER'] },
+        },
+        required: ['dealIds', 'stage'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await dealsService.bulkMoveStage(
+        companyId,
+        args.dealIds as string[],
+        args.stage as never,
+        AI_DEAL_ACTOR,
+        args.lossReason as never,
+      );
+      return `Bulk stage: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_assign_deals',
+      description: 'Assign many deals to one user at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          dealIds: { type: 'array', items: { type: 'string' } },
+          userId: { type: 'string' },
+        },
+        required: ['dealIds', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const result = await dealsService.bulkAssign(companyId, args.dealIds as string[], userId, AI_DEAL_ACTOR);
+      return `Bulk assign: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_delete_deals',
+      description: 'Soft-delete many deals at once.',
+      parameters: {
+        type: 'object',
+        properties: { dealIds: { type: 'array', items: { type: 'string' } } },
+        required: ['dealIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await dealsService.bulkDelete(companyId, args.dealIds as string[], AI_DEAL_ACTOR);
+      return `Bulk delete: ${result.deleted}/${result.requested} removed`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_deal_forecast',
+      description: 'Pipeline forecast — weighted/unweighted value, by stage, by source, conversion rate, average sales cycle, top open deals, loss reasons. Call this when the user asks "how is the pipeline" or "what\'s the forecast".',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window in days (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const f = await dealsService.forecast(companyId, (args.days as number) ?? 30);
+      const stages = (Object.keys(f.byStage) as (keyof typeof f.byStage)[])
+        .map((s) => `${s}=${f.byStage[s].count}/₹${Math.round(f.byStage[s].value)}`)
+        .join(', ');
+      return [
+        `Pipeline forecast — last ${f.rangeDays} days`,
+        `Total deals: ${f.totalDeals} (${f.openDeals} open)`,
+        `Pipeline value: ₹${Math.round(f.pipelineValueRaw)} raw / ₹${Math.round(f.pipelineValueWeighted)} weighted`,
+        `Won: ${f.wonCount} (₹${Math.round(f.wonValue)}) — conversion ${f.conversionRate}%`,
+        `Lost: ${f.lostCount} (₹${Math.round(f.lostValue)})`,
+        `Avg sales cycle: ${f.avgSalesCycleDays} days`,
+        `By stage: ${stages}`,
+        f.topOpenDeals.length ? `Top open: ${f.topOpenDeals.map((d) => `"${d.title}" ₹${d.value}`).join(', ')}` : '',
+      ].filter(Boolean).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'find_deals_by_contact',
+      description: 'Find all deals attached to a specific contact.',
+      parameters: {
+        type: 'object',
+        properties: {
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      let contactId = args.contactId as string | undefined;
+      if (!contactId && args.phoneNumber) {
+        const phone = (args.phoneNumber as string).replace(/[\s\-+()]/g, '');
+        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: phone } });
+        contactId = c?.id;
+      }
+      if (!contactId) return 'No contact found';
+      const result = await dealsService.list(companyId, { contactId, limit: 50 });
+      if (!result.items.length) return 'No deals for this contact.';
+      return result.items.map((d) => `- "${d.title}" | ${d.stage} | ${d.currency} ${d.value} (${d.probability}%) | ID: ${d.id}`).join('\n');
     },
   },
 
@@ -1675,8 +2163,9 @@ const CORE_TOOL_NAMES = new Set([
   // Leads (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
   'list_leads', 'get_lead', 'create_lead', 'update_lead',
   'qualify_lead', 'convert_lead_to_deal', 'add_lead_note', 'assign_lead',
-  // Deals
-  'create_deal', 'update_deal', 'list_deals',
+  // Deals (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
+  'list_deals', 'get_deal', 'create_deal', 'update_deal',
+  'move_deal_stage', 'add_deal_note', 'assign_deal', 'get_deal_forecast',
   // Tasks
   'create_task', 'update_task', 'list_tasks',
   // Communication

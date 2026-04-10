@@ -114,6 +114,60 @@ enum DealStage {
   LOST
 }
 
+enum DealSource {
+  LEAD_CONVERSION
+  WHATSAPP
+  MANUAL
+  AI_CHAT
+  REFERRAL
+  CAMPAIGN
+  WEBSITE
+  IMPORT
+  OTHER
+}
+
+enum DealPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DealLossReason {
+  PRICE
+  COMPETITOR
+  TIMING
+  NO_BUDGET
+  NO_DECISION
+  WRONG_FIT
+  GHOSTED
+  OTHER
+}
+
+enum DealActivityType {
+  CREATED
+  STAGE_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  VALUE_UPDATED
+  PROBABILITY_UPDATED
+  NOTE_ADDED
+  TAG_ADDED
+  TAG_REMOVED
+  CONTACTED
+  RESPONDED
+  PROPOSAL_SENT
+  MEETING_BOOKED
+  LINE_ITEM_ADDED
+  LINE_ITEM_REMOVED
+  PAYMENT_RECEIVED
+  WON
+  LOST
+  REOPENED
+  FIELD_UPDATED
+  CUSTOM
+}
+
 enum TaskStatus {
   TODO
   IN_PROGRESS
@@ -493,37 +547,96 @@ model LeadScoreEvent {
 // ─── DEAL ─────────────────────────────────────────────────────────────────────
 
 model Deal {
-  id              String    @id @default(cuid())
+  id              String          @id @default(cuid())
   companyId       String
   contactId       String
   leadId          String?
   assignedAgentId String?
   title           String
-  stage           DealStage @default(LEAD_IN)
+  stage           DealStage       @default(LEAD_IN)
+  source          DealSource      @default(MANUAL)
+  priority        DealPriority    @default(MEDIUM)
   value           Float
-  currency        String    @default("INR")
-  probability     Int       @default(20)
+  currency        String          @default("INR")
+  probability     Int             @default(20)
+  weightedValue   Float?          // value * probability/100, maintained by service
+  tags            String[]        @default([])
   expectedCloseAt DateTime?
+  nextActionAt    DateTime?
+  nextActionNote  String?
+  qualifiedAt     DateTime?
+  proposalSentAt  DateTime?
   wonAt           DateTime?
   lostAt          DateTime?
-  lostReason      String?
+  lostReason      String?         // legacy free-text reason
+  lostReasonCode  DealLossReason? // taxonomic reason for analytics
+  salesCycleDays  Int?            // days from createdAt → wonAt/lostAt
+  lastTouchedAt   DateTime?       // updated by WhatsApp ingest hook
   notes           String?
-  customFields    Json      @default("{}")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  customFields    Json            @default("{}")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   deletedAt       DateTime?
 
-  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  contact       Contact   @relation(fields: [contactId], references: [id])
-  lead          Lead?     @relation(fields: [leadId], references: [id])
-  assignedAgent User?     @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact       Contact        @relation(fields: [contactId], references: [id])
+  lead          Lead?          @relation(fields: [leadId], references: [id])
+  assignedAgent User?          @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
   payments      Payment[]
   tasks         Task[]
+  activities    DealActivity[]
+  lineItems     DealLineItem[]
 
   @@index([companyId])
   @@index([contactId])
   @@index([stage])
   @@index([companyId, stage])
+  @@index([companyId, source])
+  @@index([companyId, priority])
+  @@index([companyId, assignedAgentId])
+  @@index([companyId, nextActionAt])
+  @@index([companyId, lastTouchedAt])
+}
+
+model DealActivity {
+  id        String           @id @default(cuid())
+  dealId    String
+  companyId String
+  type      DealActivityType
+  actorType String           // user | ai | system | whatsapp | payment
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json             @default("{}")
+  createdAt DateTime         @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId, createdAt])
+  @@index([companyId, type])
+}
+
+model DealLineItem {
+  id          String   @id @default(cuid())
+  dealId      String
+  companyId   String
+  productId   String?
+  name        String
+  description String?
+  quantity    Float    @default(1)
+  unitPrice   Float
+  discount    Float    @default(0) // percent
+  taxRate     Float    @default(0) // percent
+  total       Float
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deal    Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([dealId])
+  @@index([companyId])
 }
 
 // ─── TASK ─────────────────────────────────────────────────────────────────────
@@ -907,6 +1020,8 @@ model Product {
   currency    String  @default("INR")
   sku         String?
   isActive    Boolean @default(true)
+
+  dealLineItems DealLineItem[]
 
   @@unique([companyId, sku])
   @@index([companyId])

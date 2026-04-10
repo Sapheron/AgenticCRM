@@ -313,18 +313,59 @@ exports.Prisma.DealScalarFieldEnum = {
   assignedAgentId: 'assignedAgentId',
   title: 'title',
   stage: 'stage',
+  source: 'source',
+  priority: 'priority',
   value: 'value',
   currency: 'currency',
   probability: 'probability',
+  weightedValue: 'weightedValue',
+  tags: 'tags',
   expectedCloseAt: 'expectedCloseAt',
+  nextActionAt: 'nextActionAt',
+  nextActionNote: 'nextActionNote',
+  qualifiedAt: 'qualifiedAt',
+  proposalSentAt: 'proposalSentAt',
   wonAt: 'wonAt',
   lostAt: 'lostAt',
   lostReason: 'lostReason',
+  lostReasonCode: 'lostReasonCode',
+  salesCycleDays: 'salesCycleDays',
+  lastTouchedAt: 'lastTouchedAt',
   notes: 'notes',
   customFields: 'customFields',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
+};
+
+exports.Prisma.DealActivityScalarFieldEnum = {
+  id: 'id',
+  dealId: 'dealId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.DealLineItemScalarFieldEnum = {
+  id: 'id',
+  dealId: 'dealId',
+  companyId: 'companyId',
+  productId: 'productId',
+  name: 'name',
+  description: 'description',
+  quantity: 'quantity',
+  unitPrice: 'unitPrice',
+  discount: 'discount',
+  taxRate: 'taxRate',
+  total: 'total',
+  position: 'position',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.TaskScalarFieldEnum = {
@@ -1073,6 +1114,60 @@ exports.DealStage = exports.$Enums.DealStage = {
   LOST: 'LOST'
 };
 
+exports.DealSource = exports.$Enums.DealSource = {
+  LEAD_CONVERSION: 'LEAD_CONVERSION',
+  WHATSAPP: 'WHATSAPP',
+  MANUAL: 'MANUAL',
+  AI_CHAT: 'AI_CHAT',
+  REFERRAL: 'REFERRAL',
+  CAMPAIGN: 'CAMPAIGN',
+  WEBSITE: 'WEBSITE',
+  IMPORT: 'IMPORT',
+  OTHER: 'OTHER'
+};
+
+exports.DealPriority = exports.$Enums.DealPriority = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
+};
+
+exports.DealLossReason = exports.$Enums.DealLossReason = {
+  PRICE: 'PRICE',
+  COMPETITOR: 'COMPETITOR',
+  TIMING: 'TIMING',
+  NO_BUDGET: 'NO_BUDGET',
+  NO_DECISION: 'NO_DECISION',
+  WRONG_FIT: 'WRONG_FIT',
+  GHOSTED: 'GHOSTED',
+  OTHER: 'OTHER'
+};
+
+exports.DealActivityType = exports.$Enums.DealActivityType = {
+  CREATED: 'CREATED',
+  STAGE_CHANGED: 'STAGE_CHANGED',
+  ASSIGNED: 'ASSIGNED',
+  UNASSIGNED: 'UNASSIGNED',
+  VALUE_UPDATED: 'VALUE_UPDATED',
+  PROBABILITY_UPDATED: 'PROBABILITY_UPDATED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  TAG_ADDED: 'TAG_ADDED',
+  TAG_REMOVED: 'TAG_REMOVED',
+  CONTACTED: 'CONTACTED',
+  RESPONDED: 'RESPONDED',
+  PROPOSAL_SENT: 'PROPOSAL_SENT',
+  MEETING_BOOKED: 'MEETING_BOOKED',
+  LINE_ITEM_ADDED: 'LINE_ITEM_ADDED',
+  LINE_ITEM_REMOVED: 'LINE_ITEM_REMOVED',
+  PAYMENT_RECEIVED: 'PAYMENT_RECEIVED',
+  WON: 'WON',
+  LOST: 'LOST',
+  REOPENED: 'REOPENED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.TaskStatus = exports.$Enums.TaskStatus = {
   TODO: 'TODO',
   IN_PROGRESS: 'IN_PROGRESS',
@@ -1148,6 +1243,8 @@ exports.Prisma.ModelName = {
   LeadActivity: 'LeadActivity',
   LeadScoreEvent: 'LeadScoreEvent',
   Deal: 'Deal',
+  DealActivity: 'DealActivity',
+  DealLineItem: 'DealLineItem',
   Task: 'Task',
   AiConfig: 'AiConfig',
   AiContextCache: 'AiContextCache',
