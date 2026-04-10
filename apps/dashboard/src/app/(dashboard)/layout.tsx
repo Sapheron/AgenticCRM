@@ -11,7 +11,7 @@ import {
   BarChart3, Settings, Megaphone, LogOut, Zap, CreditCard,
   FileText, Repeat, Package, Receipt, FileSpreadsheet,
   Target, Clipboard, Workflow, LifeBuoy, BookOpen, PieChart,
-  Plug, FolderOpen, Brain,
+  Plug, FolderOpen, Brain, Terminal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ const navSections = [
     items: [
       { href: '/chat', icon: MessageSquare, label: 'AI Chat' },
       { href: '/memory', icon: Brain, label: 'Memory' },
+      { href: '/docs', icon: Terminal, label: 'AI Commands' },
     ],
   },
   {

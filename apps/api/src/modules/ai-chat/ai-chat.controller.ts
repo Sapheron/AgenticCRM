@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsArray, ValidateNested, IsString, IsEnum, IsOptional, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -9,6 +9,7 @@ import { CompanyScopeGuard } from '../../common/guards/company-scope.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@wacrm/database';
 import { normalizeAttachments, type ChatAttachment } from './attachments';
+import { getAdminToolCatalog } from './admin-tools';
 
 class RawAttachmentDto {
   @IsString() mimeType: string;
@@ -49,6 +50,12 @@ export class AiChatController {
     private readonly svc: AiChatService,
     private readonly convSvc: ChatConversationsService,
   ) {}
+
+  @Get('tools')
+  @ApiOperation({ summary: 'List all AI admin tools (for the docs page)' })
+  listTools() {
+    return getAdminToolCatalog();
+  }
 
   @Post()
   @ApiOperation({ summary: 'Chat with configured AI model (admin tool)' })

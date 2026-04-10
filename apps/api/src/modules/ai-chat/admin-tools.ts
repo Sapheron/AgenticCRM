@@ -1696,6 +1696,65 @@ export function getAdminToolDefinitions(): ToolDefinition[] {
     .map((t) => t.definition);
 }
 
+/**
+ * Categorize a tool by its name. Used to render the docs page
+ * (apps/dashboard/src/app/(dashboard)/docs/page.tsx) in grouped sections.
+ *
+ * The order of the rules matters — the first match wins. Add new rules near
+ * the top when you introduce a new tool prefix.
+ */
+function categorizeTool(name: string): string {
+  const m = (re: RegExp) => re.test(name);
+  if (m(/^memory_/)) return 'Memory';
+  if (m(/^send_whatsapp|^list_conversations/)) return 'WhatsApp & Messaging';
+  if (m(/^create_broadcast|^list_broadcasts|^send_broadcast/)) return 'Broadcasts';
+  if (m(/^get_analytics|^get_lead_stats/)) return 'Analytics';
+  if (m(/contact/)) return 'Contacts';
+  if (m(/lead/)) return 'Leads';
+  if (m(/deal/)) return 'Deals';
+  if (m(/task/)) return 'Tasks';
+  if (m(/template/)) return 'Templates';
+  if (m(/sequence/)) return 'Sequences';
+  if (m(/pipeline/)) return 'Pipelines';
+  if (m(/product/)) return 'Products';
+  if (m(/quote/)) return 'Quotes';
+  if (m(/invoice/)) return 'Invoices';
+  if (m(/payment/)) return 'Payments';
+  if (m(/campaign/)) return 'Campaigns';
+  if (m(/form/)) return 'Forms';
+  if (m(/workflow/)) return 'Workflows';
+  if (m(/ticket/)) return 'Tickets';
+  if (m(/knowledge_base|^kb_|knowledgebase/i)) return 'Knowledge Base';
+  if (m(/report/)) return 'Reports';
+  if (m(/calendar|event/)) return 'Calendar';
+  if (m(/document/)) return 'Documents';
+  return 'Other';
+}
+
+export interface CatalogEntry {
+  name: string;
+  description: string;
+  category: string;
+  /** Whether this tool is in the always-sent CORE_TOOL_NAMES whitelist. */
+  core: boolean;
+  parameters: Record<string, unknown>;
+}
+
+/**
+ * Returns every tool the AI can call (not just the CORE whitelist) with a
+ * category attached, ready to be rendered as a docs page or pulled into a
+ * GUI tool palette.
+ */
+export function getAdminToolCatalog(): CatalogEntry[] {
+  return tools.map((t) => ({
+    name: t.definition.name,
+    description: t.definition.description,
+    category: categorizeTool(t.definition.name),
+    core: CORE_TOOL_NAMES.has(t.definition.name),
+    parameters: t.definition.parameters,
+  }));
+}
+
 export async function executeAdminTool(
   name: string,
   args: Record<string, unknown>,
