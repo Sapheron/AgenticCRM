@@ -350,13 +350,14 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  assignedConvs Conversation[] @relation("AssignedAgent")
-  assignedLeads Lead[]         @relation("AssignedAgent")
-  assignedDeals Deal[]         @relation("AssignedAgent")
-  assignedTasks Task[]         @relation("AssignedAgent")
-  createdTasks  Task[]         @relation("CreatedBy")
-  auditLogs     AuditLog[]
+  company           Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedConvs     Conversation[] @relation("AssignedAgent")
+  assignedLeads     Lead[]         @relation("AssignedAgent")
+  assignedDeals     Deal[]         @relation("AssignedAgent")
+  assignedTasks     Task[]         @relation("AssignedAgent")
+  createdTasks      Task[]         @relation("CreatedBy")
+  createdBroadcasts Broadcast[]    @relation("BroadcastCreatedBy")
+  auditLogs         AuditLog[]
 
   @@unique([companyId, email])
   @@index([companyId])
@@ -425,15 +426,16 @@ model Contact {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  referredBy    Contact?       @relation("ContactReferrals", fields: [referredById], references: [id])
-  referrals     Contact[]      @relation("ContactReferrals")
-  conversations Conversation[]
-  leads         Lead[]
-  deals         Deal[]
-  tasks         Task[]
-  payments      Payment[]
-  contactNotes  ContactNote[]
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  referredBy          Contact?             @relation("ContactReferrals", fields: [referredById], references: [id])
+  referrals           Contact[]            @relation("ContactReferrals")
+  conversations       Conversation[]
+  leads               Lead[]
+  deals               Deal[]
+  tasks               Task[]
+  payments            Payment[]
+  contactNotes        ContactNote[]
+  broadcastRecipients BroadcastRecipient[]
 
   @@unique([companyId, phoneNumber])
   @@index([companyId])
@@ -943,26 +945,131 @@ model Payment {
 
 // ─── BROADCAST ────────────────────────────────────────────────────────────────
 
+enum BroadcastStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  COMPLETED
+  CANCELLED
+  PAUSED
+  FAILED
+}
+
+enum BroadcastRecipientStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  SKIPPED
+}
+
+enum BroadcastActivityType {
+  CREATED
+  UPDATED
+  AUDIENCE_CHANGED
+  SCHEDULED
+  STARTED
+  PAUSED
+  RESUMED
+  CANCELLED
+  COMPLETED
+  FAILED
+  RECIPIENT_SENT
+  RECIPIENT_FAILED
+  RECIPIENT_DELIVERED
+  RECIPIENT_READ
+  RETRY_FAILED
+  CUSTOM
+}
+
 model Broadcast {
-  id               String    @id @default(cuid())
+  id               String          @id @default(cuid())
   companyId        String
   name             String
   message          String
   mediaUrl         String?
-  targetTags       String[]
-  targetContactIds String[]
+  mediaType        String?
+  mediaCaption     String?
+  templateName     String?
+  variables        Json            @default("{}")
+  audienceFilter   Json?
+  // Legacy raw audience inputs (kept for backwards compat with the old worker)
+  targetTags       String[]        @default([])
+  targetContactIds String[]        @default([])
+  status           BroadcastStatus @default(DRAFT)
+  throttleMs       Int             @default(2000)
   scheduledAt      DateTime?
   startedAt        DateTime?
   completedAt      DateTime?
-  totalCount       Int       @default(0)
-  sentCount        Int       @default(0)
-  failedCount      Int       @default(0)
-  createdAt        DateTime  @default(now())
+  totalCount       Int             @default(0) // legacy alias for totalRecipients
+  totalRecipients  Int             @default(0)
+  sentCount        Int             @default(0)
+  failedCount      Int             @default(0)
+  deliveredCount   Int             @default(0)
+  readCount        Int             @default(0)
+  skippedCount     Int             @default(0)
+  errorMessage     String?
+  createdById      String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company    Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy  User?                @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
+  recipients BroadcastRecipient[]
+  activities BroadcastActivity[]
 
   @@index([companyId])
   @@index([scheduledAt])
+  @@index([companyId, status])
+  @@index([scheduledAt, status])
+  @@index([companyId, createdAt])
+}
+
+model BroadcastRecipient {
+  id                String                   @id @default(cuid())
+  broadcastId       String
+  companyId         String
+  contactId         String
+  toPhone           String
+  status            BroadcastRecipientStatus @default(QUEUED)
+  /// Rendered, personalized message body for THIS recipient. Stored so retries
+  /// don't re-render and the audit shows the exact text sent.
+  renderedText      String
+  mediaUrl          String?
+  whatsappMessageId String?
+  errorMessage      String?
+  queuedAt          DateTime                 @default(now())
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  failedAt          DateTime?
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  contact   Contact   @relation(fields: [contactId], references: [id])
+
+  @@unique([broadcastId, contactId])
+  @@index([broadcastId, status])
+  @@index([companyId, contactId])
+}
+
+model BroadcastActivity {
+  id          String                @id @default(cuid())
+  broadcastId String
+  companyId   String
+  type        BroadcastActivityType
+  actorType   String
+  actorId     String?
+  title       String
+  body        String?
+  metadata    Json                  @default("{}")
+  createdAt   DateTime              @default(now())
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, createdAt])
+  @@index([companyId, type])
 }
 
 // ─── AUDIT LOG ────────────────────────────────────────────────────────────────

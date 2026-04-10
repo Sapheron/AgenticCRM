@@ -13,6 +13,10 @@ import { TasksService } from '../tasks/tasks.service';
 import type { TaskActor } from '../tasks/tasks.types';
 import { ProductsService } from '../products/products.service';
 import type { ProductActor } from '../products/products.types';
+import { BroadcastService } from '../broadcast/broadcast.service';
+import type { BroadcastActor } from '../broadcast/broadcast.types';
+import { Queue } from 'bullmq';
+import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
 
 // Memory service is a plain class (no DI deps), so we can instantiate it once
@@ -23,10 +27,19 @@ const leadsService = new LeadsService();
 const dealsService = new DealsService();
 const tasksService = new TasksService();
 const productsService = new ProductsService();
+
+// BroadcastService takes a BullMQ Queue. We construct one here so the AI
+// tools can drive the same single-write-path service the controller uses.
+const broadcastQueue = new Queue(QUEUES.BROADCAST, {
+  connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }),
+});
+const broadcastsService = new BroadcastService(broadcastQueue);
+
 const AI_ACTOR: LeadActor = { type: 'ai' };
 const AI_DEAL_ACTOR: DealActor = { type: 'ai' };
 const AI_TASK_ACTOR: TaskActor = { type: 'ai' };
 const AI_PRODUCT_ACTOR: ProductActor = { type: 'ai' };
+const AI_BROADCAST_ACTOR: BroadcastActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -2070,30 +2083,437 @@ const tools: AdminTool[] = [
   },
 
   // ── Broadcasts ────────────────────────────────────────────────────────────
+  // ── Broadcasts (full lifecycle, all routed through BroadcastService) ─────
   {
     definition: {
-      name: 'create_broadcast',
-      description: 'Create a broadcast message to multiple contacts.',
+      name: 'list_broadcasts',
+      description: 'List broadcasts with optional filters. Use this to find broadcasts by status, search text, or scheduled date range.',
       parameters: {
         type: 'object',
         properties: {
-          name: { type: 'string', description: 'Broadcast name' },
-          message: { type: 'string', description: 'Message text to send' },
-          targetTags: { type: 'array', items: { type: 'string' }, description: 'Send to contacts with these tags' },
+          status: { type: 'string', enum: ['DRAFT', 'SCHEDULED', 'SENDING', 'COMPLETED', 'CANCELLED', 'PAUSED', 'FAILED'] },
+          search: { type: 'string', description: 'Free-text search over name and message' },
+          sort: { type: 'string', enum: ['recent', 'scheduled', 'sent_count', 'name'] },
+          limit: { type: 'number' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await broadcastsService.list(companyId, {
+        status: args.status as never,
+        search: args.search as string | undefined,
+        sort: args.sort as never,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No broadcasts match those filters.';
+      return [
+        `Found ${result.total} broadcast(s) (showing ${result.items.length}):`,
+        ...result.items.map((b) => {
+          const counts = `${b.sentCount}/${b.totalRecipients} sent${b.failedCount > 0 ? `, ${b.failedCount} failed` : ''}`;
+          const sched = b.scheduledAt ? ` · sched ${b.scheduledAt.toISOString().slice(0, 16)}` : '';
+          return `- [${b.status}] "${b.name}" · ${counts}${sched} · ID: ${b.id}`;
+        }),
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_broadcast',
+      description: 'Fetch a broadcast with its message body, audience size, recipient counts by status, and last 10 timeline activities.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const b = await broadcastsService.get(companyId, args.broadcastId as string);
+      const recent = b.activities.slice(0, 10);
+      const lines = [
+        `Broadcast "${b.name}" (ID: ${b.id})`,
+        `Status: ${b.status}`,
+        `Message: ${b.message.slice(0, 200)}${b.message.length > 200 ? '...' : ''}`,
+        b.mediaUrl ? `Media: ${b.mediaUrl}` : '',
+        `Audience: ${b.totalRecipients} recipient${b.totalRecipients === 1 ? '' : 's'}`,
+        `Sent: ${b.sentCount} · Failed: ${b.failedCount} · Delivered: ${b.deliveredCount} · Read: ${b.readCount}`,
+        b.scheduledAt ? `Scheduled: ${b.scheduledAt.toISOString().slice(0, 16)}` : '',
+        b.startedAt ? `Started: ${b.startedAt.toISOString().slice(0, 16)}` : '',
+        b.completedAt ? `Completed: ${b.completedAt.toISOString().slice(0, 16)}` : '',
+        '',
+        'Recent activity:',
+        ...recent.map((a) => `  • ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`),
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_broadcast',
+      description: 'Create a new broadcast (always starts in DRAFT). Use {{firstName}}, {{lastName}}, {{name}}, {{phoneNumber}}, {{email}}, {{company}} for personalization. Pass `audience` to set targeting on creation, `scheduledAt` to schedule.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Internal name (not shown to recipients)' },
+          message: { type: 'string', description: 'Message body. Supports {{firstName}}, {{name}}, etc.' },
+          mediaUrl: { type: 'string', description: 'Optional image/document URL' },
+          mediaType: { type: 'string', enum: ['image', 'document', 'video'] },
+          mediaCaption: { type: 'string' },
+          variables: { type: 'object', description: 'Default values for template variables' },
+          audience: {
+            type: 'object',
+            description: 'Audience filter — at minimum pass tags or contactIds',
+            properties: {
+              tags: { type: 'array', items: { type: 'string' } },
+              contactIds: { type: 'array', items: { type: 'string' } },
+              lifecycleStage: { type: 'string' },
+              scoreMin: { type: 'number' },
+              hasOpenDeal: { type: 'boolean' },
+              hasOpenLead: { type: 'boolean' },
+            },
+          },
+          scheduledAt: { type: 'string', description: 'ISO datetime to schedule for' },
+          throttleMs: { type: 'number', description: 'Milliseconds between sends (default 2000)' },
         },
         required: ['name', 'message'],
       },
     },
     execute: async (args, companyId) => {
-      const broadcast = await prisma.broadcast.create({
-        data: {
-          companyId,
+      const b = await broadcastsService.create(
+        companyId,
+        {
           name: args.name as string,
           message: args.message as string,
-          targetTags: (args.targetTags as string[]) || [],
+          mediaUrl: args.mediaUrl as string | undefined,
+          mediaType: args.mediaType as string | undefined,
+          mediaCaption: args.mediaCaption as string | undefined,
+          variables: args.variables as Record<string, string> | undefined,
+          audience: args.audience as never,
+          scheduledAt: args.scheduledAt as string | undefined,
+          throttleMs: args.throttleMs as number | undefined,
         },
+        AI_BROADCAST_ACTOR,
+      );
+      return `Created broadcast "${b.name}" (ID: ${b.id}, status: ${b.status}, audience: ${b.totalRecipients})`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_broadcast',
+      description: 'Update arbitrary broadcast fields. Only allowed in DRAFT or SCHEDULED state.',
+      parameters: {
+        type: 'object',
+        properties: {
+          broadcastId: { type: 'string' },
+          name: { type: 'string' },
+          message: { type: 'string' },
+          mediaUrl: { type: 'string' },
+          variables: { type: 'object' },
+          throttleMs: { type: 'number' },
+        },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const b = await broadcastsService.update(
+        companyId,
+        args.broadcastId as string,
+        {
+          name: args.name as string | undefined,
+          message: args.message as string | undefined,
+          mediaUrl: args.mediaUrl as string | undefined,
+          variables: args.variables as Record<string, string> | undefined,
+          throttleMs: args.throttleMs as number | undefined,
+        },
+        AI_BROADCAST_ACTOR,
+      );
+      return `Updated "${b.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_broadcast_audience',
+      description: 'Set or replace the audience for a broadcast. Resolves the filter NOW and snapshots recipients into the database. Only allowed in DRAFT.',
+      parameters: {
+        type: 'object',
+        properties: {
+          broadcastId: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          contactIds: { type: 'array', items: { type: 'string' } },
+          lifecycleStage: { type: 'string' },
+          scoreMin: { type: 'number' },
+          scoreMax: { type: 'number' },
+          hasOpenDeal: { type: 'boolean' },
+          hasOpenLead: { type: 'boolean' },
+        },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await broadcastsService.setAudience(
+        companyId,
+        args.broadcastId as string,
+        {
+          tags: args.tags as string[] | undefined,
+          contactIds: args.contactIds as string[] | undefined,
+          lifecycleStage: args.lifecycleStage as string | undefined,
+          scoreMin: args.scoreMin as number | undefined,
+          scoreMax: args.scoreMax as number | undefined,
+          hasOpenDeal: args.hasOpenDeal as boolean | undefined,
+          hasOpenLead: args.hasOpenLead as boolean | undefined,
+        },
+        AI_BROADCAST_ACTOR,
+      );
+      return `Audience set — ${result.totalRecipients} recipient${result.totalRecipients === 1 ? '' : 's'} queued`;
+    },
+  },
+  {
+    definition: {
+      name: 'preview_audience_size',
+      description: 'Preview the size of an audience filter WITHOUT creating a broadcast. Use this when the user asks "how many people will get this".',
+      parameters: {
+        type: 'object',
+        properties: {
+          tags: { type: 'array', items: { type: 'string' } },
+          contactIds: { type: 'array', items: { type: 'string' } },
+          lifecycleStage: { type: 'string' },
+          scoreMin: { type: 'number' },
+          hasOpenDeal: { type: 'boolean' },
+          hasOpenLead: { type: 'boolean' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await broadcastsService.previewAudienceSize(companyId, {
+        tags: args.tags as string[] | undefined,
+        contactIds: args.contactIds as string[] | undefined,
+        lifecycleStage: args.lifecycleStage as string | undefined,
+        scoreMin: args.scoreMin as number | undefined,
+        hasOpenDeal: args.hasOpenDeal as boolean | undefined,
+        hasOpenLead: args.hasOpenLead as boolean | undefined,
       });
-      return `Created broadcast "${broadcast.name}" (ID: ${broadcast.id}). Queue it from the Broadcasts page to send.`;
+      const sample = result.sample.map((c) => c.displayName ?? c.phoneNumber).join(', ');
+      return `${result.count} contact${result.count === 1 ? '' : 's'} match${result.count === 1 ? 'es' : ''} this audience.${sample ? `\nFirst few: ${sample}` : ''}`;
+    },
+  },
+  {
+    definition: {
+      name: 'schedule_broadcast',
+      description: 'Schedule a DRAFT broadcast to send at a specific time. Audience must already be set.',
+      parameters: {
+        type: 'object',
+        properties: {
+          broadcastId: { type: 'string' },
+          scheduledAt: { type: 'string', description: 'ISO datetime' },
+        },
+        required: ['broadcastId', 'scheduledAt'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const b = await broadcastsService.schedule(
+        companyId,
+        args.broadcastId as string,
+        args.scheduledAt as string,
+        AI_BROADCAST_ACTOR,
+      );
+      return `Scheduled "${b.name}" for ${b.scheduledAt?.toISOString().slice(0, 16)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'unschedule_broadcast',
+      description: 'Cancel the schedule of a SCHEDULED broadcast — moves it back to DRAFT.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.unschedule(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Unscheduled — back to DRAFT';
+    },
+  },
+  {
+    definition: {
+      name: 'send_broadcast_now',
+      description: 'Send a DRAFT or SCHEDULED broadcast immediately. Audience must already be set.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const b = await broadcastsService.sendNow(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return `Started sending "${b.name}" — ${b.totalRecipients} recipient${b.totalRecipients === 1 ? '' : 's'}`;
+    },
+  },
+  {
+    definition: {
+      name: 'pause_broadcast',
+      description: 'Pause an in-progress broadcast. Stops sending more messages until you resume.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.pause(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Paused';
+    },
+  },
+  {
+    definition: {
+      name: 'resume_broadcast',
+      description: 'Resume a paused broadcast.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.resume(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Resumed';
+    },
+  },
+  {
+    definition: {
+      name: 'cancel_broadcast',
+      description: 'Cancel a broadcast. Marks all still-queued recipients as SKIPPED.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.cancel(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Cancelled';
+    },
+  },
+  {
+    definition: {
+      name: 'retry_failed_recipients',
+      description: 'Reset all FAILED recipients of a broadcast back to QUEUED and re-send. Useful after fixing a connectivity issue.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.retryFailed(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Retrying failed recipients';
+    },
+  },
+  {
+    definition: {
+      name: 'duplicate_broadcast',
+      description: 'Clone a broadcast as a new DRAFT.',
+      parameters: {
+        type: 'object',
+        properties: {
+          broadcastId: { type: 'string' },
+          newName: { type: 'string' },
+        },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const b = await broadcastsService.duplicate(
+        companyId,
+        args.broadcastId as string,
+        AI_BROADCAST_ACTOR,
+        args.newName as string | undefined,
+      );
+      return `Duplicated as "${b.name}" (ID: ${b.id})`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_broadcast',
+      description: 'Permanently delete a broadcast. Cannot delete a broadcast that is currently SENDING.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await broadcastsService.delete(companyId, args.broadcastId as string, AI_BROADCAST_ACTOR);
+      return 'Deleted';
+    },
+  },
+  {
+    definition: {
+      name: 'get_broadcast_recipients',
+      description: 'List recipients of a broadcast with their per-recipient delivery status (QUEUED/SENT/DELIVERED/READ/FAILED/SKIPPED).',
+      parameters: {
+        type: 'object',
+        properties: {
+          broadcastId: { type: 'string' },
+          status: { type: 'string', enum: ['QUEUED', 'SENDING', 'SENT', 'DELIVERED', 'READ', 'FAILED', 'SKIPPED'] },
+          limit: { type: 'number' },
+        },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await broadcastsService.getRecipients(companyId, args.broadcastId as string, {
+        status: args.status as string | undefined,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No recipients match.';
+      return [
+        `${result.total} total (showing ${result.items.length}):`,
+        ...result.items.map((r) => {
+          const name = r.contact?.displayName ?? r.toPhone;
+          const err = r.errorMessage ? ` — ${r.errorMessage.slice(0, 60)}` : '';
+          return `- [${r.status}] ${name}${err}`;
+        }),
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_broadcast_timeline',
+      description: 'Fetch the activity timeline of a broadcast.',
+      parameters: {
+        type: 'object',
+        properties: { broadcastId: { type: 'string' }, limit: { type: 'number' } },
+        required: ['broadcastId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await broadcastsService.getTimeline(companyId, args.broadcastId as string, (args.limit as number) ?? 20);
+      if (!items.length) return 'No activity yet.';
+      return items
+        .map((a) => `- ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_broadcast_stats',
+      description: 'Broadcast stats — counts per status, sent/failed/delivered/read totals, delivery rate, open rate.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Lookback window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (_args, companyId) => {
+      const s = await broadcastsService.stats(companyId, (_args.days as number) ?? 30);
+      return [
+        `Broadcast stats — last ${s.rangeDays} days`,
+        `Sent: ${s.sent} · Failed: ${s.failed} · Delivered: ${s.delivered} · Read: ${s.read}`,
+        `Delivery rate: ${s.deliveryRate}% · Open rate: ${s.openRate}%`,
+        `By status: ${Object.entries(s.byStatus).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+      ].join('\n');
     },
   },
 
@@ -3181,6 +3601,9 @@ const CORE_TOOL_NAMES = new Set([
   // Products (full catalog — see admin-tools.ts for the additional ~12 callable-by-name tools)
   'list_products', 'get_product', 'create_product', 'update_product',
   'adjust_product_stock', 'list_low_stock_products',
+  // Broadcasts (full lifecycle — see admin-tools.ts for the additional ~12 callable-by-name tools)
+  'list_broadcasts', 'get_broadcast', 'create_broadcast', 'set_broadcast_audience',
+  'preview_audience_size', 'schedule_broadcast', 'send_broadcast_now',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics

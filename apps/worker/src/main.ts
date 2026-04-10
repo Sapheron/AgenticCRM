@@ -49,7 +49,12 @@ async function main() {
   const broadcastWorker = startBroadcastWorker();
   logger.info('Broadcast worker started');
 
-  const reminderWorker = startReminderWorker();
+  // Broadcast queue handle, passed to the reminder worker so it can dispatch
+  // due SCHEDULED broadcasts every minute (piggybacks on the reminder cron).
+  const broadcastQueueForDispatcher = new Queue(QUEUES.BROADCAST, {
+    connection: new Redis((process.env.REDIS_URL || '').trim(), { maxRetriesPerRequest: null }),
+  });
+  const reminderWorker = startReminderWorker(broadcastQueueForDispatcher);
   const followUpWorker = startFollowUpProcessor();
   const cleanupWorker = startCleanupProcessor();
   const paymentCheckWorker = startPaymentCheckProcessor();

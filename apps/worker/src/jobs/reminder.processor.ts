@@ -14,6 +14,7 @@ import pino from 'pino';
 import Redis from 'ioredis';
 import { QUEUES } from '@wacrm/shared';
 import { prisma } from '@wacrm/database';
+import { dispatchDueScheduledBroadcasts } from './broadcast.processor';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const redisUrl = process.env.REDIS_URL!;
@@ -29,12 +30,29 @@ export async function scheduleReminderJob(queue: Queue) {
   );
 }
 
-export function startReminderWorker() {
+/**
+ * @param broadcastQueue Optional — when provided, the reminder worker will
+ *   also scan for SCHEDULED broadcasts whose `scheduledAt` has elapsed and
+ *   enqueue them onto the broadcast queue. We piggyback on the existing
+ *   per-minute reminder cron rather than spinning up another scanner job.
+ */
+export function startReminderWorker(broadcastQueue?: Queue) {
   const connection = new Redis(redisUrl, { maxRetriesPerRequest: null });
 
   const worker = new Worker(
     QUEUES.REMINDER,
     async (_job: Job) => {
+      // Dispatch any due SCHEDULED broadcasts before doing reminder work.
+      // Best-effort — never let a broadcast scan failure block reminders.
+      if (broadcastQueue) {
+        try {
+          const dispatched = await dispatchDueScheduledBroadcasts(broadcastQueue);
+          if (dispatched > 0) logger.info({ count: dispatched }, 'Dispatched scheduled broadcasts');
+        } catch (err) {
+          logger.warn({ err }, 'broadcast dispatcher failed');
+        }
+      }
+
       const now = new Date();
       // Pull a wide window of upcoming tasks. The cap of 60 min covers the
       // longest configured offset by default; if a user sets `[1440]` (a day

@@ -539,14 +539,59 @@ exports.Prisma.BroadcastScalarFieldEnum = {
   name: 'name',
   message: 'message',
   mediaUrl: 'mediaUrl',
+  mediaType: 'mediaType',
+  mediaCaption: 'mediaCaption',
+  templateName: 'templateName',
+  variables: 'variables',
+  audienceFilter: 'audienceFilter',
   targetTags: 'targetTags',
   targetContactIds: 'targetContactIds',
+  status: 'status',
+  throttleMs: 'throttleMs',
   scheduledAt: 'scheduledAt',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   totalCount: 'totalCount',
+  totalRecipients: 'totalRecipients',
   sentCount: 'sentCount',
   failedCount: 'failedCount',
+  deliveredCount: 'deliveredCount',
+  readCount: 'readCount',
+  skippedCount: 'skippedCount',
+  errorMessage: 'errorMessage',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BroadcastRecipientScalarFieldEnum = {
+  id: 'id',
+  broadcastId: 'broadcastId',
+  companyId: 'companyId',
+  contactId: 'contactId',
+  toPhone: 'toPhone',
+  status: 'status',
+  renderedText: 'renderedText',
+  mediaUrl: 'mediaUrl',
+  whatsappMessageId: 'whatsappMessageId',
+  errorMessage: 'errorMessage',
+  queuedAt: 'queuedAt',
+  sentAt: 'sentAt',
+  deliveredAt: 'deliveredAt',
+  readAt: 'readAt',
+  failedAt: 'failedAt'
+};
+
+exports.Prisma.BroadcastActivityScalarFieldEnum = {
+  id: 'id',
+  broadcastId: 'broadcastId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
   createdAt: 'createdAt'
 };
 
@@ -1389,6 +1434,45 @@ exports.PaymentStatus = exports.$Enums.PaymentStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.BroadcastStatus = exports.$Enums.BroadcastStatus = {
+  DRAFT: 'DRAFT',
+  SCHEDULED: 'SCHEDULED',
+  SENDING: 'SENDING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  PAUSED: 'PAUSED',
+  FAILED: 'FAILED'
+};
+
+exports.BroadcastRecipientStatus = exports.$Enums.BroadcastRecipientStatus = {
+  QUEUED: 'QUEUED',
+  SENDING: 'SENDING',
+  SENT: 'SENT',
+  DELIVERED: 'DELIVERED',
+  READ: 'READ',
+  FAILED: 'FAILED',
+  SKIPPED: 'SKIPPED'
+};
+
+exports.BroadcastActivityType = exports.$Enums.BroadcastActivityType = {
+  CREATED: 'CREATED',
+  UPDATED: 'UPDATED',
+  AUDIENCE_CHANGED: 'AUDIENCE_CHANGED',
+  SCHEDULED: 'SCHEDULED',
+  STARTED: 'STARTED',
+  PAUSED: 'PAUSED',
+  RESUMED: 'RESUMED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  RECIPIENT_SENT: 'RECIPIENT_SENT',
+  RECIPIENT_FAILED: 'RECIPIENT_FAILED',
+  RECIPIENT_DELIVERED: 'RECIPIENT_DELIVERED',
+  RECIPIENT_READ: 'RECIPIENT_READ',
+  RETRY_FAILED: 'RETRY_FAILED',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.AuditAction = exports.$Enums.AuditAction = {
   CREATE: 'CREATE',
   UPDATE: 'UPDATE',
@@ -1451,6 +1535,8 @@ exports.Prisma.ModelName = {
   PaymentConfig: 'PaymentConfig',
   Payment: 'Payment',
   Broadcast: 'Broadcast',
+  BroadcastRecipient: 'BroadcastRecipient',
+  BroadcastActivity: 'BroadcastActivity',
   AuditLog: 'AuditLog',
   WebhookEndpoint: 'WebhookEndpoint',
   ContactNote: 'ContactNote',
