@@ -4,7 +4,7 @@
  * Mirrors the entity upgrade pattern with single-write-path service,
  * activity timeline, and full AI control.
  */
-import type { SequenceStatus, EnrollmentStatus, SequenceActivityType, EnrollmentActivityType, Prisma } from '@wacrm/database';
+import type { SequenceStatus, SequenceActivityType, EnrollmentActivityType } from '@wacrm/database';
 
 export type SequenceActor =
   | { type: 'user'; userId: string }

@@ -12,13 +12,9 @@ import {
   Copy,
   Trash2,
   Users,
-  Plus,
   Clock,
-  CheckCircle,
   XCircle,
   MoreVertical,
-  Edit,
-  Tag,
   Calendar,
   BarChart3,
 } from 'lucide-react';

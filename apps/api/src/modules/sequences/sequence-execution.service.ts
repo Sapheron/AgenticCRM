@@ -170,9 +170,9 @@ export class SequenceExecutionService {
   /**
    * Send email (placeholder - implementation depends on email service)
    */
-  private async sendEmail(step: any, contact: any, enrollment: any): Promise<ActionResult> {
+  private async sendEmail(_step: any, _contact: any, _enrollment: any): Promise<ActionResult> {
     // TODO: Implement email sending logic
-    this.logger.warn(`Email sending not yet implemented for step ${step.id}`);
+    this.logger.warn(`Email sending not yet implemented`);
     return { success: true, message: 'Email step skipped (not implemented)' };
   }
 
@@ -283,16 +283,16 @@ export class SequenceExecutionService {
   /**
    * Execute AI task (placeholder - can be used for custom AI actions)
    */
-  private async executeAiTask(step: any, contact: any, enrollment: any): Promise<ActionResult> {
+  private async executeAiTask(_step: any, _contact: any, _enrollment: any): Promise<ActionResult> {
     // TODO: Implement AI task execution logic
-    this.logger.warn(`AI task execution not yet implemented for step ${step.id}`);
+    this.logger.warn(`AI task execution not yet implemented`);
     return { success: true, message: 'AI task skipped (not implemented)' };
   }
 
   /**
    * Evaluate condition for step execution
    */
-  private async evaluateCondition(condition: string, contact: any, enrollment: any): Promise<boolean> {
+  private evaluateCondition(condition: string, contact: any, _enrollment: any): boolean {
     try {
       const conditionData = JSON.parse(condition);
 

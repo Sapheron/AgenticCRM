@@ -7,7 +7,7 @@
  */
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { prisma } from '@wacrm/database';
-import type { Sequence, SequenceStatus, Prisma } from '@wacrm/database';
+import type { Sequence, Prisma } from '@wacrm/database';
 import {
   type SequenceActor,
   type CreateSequenceDto,
@@ -19,8 +19,6 @@ import {
   type AddSequenceActivityInput,
   type AddEnrollmentActivityInput,
 } from './sequences.types';
-
-const ACTIVE_STATUSES: SequenceStatus[] = ['ACTIVE', 'PAUSED'];
 
 @Injectable()
 export class SequencesService {
@@ -370,7 +368,6 @@ export class SequencesService {
 
   async addStep(companyId: string, sequenceId: string, dto: CreateStepDto, actor: SequenceActor) {
     await this.ensureExists(companyId, sequenceId);
-    const sequence = await prisma.sequence.findUnique({ where: { id: sequenceId } });
 
     // Get next sort order
     const maxSort = await prisma.sequenceStep.findFirst({

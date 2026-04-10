@@ -8,7 +8,6 @@ import {
   Plus,
   GitBranch,
   Search,
-  Filter,
   MoreVertical,
   Play,
   Pause,
@@ -16,7 +15,6 @@ import {
   Copy,
   Trash2,
   Users,
-  CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

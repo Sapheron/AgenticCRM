@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import {
   Plus, FileText, Search, Filter, Copy, Archive, Trash2, Power,
-  Eye, TrendingUp, MessageSquare, CheckCircle2, Clock, ChevronDown,
-  Tag as TagIcon, Zap
+  Eye, MessageSquare, CheckCircle2, ChevronDown,
+  Tag as TagIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

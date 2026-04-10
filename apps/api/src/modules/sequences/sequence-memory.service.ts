@@ -48,7 +48,7 @@ export class SequenceMemoryService {
   async suggestSequenceForContext(
     companyId: string,
     context: string,
-    tags?: string[],
+    _tags?: string[],
   ): Promise<Array<{ sequence: any; score: number; reason: string }>> {
     // Search memory for similar sequences
     const hits = await this.memoryService.search(companyId, context, {

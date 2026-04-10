@@ -3754,7 +3754,7 @@ const tools: AdminTool[] = [
         required: ['sequenceId'],
       },
     },
-    execute: async (args, companyId) => {
+    execute: async (args, _companyId) => {
       await sequenceMemoryService.learnFromSequence(args.sequenceId as string);
       return 'Analyzed sequence. If completion rate ≥80%, pattern stored in memory.';
     },
