@@ -25,7 +25,7 @@ export async function executeTool(
           companyId: ctx.companyId,
           contactId: ctx.contactId,
           title: args.title as string,
-          source: (args.source as string | undefined) ?? 'whatsapp',
+          source: 'WHATSAPP',
           estimatedValue: args.estimatedValue as number | undefined,
           status: 'NEW',
         },

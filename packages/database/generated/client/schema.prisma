@@ -63,6 +63,48 @@ enum LeadStatus {
   DISQUALIFIED
 }
 
+enum LeadSource {
+  WHATSAPP
+  WEBSITE
+  REFERRAL
+  INBOUND_EMAIL
+  OUTBOUND
+  CAMPAIGN
+  FORM
+  IMPORT
+  AI_CHAT
+  MANUAL
+  OTHER
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LeadActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  SCORED
+  NOTE_ADDED
+  TAG_ADDED
+  TAG_REMOVED
+  CONTACTED
+  RESPONDED
+  MEETING_BOOKED
+  PROPOSAL_SENT
+  CONVERTED
+  WON
+  LOST
+  DISQUALIFIED
+  FIELD_UPDATED
+  CUSTOM
+}
+
 enum DealStage {
   LEAD_IN
   QUALIFIED
@@ -369,34 +411,83 @@ model Message {
 // ─── LEAD ─────────────────────────────────────────────────────────────────────
 
 model Lead {
-  id              String     @id @default(cuid())
-  companyId       String
-  contactId       String
-  assignedAgentId String?
-  title           String
-  status          LeadStatus @default(NEW)
-  source          String?
-  score           Int        @default(0)
-  estimatedValue  Float?
-  currency        String     @default("INR")
-  notes           String?
-  customFields    Json       @default("{}")
-  lostReason      String?
-  wonAt           DateTime?
-  lostAt          DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  deletedAt       DateTime?
+  id                 String       @id @default(cuid())
+  companyId          String
+  contactId          String
+  assignedAgentId    String?
+  title              String
+  status             LeadStatus   @default(NEW)
+  source             LeadSource   @default(MANUAL)
+  priority           LeadPriority @default(MEDIUM)
+  score              Int          @default(0)
+  probability        Int          @default(20) // 0-100
+  estimatedValue     Float?
+  currency           String       @default("INR")
+  tags               String[]     @default([])
+  notes              String?
+  customFields       Json         @default("{}")
+  expectedCloseAt    DateTime?
+  nextActionAt       DateTime?
+  nextActionNote     String?
+  qualifiedAt        DateTime?
+  disqualifiedAt     DateTime?
+  disqualifiedReason String?
+  lostReason         String?
+  wonAt              DateTime?
+  lostAt             DateTime?
+  slaFirstResponseAt DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  deletedAt          DateTime?
 
-  company       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  contact       Contact @relation(fields: [contactId], references: [id])
-  assignedAgent User?   @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact       Contact          @relation(fields: [contactId], references: [id])
+  assignedAgent User?            @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
   deals         Deal[]
+  activities    LeadActivity[]
+  scoreEvents   LeadScoreEvent[]
 
   @@index([companyId])
   @@index([contactId])
   @@index([status])
   @@index([companyId, status])
+  @@index([companyId, source])
+  @@index([companyId, priority])
+  @@index([companyId, assignedAgentId])
+  @@index([companyId, nextActionAt])
+}
+
+model LeadActivity {
+  id        String           @id @default(cuid())
+  leadId    String
+  companyId String
+  type      LeadActivityType
+  actorType String // user | ai | system | whatsapp
+  actorId   String? // userId if actor is a user
+  title     String
+  body      String?
+  metadata  Json             @default("{}")
+  createdAt DateTime         @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+  @@index([companyId, type])
+}
+
+model LeadScoreEvent {
+  id        String   @id @default(cuid())
+  leadId    String
+  companyId String
+  delta     Int
+  newScore  Int
+  reason    String
+  source    String // auto | manual | ai | rule:<name>
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
 }
 
 // ─── DEAL ─────────────────────────────────────────────────────────────────────

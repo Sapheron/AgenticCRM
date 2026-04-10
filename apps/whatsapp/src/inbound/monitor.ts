@@ -183,5 +183,147 @@ export class InboundMonitor {
       );
       logger.info({ messageId: storedMessage.id }, 'Message queued for AI processing');
     }
+
+    // ── Lead hooks (best-effort, never block message ingestion) ──────────
+    await this.maybeCreateLead(companyId, contact.id, normalized.body)
+      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead auto-create failed'));
+    await this.bumpLeadScore(companyId, contact.id)
+      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead score bump failed'));
   }
+
+  /**
+   * If this contact has zero open leads in the last 30 days, create one with
+   * source=WHATSAPP. Skips silently if any open lead exists or on any error.
+   */
+  private async maybeCreateLead(companyId: string, contactId: string, body?: string): Promise<void> {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const existing = await prisma.lead.findFirst({
+      where: {
+        companyId,
+        contactId,
+        deletedAt: null,
+        status: { notIn: ['WON', 'LOST', 'DISQUALIFIED'] },
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      select: { id: true },
+    });
+    if (existing) return;
+
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId },
+      select: { displayName: true, phoneNumber: true },
+    });
+    const title = `Inbound from ${contact?.displayName ?? contact?.phoneNumber ?? 'WhatsApp'}`;
+
+    const lead = await prisma.lead.create({
+      data: {
+        companyId,
+        contactId,
+        title,
+        status: 'NEW',
+        source: 'WHATSAPP',
+        priority: 'MEDIUM',
+        score: 5,
+        notes: body?.slice(0, 200),
+      },
+    });
+    await prisma.leadActivity.create({
+      data: {
+        leadId: lead.id,
+        companyId,
+        type: 'CREATED',
+        actorType: 'whatsapp',
+        title: 'Auto-created from inbound WhatsApp message',
+        body: body?.slice(0, 500),
+      },
+    });
+    logger.info({ leadId: lead.id, contactId }, 'Auto-created lead from inbound WhatsApp');
+  }
+
+  /**
+   * Re-run the scoring rules for any open lead linked to this contact. Mirrors
+   * the API's `LeadsService.recalculateScore` but inlined here so we don't
+   * cross-import from apps/api.
+   */
+  private async bumpLeadScore(companyId: string, contactId: string): Promise<void> {
+    const leads = await prisma.lead.findMany({
+      where: {
+        companyId,
+        contactId,
+        deletedAt: null,
+        status: { notIn: ['WON', 'LOST', 'DISQUALIFIED'] },
+      },
+      select: {
+        id: true,
+        score: true,
+        status: true,
+        tags: true,
+        estimatedValue: true,
+        updatedAt: true,
+      },
+    });
+    if (!leads.length) return;
+
+    const recentMessages = await prisma.message.findMany({
+      where: { companyId, conversation: { contactId } },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { direction: true, createdAt: true },
+    });
+
+    for (const lead of leads) {
+      const newScore = scoreLeadInline(lead, recentMessages);
+      if (newScore === lead.score) continue;
+
+      await prisma.lead.update({ where: { id: lead.id }, data: { score: newScore } });
+      await prisma.leadScoreEvent.create({
+        data: {
+          leadId: lead.id,
+          companyId,
+          delta: newScore - lead.score,
+          newScore,
+          reason: 'inbound message',
+          source: 'auto',
+        },
+      });
+    }
+  }
+}
+
+// ── Local scoring (mirrors apps/api/src/modules/leads/scoring.ts) ───────────
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+
+function scoreLeadInline(
+  lead: { score: number; status: string; tags: string[]; estimatedValue: number | null; updatedAt: Date },
+  recentMessages: { direction: string; createdAt: Date }[],
+): number {
+  let total = 0;
+  if (lead.score === 0) total += 5;
+
+  const inbound = recentMessages.filter((m) => m.direction === 'INBOUND');
+  const outbound = recentMessages.filter((m) => m.direction === 'OUTBOUND');
+  if (inbound.length && outbound.length) {
+    const lastIn = inbound[0]?.createdAt.getTime() ?? 0;
+    const lastOut = outbound[0]?.createdAt.getTime() ?? 0;
+    if (lastIn > lastOut) {
+      total += 10;
+      if (lastIn - lastOut <= HOUR) total += 5;
+    }
+  }
+  const since = Date.now() - DAY;
+  if (inbound.filter((m) => m.createdAt.getTime() >= since).length >= 3) total += 5;
+
+  if ((lead.estimatedValue ?? 0) >= 50000) total += 10;
+  if (lead.status === 'QUALIFIED') total += 20;
+  else if (lead.status === 'PROPOSAL_SENT') total += 15;
+  else if (lead.status === 'NEGOTIATING') total += 10;
+
+  if (lead.tags.includes('high-intent')) total += 15;
+  if (lead.tags.includes('cold')) total -= 10;
+
+  const lastActivity = recentMessages[0]?.createdAt.getTime() ?? lead.updatedAt.getTime();
+  if (Date.now() - lastActivity > 14 * DAY) total -= 5;
+
+  return Math.max(0, Math.min(100, total));
 }

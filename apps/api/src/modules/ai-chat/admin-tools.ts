@@ -5,12 +5,16 @@
 import { prisma } from '@wacrm/database';
 import Redis from 'ioredis';
 import { MemoryService } from '../memory/memory.service';
+import { LeadsService } from '../leads/leads.service';
+import type { LeadActor } from '../leads/leads.types';
 import type { ChatAttachment } from './attachments';
 
 // Memory service is a plain class (no DI deps), so we can instantiate it once
 // here and reuse across tool calls. Tools that don't go through Nest's DI
 // container (like the chat tools) need this.
 const memoryService = new MemoryService();
+const leadsService = new LeadsService();
+const AI_ACTOR: LeadActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -218,87 +222,526 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Leads ─────────────────────────────────────────────────────────────────
-  {
-    definition: {
-      name: 'create_lead',
-      description: 'Create a new sales lead.',
-      parameters: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', description: 'Lead title (e.g., "Website Redesign for Acme")' },
-          contactId: { type: 'string', description: 'Contact ID to link' },
-          phoneNumber: { type: 'string', description: 'Contact phone (if no contactId)' },
-          estimatedValue: { type: 'number', description: 'Estimated deal value' },
-          source: { type: 'string', description: 'Lead source (e.g., whatsapp, website, referral)' },
-        },
-        required: ['title'],
-      },
-    },
-    execute: async (args, companyId) => {
-      let contactId = args.contactId as string;
-      if (!contactId && args.phoneNumber) {
-        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: args.phoneNumber as string } });
-        if (c) contactId = c.id;
-      }
-      const lead = await prisma.lead.create({
-        data: {
-          company: { connect: { id: companyId } },
-          title: args.title as string,
-          ...(contactId ? { contact: { connect: { id: contactId } } } : {}),
-          estimatedValue: (args.estimatedValue as number) || undefined,
-          source: (args.source as string) || 'ai_chat',
-          status: 'NEW',
-        } as any,
-      });
-      return `Created lead: "${lead.title}" (ID: ${lead.id}, status: NEW)`;
-    },
-  },
-  {
-    definition: {
-      name: 'update_lead',
-      description: 'Update a lead status, value, or notes.',
-      parameters: {
-        type: 'object',
-        properties: {
-          leadId: { type: 'string', description: 'Lead ID' },
-          status: { type: 'string', enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATING', 'WON', 'LOST', 'DISQUALIFIED'] },
-          estimatedValue: { type: 'number' },
-          notes: { type: 'string' },
-        },
-        required: ['leadId'],
-      },
-    },
-    execute: async (args, _companyId) => {
-      const data: Record<string, unknown> = {};
-      if (args.status) data.status = args.status;
-      if (args.estimatedValue) data.estimatedValue = args.estimatedValue;
-      if (args.notes) data.notes = args.notes;
-      if (args.status === 'WON') data.wonAt = new Date();
-      if (args.status === 'LOST') data.lostAt = new Date();
-      const lead = await prisma.lead.update({ where: { id: args.leadId as string }, data });
-      return `Updated lead "${lead.title}" — status: ${lead.status}`;
-    },
-  },
+  // ── Leads (full lifecycle, all routed through LeadsService) ───────────────
   {
     definition: {
       name: 'list_leads',
-      description: 'List leads with optional status filter.',
+      description: 'List leads with rich filters. Use this to find leads by status, source, priority, score range, value range, or text search. Always prefer this over reading leads ad-hoc.',
       parameters: {
         type: 'object',
         properties: {
-          status: { type: 'string', description: 'Filter by status' },
-          limit: { type: 'number', description: 'Max results (default 10)' },
+          status: { type: 'string', enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATING', 'WON', 'LOST', 'DISQUALIFIED'] },
+          source: { type: 'string', enum: ['WHATSAPP', 'WEBSITE', 'REFERRAL', 'INBOUND_EMAIL', 'OUTBOUND', 'CAMPAIGN', 'FORM', 'IMPORT', 'AI_CHAT', 'MANUAL', 'OTHER'] },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          assignedAgentId: { type: 'string', description: 'User ID of the assignee, or "null" for unassigned' },
+          tag: { type: 'string', description: 'Single tag to filter by' },
+          search: { type: 'string', description: 'Free-text search over title/notes/contact name/phone' },
+          scoreMin: { type: 'number' },
+          valueMin: { type: 'number' },
+          nextActionDue: { type: 'boolean', description: 'Only return leads with overdue next-action' },
+          sort: { type: 'string', enum: ['recent', 'score', 'value', 'next_action', 'created'] },
+          limit: { type: 'number', description: 'Max results (default 20)' },
         },
         required: [],
       },
     },
     execute: async (args, companyId) => {
-      const where: Record<string, unknown> = { companyId };
-      if (args.status) where.status = args.status;
-      const leads = await prisma.lead.findMany({ where: where as any, take: (args.limit as number) || 10, orderBy: { createdAt: 'desc' }, include: { contact: { select: { displayName: true, phoneNumber: true } } } });
-      if (!leads.length) return 'No leads found';
-      return leads.map((l) => `- "${l.title}" | ${l.status} | ₹${l.estimatedValue || 0} | ${l.contact?.displayName || l.contact?.phoneNumber || 'no contact'} | ID: ${l.id}`).join('\n');
+      const result = await leadsService.list(companyId, {
+        status: args.status as never,
+        source: args.source as never,
+        priority: args.priority as never,
+        assignedAgentId: args.assignedAgentId === 'null' ? null : (args.assignedAgentId as string | undefined),
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        scoreMin: args.scoreMin as number | undefined,
+        valueMin: args.valueMin as number | undefined,
+        nextActionDue: args.nextActionDue as boolean | undefined,
+        sort: args.sort as never,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No leads match those filters.';
+      return [
+        `Found ${result.total} lead(s) (showing ${result.items.length}):`,
+        ...result.items.map((l) => {
+          const contact = l.contact?.displayName ?? l.contact?.phoneNumber ?? '—';
+          const value = l.estimatedValue ? `₹${l.estimatedValue}` : '—';
+          return `- [${l.score}] "${l.title}" | ${l.status} | ${l.priority} | ${value} | ${contact} | ID: ${l.id}`;
+        }),
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_lead',
+      description: 'Fetch a lead with its last 10 timeline activities. Use after list_leads or when the user references a specific lead.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' } },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.get(companyId, args.leadId as string);
+      const recent = lead.activities.slice(0, 10);
+      const lines = [
+        `Lead "${lead.title}" (ID: ${lead.id})`,
+        `Status: ${lead.status} · Priority: ${lead.priority} · Score: ${lead.score} · Value: ${lead.estimatedValue ?? '—'} ${lead.currency}`,
+        `Source: ${lead.source} · Tags: ${lead.tags.join(', ') || '—'}`,
+        `Contact: ${lead.contact.displayName ?? lead.contact.phoneNumber} (${lead.contact.phoneNumber})`,
+        lead.assignedAgent ? `Assigned to: ${lead.assignedAgent.firstName} ${lead.assignedAgent.lastName}` : 'Unassigned',
+        lead.expectedCloseAt ? `Expected close: ${lead.expectedCloseAt.toISOString().slice(0, 10)}` : '',
+        lead.nextActionAt ? `Next action: ${lead.nextActionAt.toISOString().slice(0, 16)} — ${lead.nextActionNote ?? ''}` : '',
+        '',
+        'Recent activity:',
+        ...recent.map((a) => `  • ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`),
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_lead',
+      description: 'Create a new sales lead. Auto-creates a contact from `phoneNumber` if needed. Refuses if an open lead already exists for the same contact in the last 30 days unless `force: true`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string', description: 'Used if no contactId — upserts a contact' },
+          contactName: { type: 'string', description: 'Optional display name when upserting a contact' },
+          source: { type: 'string', enum: ['WHATSAPP', 'WEBSITE', 'REFERRAL', 'INBOUND_EMAIL', 'OUTBOUND', 'CAMPAIGN', 'FORM', 'IMPORT', 'AI_CHAT', 'MANUAL', 'OTHER'] },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          estimatedValue: { type: 'number' },
+          currency: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          expectedCloseAt: { type: 'string', description: 'ISO date' },
+          notes: { type: 'string' },
+          force: { type: 'boolean', description: 'Bypass duplicate detection' },
+        },
+        required: ['title'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.create(
+        companyId,
+        {
+          title: args.title as string,
+          contactId: args.contactId as string | undefined,
+          phoneNumber: args.phoneNumber as string | undefined,
+          contactName: args.contactName as string | undefined,
+          source: args.source as never,
+          priority: args.priority as never,
+          estimatedValue: args.estimatedValue as number | undefined,
+          currency: args.currency as string | undefined,
+          tags: args.tags as string[] | undefined,
+          expectedCloseAt: args.expectedCloseAt as string | undefined,
+          notes: args.notes as string | undefined,
+          force: args.force as boolean | undefined,
+        },
+        AI_ACTOR,
+      );
+      return `Created lead "${lead.title}" (ID: ${lead.id}, status: ${lead.status}, score: ${lead.score})`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_lead',
+      description: 'Update arbitrary lead fields. Field-level changes are diffed and logged to the activity timeline.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          title: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          estimatedValue: { type: 'number' },
+          probability: { type: 'number' },
+          tags: { type: 'array', items: { type: 'string' } },
+          expectedCloseAt: { type: 'string' },
+          nextActionAt: { type: 'string', description: 'When to follow up next (ISO date)' },
+          nextActionNote: { type: 'string' },
+          notes: { type: 'string' },
+        },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.update(
+        companyId,
+        args.leadId as string,
+        {
+          title: args.title as string | undefined,
+          priority: args.priority as never,
+          estimatedValue: args.estimatedValue as number | undefined,
+          probability: args.probability as number | undefined,
+          tags: args.tags as string[] | undefined,
+          expectedCloseAt: args.expectedCloseAt as string | undefined,
+          nextActionAt: args.nextActionAt as string | undefined,
+          nextActionNote: args.nextActionNote as string | undefined,
+          notes: args.notes as string | undefined,
+        },
+        AI_ACTOR,
+      );
+      return `Updated lead "${lead.title}" (status: ${lead.status}, score: ${lead.score})`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_lead',
+      description: 'Soft-delete a lead.',
+      parameters: { type: 'object', properties: { leadId: { type: 'string' } }, required: ['leadId'] },
+    },
+    execute: async (args, companyId) => {
+      await leadsService.remove(companyId, args.leadId as string, AI_ACTOR);
+      return `Deleted lead ${args.leadId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'qualify_lead',
+      description: 'Mark a lead as QUALIFIED. Logs the activity and bumps the score.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, reason: { type: 'string' } },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.updateStatus(companyId, args.leadId as string, 'QUALIFIED', AI_ACTOR, args.reason as string | undefined);
+      return `Qualified lead "${lead.title}" — score now ${lead.score}`;
+    },
+  },
+  {
+    definition: {
+      name: 'disqualify_lead',
+      description: 'Mark a lead as DISQUALIFIED with a reason.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, reason: { type: 'string' } },
+        required: ['leadId', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.updateStatus(companyId, args.leadId as string, 'DISQUALIFIED', AI_ACTOR, args.reason as string);
+      return `Disqualified lead "${lead.title}": ${args.reason as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_lead_won',
+      description: 'Mark a lead as WON. Consider also calling convert_lead_to_deal afterwards.',
+      parameters: { type: 'object', properties: { leadId: { type: 'string' } }, required: ['leadId'] },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.updateStatus(companyId, args.leadId as string, 'WON', AI_ACTOR);
+      return `Marked lead "${lead.title}" as WON`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_lead_lost',
+      description: 'Mark a lead as LOST with a reason.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, reason: { type: 'string' } },
+        required: ['leadId', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.updateStatus(companyId, args.leadId as string, 'LOST', AI_ACTOR, args.reason as string);
+      return `Marked lead "${lead.title}" as LOST: ${args.reason as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'convert_lead_to_deal',
+      description: 'Convert a lead into a Deal in the pipeline. Marks the lead WON and creates a linked deal record.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          dealTitle: { type: 'string' },
+          value: { type: 'number' },
+          currency: { type: 'string' },
+          stage: { type: 'string', enum: ['LEAD_IN', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST'] },
+          probability: { type: 'number' },
+        },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await leadsService.convertToDeal(
+        companyId,
+        args.leadId as string,
+        {
+          dealTitle: args.dealTitle as string | undefined,
+          value: args.value as number | undefined,
+          currency: args.currency as string | undefined,
+          stage: args.stage as never,
+          probability: args.probability as number | undefined,
+        },
+        AI_ACTOR,
+      );
+      return `Converted lead → deal ${result.dealId}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_lead_note',
+      description: 'Add a note to a lead. The note appears in the timeline AND is appended to the legacy notes field.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, body: { type: 'string' } },
+        required: ['leadId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await leadsService.addNote(companyId, args.leadId as string, args.body as string, AI_ACTOR);
+      return `Note added to lead ${args.leadId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'assign_lead',
+      description: 'Assign a lead to a user. Pass userId="null" to unassign.',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, userId: { type: 'string' } },
+        required: ['leadId', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const lead = await leadsService.assign(companyId, args.leadId as string, userId, AI_ACTOR);
+      return userId ? `Assigned lead "${lead.title}" to user ${userId}` : `Unassigned lead "${lead.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'score_lead',
+      description: 'Manually adjust a lead score by `delta` (positive or negative). Use this when you have qualitative info the rule engine can\'t see.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          delta: { type: 'number', description: 'Score delta (-100 to +100)' },
+          reason: { type: 'string' },
+        },
+        required: ['leadId', 'delta', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.setScore(
+        companyId,
+        args.leadId as string,
+        args.delta as number,
+        args.reason as string,
+        'ai',
+        AI_ACTOR,
+      );
+      return `Lead "${lead.title}" score is now ${lead.score}`;
+    },
+  },
+  {
+    definition: {
+      name: 'recalculate_lead_score',
+      description: 'Re-run the deterministic scoring rule engine for a lead.',
+      parameters: { type: 'object', properties: { leadId: { type: 'string' } }, required: ['leadId'] },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.recalculateScore(companyId, args.leadId as string);
+      return `Recalculated. Score: ${lead.score}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_lead_timeline',
+      description: 'Fetch the activity timeline of a lead (newest first).',
+      parameters: {
+        type: 'object',
+        properties: { leadId: { type: 'string' }, limit: { type: 'number' } },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await leadsService.getTimeline(companyId, args.leadId as string, (args.limit as number) ?? 20);
+      if (!items.length) return 'No timeline activity yet.';
+      return items
+        .map((a) => `- ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}${a.body ? `\n    ${a.body}` : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_lead_score_history',
+      description: 'Show how a lead\'s score evolved over time.',
+      parameters: { type: 'object', properties: { leadId: { type: 'string' } }, required: ['leadId'] },
+    },
+    execute: async (args, companyId) => {
+      const events = await leadsService.getScoreHistory(companyId, args.leadId as string);
+      if (!events.length) return 'No score history yet.';
+      return events
+        .map((e) => `${e.createdAt.toISOString().slice(0, 16)}  ${e.delta > 0 ? '+' : ''}${e.delta} → ${e.newScore}  (${e.source}) ${e.reason}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'find_duplicate_leads',
+      description: 'Find existing leads for a contact (by contactId). Use before creating a new lead.',
+      parameters: { type: 'object', properties: { contactId: { type: 'string' } }, required: ['contactId'] },
+    },
+    execute: async (args, companyId) => {
+      const dups = await leadsService.findDuplicates(companyId, args.contactId as string);
+      if (!dups.length) return 'No existing leads for this contact.';
+      return dups.map((d) => `- "${d.title}" | ${d.status} | score ${d.score} | ${d.createdAt.toISOString().slice(0, 10)} | ID: ${d.id}`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'set_lead_priority',
+      description: 'Set lead priority.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+        },
+        required: ['leadId', 'priority'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.update(companyId, args.leadId as string, { priority: args.priority as never }, AI_ACTOR);
+      return `Set priority of "${lead.title}" to ${lead.priority}`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_lead_next_action',
+      description: 'Schedule the next action for a lead — when to follow up and what to do.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          when: { type: 'string', description: 'ISO datetime' },
+          note: { type: 'string' },
+        },
+        required: ['leadId', 'when'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const lead = await leadsService.update(
+        companyId,
+        args.leadId as string,
+        { nextActionAt: args.when as string, nextActionNote: args.note as string | undefined },
+        AI_ACTOR,
+      );
+      return `Next action for "${lead.title}" set for ${lead.nextActionAt?.toISOString().slice(0, 16)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'tag_lead',
+      description: 'Add or remove tags from a lead.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadId: { type: 'string' },
+          add: { type: 'array', items: { type: 'string' } },
+          remove: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['leadId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await leadsService.bulkTag(
+        companyId,
+        [args.leadId as string],
+        (args.add as string[]) ?? [],
+        (args.remove as string[]) ?? [],
+        AI_ACTOR,
+      );
+      return result.updated ? `Tagged lead ${args.leadId as string}` : 'No changes';
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_update_lead_status',
+      description: 'Move many leads to the same status at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadIds: { type: 'array', items: { type: 'string' } },
+          status: { type: 'string', enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATING', 'WON', 'LOST', 'DISQUALIFIED'] },
+          reason: { type: 'string' },
+        },
+        required: ['leadIds', 'status'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await leadsService.bulkUpdateStatus(
+        companyId,
+        args.leadIds as string[],
+        args.status as never,
+        AI_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Bulk status: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_assign_leads',
+      description: 'Assign many leads to one user at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          leadIds: { type: 'array', items: { type: 'string' } },
+          userId: { type: 'string' },
+        },
+        required: ['leadIds', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const result = await leadsService.bulkAssign(companyId, args.leadIds as string[], userId, AI_ACTOR);
+      return `Bulk assign: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_delete_leads',
+      description: 'Soft-delete many leads at once.',
+      parameters: {
+        type: 'object',
+        properties: { leadIds: { type: 'array', items: { type: 'string' } } },
+        required: ['leadIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await leadsService.bulkDelete(companyId, args.leadIds as string[], AI_ACTOR);
+      return `Bulk delete: ${result.deleted}/${result.requested} removed`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_lead_stats',
+      description: 'Pipeline funnel stats — counts per status, conversion rate, won value, source breakdown.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window in days (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await leadsService.stats(companyId, (args.days as number) ?? 30);
+      return [
+        `Lead stats — last ${s.rangeDays} days`,
+        `Total: ${s.total}`,
+        `Won: ${s.wonCount} (₹${s.wonValue}, ${s.conversionRate}% conversion)`,
+        `Avg score: ${s.avgScore}`,
+        `By status: ${Object.entries(s.byStatus).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+        `By source: ${Object.entries(s.bySource).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+      ].join('\n');
     },
   },
 
@@ -1229,8 +1672,9 @@ const CORE_TOOL_NAMES = new Set([
   // Contacts
   'create_contact', 'update_contact', 'delete_contact', 'search_contacts', 'get_contact',
   'tag_contact', 'add_contact_note', 'get_contact_timeline',
-  // Leads
-  'create_lead', 'update_lead', 'list_leads',
+  // Leads (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
+  'list_leads', 'get_lead', 'create_lead', 'update_lead',
+  'qualify_lead', 'convert_lead_to_deal', 'add_lead_note', 'assign_lead',
   // Deals
   'create_deal', 'update_deal', 'list_deals',
   // Tasks

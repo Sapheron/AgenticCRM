@@ -49,6 +49,16 @@ export type Message = $Result.DefaultSelection<Prisma.$MessagePayload>
  */
 export type Lead = $Result.DefaultSelection<Prisma.$LeadPayload>
 /**
+ * Model LeadActivity
+ * 
+ */
+export type LeadActivity = $Result.DefaultSelection<Prisma.$LeadActivityPayload>
+/**
+ * Model LeadScoreEvent
+ * 
+ */
+export type LeadScoreEvent = $Result.DefaultSelection<Prisma.$LeadScoreEventPayload>
+/**
  * Model Deal
  * 
  */
@@ -375,6 +385,57 @@ export const LeadStatus: {
 export type LeadStatus = (typeof LeadStatus)[keyof typeof LeadStatus]
 
 
+export const LeadSource: {
+  WHATSAPP: 'WHATSAPP',
+  WEBSITE: 'WEBSITE',
+  REFERRAL: 'REFERRAL',
+  INBOUND_EMAIL: 'INBOUND_EMAIL',
+  OUTBOUND: 'OUTBOUND',
+  CAMPAIGN: 'CAMPAIGN',
+  FORM: 'FORM',
+  IMPORT: 'IMPORT',
+  AI_CHAT: 'AI_CHAT',
+  MANUAL: 'MANUAL',
+  OTHER: 'OTHER'
+};
+
+export type LeadSource = (typeof LeadSource)[keyof typeof LeadSource]
+
+
+export const LeadPriority: {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
+};
+
+export type LeadPriority = (typeof LeadPriority)[keyof typeof LeadPriority]
+
+
+export const LeadActivityType: {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+  ASSIGNED: 'ASSIGNED',
+  UNASSIGNED: 'UNASSIGNED',
+  SCORED: 'SCORED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  TAG_ADDED: 'TAG_ADDED',
+  TAG_REMOVED: 'TAG_REMOVED',
+  CONTACTED: 'CONTACTED',
+  RESPONDED: 'RESPONDED',
+  MEETING_BOOKED: 'MEETING_BOOKED',
+  PROPOSAL_SENT: 'PROPOSAL_SENT',
+  CONVERTED: 'CONVERTED',
+  WON: 'WON',
+  LOST: 'LOST',
+  DISQUALIFIED: 'DISQUALIFIED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  CUSTOM: 'CUSTOM'
+};
+
+export type LeadActivityType = (typeof LeadActivityType)[keyof typeof LeadActivityType]
+
+
 export const DealStage: {
   LEAD_IN: 'LEAD_IN',
   QUALIFIED: 'QUALIFIED',
@@ -505,6 +566,18 @@ export const MessageType: typeof $Enums.MessageType
 export type LeadStatus = $Enums.LeadStatus
 
 export const LeadStatus: typeof $Enums.LeadStatus
+
+export type LeadSource = $Enums.LeadSource
+
+export const LeadSource: typeof $Enums.LeadSource
+
+export type LeadPriority = $Enums.LeadPriority
+
+export const LeadPriority: typeof $Enums.LeadPriority
+
+export type LeadActivityType = $Enums.LeadActivityType
+
+export const LeadActivityType: typeof $Enums.LeadActivityType
 
 export type DealStage = $Enums.DealStage
 
@@ -728,6 +801,26 @@ export class PrismaClient<
     * ```
     */
   get lead(): Prisma.LeadDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.leadActivity`: Exposes CRUD operations for the **LeadActivity** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LeadActivities
+    * const leadActivities = await prisma.leadActivity.findMany()
+    * ```
+    */
+  get leadActivity(): Prisma.LeadActivityDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.leadScoreEvent`: Exposes CRUD operations for the **LeadScoreEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LeadScoreEvents
+    * const leadScoreEvents = await prisma.leadScoreEvent.findMany()
+    * ```
+    */
+  get leadScoreEvent(): Prisma.LeadScoreEventDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.deal`: Exposes CRUD operations for the **Deal** model.
@@ -1669,6 +1762,8 @@ export namespace Prisma {
     Conversation: 'Conversation',
     Message: 'Message',
     Lead: 'Lead',
+    LeadActivity: 'LeadActivity',
+    LeadScoreEvent: 'LeadScoreEvent',
     Deal: 'Deal',
     Task: 'Task',
     AiConfig: 'AiConfig',
@@ -1734,7 +1829,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "company" | "user" | "whatsAppAccount" | "contact" | "conversation" | "message" | "lead" | "deal" | "task" | "aiConfig" | "aiContextCache" | "paymentConfig" | "payment" | "broadcast" | "auditLog" | "webhookEndpoint" | "contactNote" | "tag" | "segment" | "customFieldDefinition" | "notification" | "template" | "cannedResponse" | "sequence" | "sequenceStep" | "sequenceEnrollment" | "callLog" | "pipeline" | "pipelineStage" | "product" | "quote" | "quoteLineItem" | "invoice" | "invoiceLineItem" | "campaign" | "form" | "formSubmission" | "workflow" | "workflowExecution" | "ticket" | "ticketComment" | "knowledgeBaseArticle" | "slaPolicy" | "customReport" | "scheduledReport" | "integration" | "calendarEvent" | "activityLog" | "document" | "documentSignature" | "apiKey" | "chatConversation" | "chatMessage" | "aiMemory" | "memoryFile" | "memoryChunk" | "recallEntry"
+      modelProps: "company" | "user" | "whatsAppAccount" | "contact" | "conversation" | "message" | "lead" | "leadActivity" | "leadScoreEvent" | "deal" | "task" | "aiConfig" | "aiContextCache" | "paymentConfig" | "payment" | "broadcast" | "auditLog" | "webhookEndpoint" | "contactNote" | "tag" | "segment" | "customFieldDefinition" | "notification" | "template" | "cannedResponse" | "sequence" | "sequenceStep" | "sequenceEnrollment" | "callLog" | "pipeline" | "pipelineStage" | "product" | "quote" | "quoteLineItem" | "invoice" | "invoiceLineItem" | "campaign" | "form" | "formSubmission" | "workflow" | "workflowExecution" | "ticket" | "ticketComment" | "knowledgeBaseArticle" | "slaPolicy" | "customReport" | "scheduledReport" | "integration" | "calendarEvent" | "activityLog" | "document" | "documentSignature" | "apiKey" | "chatConversation" | "chatMessage" | "aiMemory" | "memoryFile" | "memoryChunk" | "recallEntry"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2253,6 +2348,154 @@ export namespace Prisma {
           count: {
             args: Prisma.LeadCountArgs<ExtArgs>
             result: $Utils.Optional<LeadCountAggregateOutputType> | number
+          }
+        }
+      }
+      LeadActivity: {
+        payload: Prisma.$LeadActivityPayload<ExtArgs>
+        fields: Prisma.LeadActivityFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LeadActivityFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LeadActivityFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          findFirst: {
+            args: Prisma.LeadActivityFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LeadActivityFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          findMany: {
+            args: Prisma.LeadActivityFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>[]
+          }
+          create: {
+            args: Prisma.LeadActivityCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          createMany: {
+            args: Prisma.LeadActivityCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LeadActivityCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>[]
+          }
+          delete: {
+            args: Prisma.LeadActivityDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          update: {
+            args: Prisma.LeadActivityUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          deleteMany: {
+            args: Prisma.LeadActivityDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LeadActivityUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LeadActivityUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>[]
+          }
+          upsert: {
+            args: Prisma.LeadActivityUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadActivityPayload>
+          }
+          aggregate: {
+            args: Prisma.LeadActivityAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLeadActivity>
+          }
+          groupBy: {
+            args: Prisma.LeadActivityGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LeadActivityGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LeadActivityCountArgs<ExtArgs>
+            result: $Utils.Optional<LeadActivityCountAggregateOutputType> | number
+          }
+        }
+      }
+      LeadScoreEvent: {
+        payload: Prisma.$LeadScoreEventPayload<ExtArgs>
+        fields: Prisma.LeadScoreEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LeadScoreEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LeadScoreEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          findFirst: {
+            args: Prisma.LeadScoreEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LeadScoreEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          findMany: {
+            args: Prisma.LeadScoreEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>[]
+          }
+          create: {
+            args: Prisma.LeadScoreEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          createMany: {
+            args: Prisma.LeadScoreEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LeadScoreEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>[]
+          }
+          delete: {
+            args: Prisma.LeadScoreEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          update: {
+            args: Prisma.LeadScoreEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.LeadScoreEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LeadScoreEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LeadScoreEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.LeadScoreEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LeadScoreEventPayload>
+          }
+          aggregate: {
+            args: Prisma.LeadScoreEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLeadScoreEvent>
+          }
+          groupBy: {
+            args: Prisma.LeadScoreEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LeadScoreEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LeadScoreEventCountArgs<ExtArgs>
+            result: $Utils.Optional<LeadScoreEventCountAggregateOutputType> | number
           }
         }
       }
@@ -6071,6 +6314,8 @@ export namespace Prisma {
     conversation?: ConversationOmit
     message?: MessageOmit
     lead?: LeadOmit
+    leadActivity?: LeadActivityOmit
+    leadScoreEvent?: LeadScoreEventOmit
     deal?: DealOmit
     task?: TaskOmit
     aiConfig?: AiConfigOmit
@@ -6586,10 +6831,14 @@ export namespace Prisma {
 
   export type LeadCountOutputType = {
     deals: number
+    activities: number
+    scoreEvents: number
   }
 
   export type LeadCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     deals?: boolean | LeadCountOutputTypeCountDealsArgs
+    activities?: boolean | LeadCountOutputTypeCountActivitiesArgs
+    scoreEvents?: boolean | LeadCountOutputTypeCountScoreEventsArgs
   }
 
   // Custom InputTypes
@@ -6608,6 +6857,20 @@ export namespace Prisma {
    */
   export type LeadCountOutputTypeCountDealsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: DealWhereInput
+  }
+
+  /**
+   * LeadCountOutputType without action
+   */
+  export type LeadCountOutputTypeCountActivitiesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LeadActivityWhereInput
+  }
+
+  /**
+   * LeadCountOutputType without action
+   */
+  export type LeadCountOutputTypeCountScoreEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LeadScoreEventWhereInput
   }
 
 
@@ -15532,11 +15795,13 @@ export namespace Prisma {
 
   export type LeadAvgAggregateOutputType = {
     score: number | null
+    probability: number | null
     estimatedValue: number | null
   }
 
   export type LeadSumAggregateOutputType = {
     score: number | null
+    probability: number | null
     estimatedValue: number | null
   }
 
@@ -15547,14 +15812,23 @@ export namespace Prisma {
     assignedAgentId: string | null
     title: string | null
     status: $Enums.LeadStatus | null
-    source: string | null
+    source: $Enums.LeadSource | null
+    priority: $Enums.LeadPriority | null
     score: number | null
+    probability: number | null
     estimatedValue: number | null
     currency: string | null
     notes: string | null
+    expectedCloseAt: Date | null
+    nextActionAt: Date | null
+    nextActionNote: string | null
+    qualifiedAt: Date | null
+    disqualifiedAt: Date | null
+    disqualifiedReason: string | null
     lostReason: string | null
     wonAt: Date | null
     lostAt: Date | null
+    slaFirstResponseAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
     deletedAt: Date | null
@@ -15567,14 +15841,23 @@ export namespace Prisma {
     assignedAgentId: string | null
     title: string | null
     status: $Enums.LeadStatus | null
-    source: string | null
+    source: $Enums.LeadSource | null
+    priority: $Enums.LeadPriority | null
     score: number | null
+    probability: number | null
     estimatedValue: number | null
     currency: string | null
     notes: string | null
+    expectedCloseAt: Date | null
+    nextActionAt: Date | null
+    nextActionNote: string | null
+    qualifiedAt: Date | null
+    disqualifiedAt: Date | null
+    disqualifiedReason: string | null
     lostReason: string | null
     wonAt: Date | null
     lostAt: Date | null
+    slaFirstResponseAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
     deletedAt: Date | null
@@ -15588,14 +15871,24 @@ export namespace Prisma {
     title: number
     status: number
     source: number
+    priority: number
     score: number
+    probability: number
     estimatedValue: number
     currency: number
+    tags: number
     notes: number
     customFields: number
+    expectedCloseAt: number
+    nextActionAt: number
+    nextActionNote: number
+    qualifiedAt: number
+    disqualifiedAt: number
+    disqualifiedReason: number
     lostReason: number
     wonAt: number
     lostAt: number
+    slaFirstResponseAt: number
     createdAt: number
     updatedAt: number
     deletedAt: number
@@ -15605,11 +15898,13 @@ export namespace Prisma {
 
   export type LeadAvgAggregateInputType = {
     score?: true
+    probability?: true
     estimatedValue?: true
   }
 
   export type LeadSumAggregateInputType = {
     score?: true
+    probability?: true
     estimatedValue?: true
   }
 
@@ -15621,13 +15916,22 @@ export namespace Prisma {
     title?: true
     status?: true
     source?: true
+    priority?: true
     score?: true
+    probability?: true
     estimatedValue?: true
     currency?: true
     notes?: true
+    expectedCloseAt?: true
+    nextActionAt?: true
+    nextActionNote?: true
+    qualifiedAt?: true
+    disqualifiedAt?: true
+    disqualifiedReason?: true
     lostReason?: true
     wonAt?: true
     lostAt?: true
+    slaFirstResponseAt?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -15641,13 +15945,22 @@ export namespace Prisma {
     title?: true
     status?: true
     source?: true
+    priority?: true
     score?: true
+    probability?: true
     estimatedValue?: true
     currency?: true
     notes?: true
+    expectedCloseAt?: true
+    nextActionAt?: true
+    nextActionNote?: true
+    qualifiedAt?: true
+    disqualifiedAt?: true
+    disqualifiedReason?: true
     lostReason?: true
     wonAt?: true
     lostAt?: true
+    slaFirstResponseAt?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -15661,14 +15974,24 @@ export namespace Prisma {
     title?: true
     status?: true
     source?: true
+    priority?: true
     score?: true
+    probability?: true
     estimatedValue?: true
     currency?: true
+    tags?: true
     notes?: true
     customFields?: true
+    expectedCloseAt?: true
+    nextActionAt?: true
+    nextActionNote?: true
+    qualifiedAt?: true
+    disqualifiedAt?: true
+    disqualifiedReason?: true
     lostReason?: true
     wonAt?: true
     lostAt?: true
+    slaFirstResponseAt?: true
     createdAt?: true
     updatedAt?: true
     deletedAt?: true
@@ -15768,15 +16091,25 @@ export namespace Prisma {
     assignedAgentId: string | null
     title: string
     status: $Enums.LeadStatus
-    source: string | null
+    source: $Enums.LeadSource
+    priority: $Enums.LeadPriority
     score: number
+    probability: number
     estimatedValue: number | null
     currency: string
+    tags: string[]
     notes: string | null
     customFields: JsonValue
+    expectedCloseAt: Date | null
+    nextActionAt: Date | null
+    nextActionNote: string | null
+    qualifiedAt: Date | null
+    disqualifiedAt: Date | null
+    disqualifiedReason: string | null
     lostReason: string | null
     wonAt: Date | null
     lostAt: Date | null
+    slaFirstResponseAt: Date | null
     createdAt: Date
     updatedAt: Date
     deletedAt: Date | null
@@ -15809,14 +16142,24 @@ export namespace Prisma {
     title?: boolean
     status?: boolean
     source?: boolean
+    priority?: boolean
     score?: boolean
+    probability?: boolean
     estimatedValue?: boolean
     currency?: boolean
+    tags?: boolean
     notes?: boolean
     customFields?: boolean
+    expectedCloseAt?: boolean
+    nextActionAt?: boolean
+    nextActionNote?: boolean
+    qualifiedAt?: boolean
+    disqualifiedAt?: boolean
+    disqualifiedReason?: boolean
     lostReason?: boolean
     wonAt?: boolean
     lostAt?: boolean
+    slaFirstResponseAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
@@ -15824,6 +16167,8 @@ export namespace Prisma {
     contact?: boolean | ContactDefaultArgs<ExtArgs>
     assignedAgent?: boolean | Lead$assignedAgentArgs<ExtArgs>
     deals?: boolean | Lead$dealsArgs<ExtArgs>
+    activities?: boolean | Lead$activitiesArgs<ExtArgs>
+    scoreEvents?: boolean | Lead$scoreEventsArgs<ExtArgs>
     _count?: boolean | LeadCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["lead"]>
 
@@ -15835,14 +16180,24 @@ export namespace Prisma {
     title?: boolean
     status?: boolean
     source?: boolean
+    priority?: boolean
     score?: boolean
+    probability?: boolean
     estimatedValue?: boolean
     currency?: boolean
+    tags?: boolean
     notes?: boolean
     customFields?: boolean
+    expectedCloseAt?: boolean
+    nextActionAt?: boolean
+    nextActionNote?: boolean
+    qualifiedAt?: boolean
+    disqualifiedAt?: boolean
+    disqualifiedReason?: boolean
     lostReason?: boolean
     wonAt?: boolean
     lostAt?: boolean
+    slaFirstResponseAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
@@ -15859,14 +16214,24 @@ export namespace Prisma {
     title?: boolean
     status?: boolean
     source?: boolean
+    priority?: boolean
     score?: boolean
+    probability?: boolean
     estimatedValue?: boolean
     currency?: boolean
+    tags?: boolean
     notes?: boolean
     customFields?: boolean
+    expectedCloseAt?: boolean
+    nextActionAt?: boolean
+    nextActionNote?: boolean
+    qualifiedAt?: boolean
+    disqualifiedAt?: boolean
+    disqualifiedReason?: boolean
     lostReason?: boolean
     wonAt?: boolean
     lostAt?: boolean
+    slaFirstResponseAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
@@ -15883,25 +16248,37 @@ export namespace Prisma {
     title?: boolean
     status?: boolean
     source?: boolean
+    priority?: boolean
     score?: boolean
+    probability?: boolean
     estimatedValue?: boolean
     currency?: boolean
+    tags?: boolean
     notes?: boolean
     customFields?: boolean
+    expectedCloseAt?: boolean
+    nextActionAt?: boolean
+    nextActionNote?: boolean
+    qualifiedAt?: boolean
+    disqualifiedAt?: boolean
+    disqualifiedReason?: boolean
     lostReason?: boolean
     wonAt?: boolean
     lostAt?: boolean
+    slaFirstResponseAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
   }
 
-  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "contactId" | "assignedAgentId" | "title" | "status" | "source" | "score" | "estimatedValue" | "currency" | "notes" | "customFields" | "lostReason" | "wonAt" | "lostAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["lead"]>
+  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "contactId" | "assignedAgentId" | "title" | "status" | "source" | "priority" | "score" | "probability" | "estimatedValue" | "currency" | "tags" | "notes" | "customFields" | "expectedCloseAt" | "nextActionAt" | "nextActionNote" | "qualifiedAt" | "disqualifiedAt" | "disqualifiedReason" | "lostReason" | "wonAt" | "lostAt" | "slaFirstResponseAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["lead"]>
   export type LeadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     company?: boolean | CompanyDefaultArgs<ExtArgs>
     contact?: boolean | ContactDefaultArgs<ExtArgs>
     assignedAgent?: boolean | Lead$assignedAgentArgs<ExtArgs>
     deals?: boolean | Lead$dealsArgs<ExtArgs>
+    activities?: boolean | Lead$activitiesArgs<ExtArgs>
+    scoreEvents?: boolean | Lead$scoreEventsArgs<ExtArgs>
     _count?: boolean | LeadCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type LeadIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -15922,6 +16299,8 @@ export namespace Prisma {
       contact: Prisma.$ContactPayload<ExtArgs>
       assignedAgent: Prisma.$UserPayload<ExtArgs> | null
       deals: Prisma.$DealPayload<ExtArgs>[]
+      activities: Prisma.$LeadActivityPayload<ExtArgs>[]
+      scoreEvents: Prisma.$LeadScoreEventPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -15930,15 +16309,25 @@ export namespace Prisma {
       assignedAgentId: string | null
       title: string
       status: $Enums.LeadStatus
-      source: string | null
+      source: $Enums.LeadSource
+      priority: $Enums.LeadPriority
       score: number
+      probability: number
       estimatedValue: number | null
       currency: string
+      tags: string[]
       notes: string | null
       customFields: Prisma.JsonValue
+      expectedCloseAt: Date | null
+      nextActionAt: Date | null
+      nextActionNote: string | null
+      qualifiedAt: Date | null
+      disqualifiedAt: Date | null
+      disqualifiedReason: string | null
       lostReason: string | null
       wonAt: Date | null
       lostAt: Date | null
+      slaFirstResponseAt: Date | null
       createdAt: Date
       updatedAt: Date
       deletedAt: Date | null
@@ -16340,6 +16729,8 @@ export namespace Prisma {
     contact<T extends ContactDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ContactDefaultArgs<ExtArgs>>): Prisma__ContactClient<$Result.GetResult<Prisma.$ContactPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     assignedAgent<T extends Lead$assignedAgentArgs<ExtArgs> = {}>(args?: Subset<T, Lead$assignedAgentArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     deals<T extends Lead$dealsArgs<ExtArgs> = {}>(args?: Subset<T, Lead$dealsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DealPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    activities<T extends Lead$activitiesArgs<ExtArgs> = {}>(args?: Subset<T, Lead$activitiesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    scoreEvents<T extends Lead$scoreEventsArgs<ExtArgs> = {}>(args?: Subset<T, Lead$scoreEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -16375,15 +16766,25 @@ export namespace Prisma {
     readonly assignedAgentId: FieldRef<"Lead", 'String'>
     readonly title: FieldRef<"Lead", 'String'>
     readonly status: FieldRef<"Lead", 'LeadStatus'>
-    readonly source: FieldRef<"Lead", 'String'>
+    readonly source: FieldRef<"Lead", 'LeadSource'>
+    readonly priority: FieldRef<"Lead", 'LeadPriority'>
     readonly score: FieldRef<"Lead", 'Int'>
+    readonly probability: FieldRef<"Lead", 'Int'>
     readonly estimatedValue: FieldRef<"Lead", 'Float'>
     readonly currency: FieldRef<"Lead", 'String'>
+    readonly tags: FieldRef<"Lead", 'String[]'>
     readonly notes: FieldRef<"Lead", 'String'>
     readonly customFields: FieldRef<"Lead", 'Json'>
+    readonly expectedCloseAt: FieldRef<"Lead", 'DateTime'>
+    readonly nextActionAt: FieldRef<"Lead", 'DateTime'>
+    readonly nextActionNote: FieldRef<"Lead", 'String'>
+    readonly qualifiedAt: FieldRef<"Lead", 'DateTime'>
+    readonly disqualifiedAt: FieldRef<"Lead", 'DateTime'>
+    readonly disqualifiedReason: FieldRef<"Lead", 'String'>
     readonly lostReason: FieldRef<"Lead", 'String'>
     readonly wonAt: FieldRef<"Lead", 'DateTime'>
     readonly lostAt: FieldRef<"Lead", 'DateTime'>
+    readonly slaFirstResponseAt: FieldRef<"Lead", 'DateTime'>
     readonly createdAt: FieldRef<"Lead", 'DateTime'>
     readonly updatedAt: FieldRef<"Lead", 'DateTime'>
     readonly deletedAt: FieldRef<"Lead", 'DateTime'>
@@ -16831,6 +17232,54 @@ export namespace Prisma {
   }
 
   /**
+   * Lead.activities
+   */
+  export type Lead$activitiesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    where?: LeadActivityWhereInput
+    orderBy?: LeadActivityOrderByWithRelationInput | LeadActivityOrderByWithRelationInput[]
+    cursor?: LeadActivityWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LeadActivityScalarFieldEnum | LeadActivityScalarFieldEnum[]
+  }
+
+  /**
+   * Lead.scoreEvents
+   */
+  export type Lead$scoreEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    where?: LeadScoreEventWhereInput
+    orderBy?: LeadScoreEventOrderByWithRelationInput | LeadScoreEventOrderByWithRelationInput[]
+    cursor?: LeadScoreEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LeadScoreEventScalarFieldEnum | LeadScoreEventScalarFieldEnum[]
+  }
+
+  /**
    * Lead without action
    */
   export type LeadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -16846,6 +17295,2270 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: LeadInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LeadActivity
+   */
+
+  export type AggregateLeadActivity = {
+    _count: LeadActivityCountAggregateOutputType | null
+    _min: LeadActivityMinAggregateOutputType | null
+    _max: LeadActivityMaxAggregateOutputType | null
+  }
+
+  export type LeadActivityMinAggregateOutputType = {
+    id: string | null
+    leadId: string | null
+    companyId: string | null
+    type: $Enums.LeadActivityType | null
+    actorType: string | null
+    actorId: string | null
+    title: string | null
+    body: string | null
+    createdAt: Date | null
+  }
+
+  export type LeadActivityMaxAggregateOutputType = {
+    id: string | null
+    leadId: string | null
+    companyId: string | null
+    type: $Enums.LeadActivityType | null
+    actorType: string | null
+    actorId: string | null
+    title: string | null
+    body: string | null
+    createdAt: Date | null
+  }
+
+  export type LeadActivityCountAggregateOutputType = {
+    id: number
+    leadId: number
+    companyId: number
+    type: number
+    actorType: number
+    actorId: number
+    title: number
+    body: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type LeadActivityMinAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    type?: true
+    actorType?: true
+    actorId?: true
+    title?: true
+    body?: true
+    createdAt?: true
+  }
+
+  export type LeadActivityMaxAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    type?: true
+    actorType?: true
+    actorId?: true
+    title?: true
+    body?: true
+    createdAt?: true
+  }
+
+  export type LeadActivityCountAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    type?: true
+    actorType?: true
+    actorId?: true
+    title?: true
+    body?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type LeadActivityAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LeadActivity to aggregate.
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadActivities to fetch.
+     */
+    orderBy?: LeadActivityOrderByWithRelationInput | LeadActivityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LeadActivityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadActivities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadActivities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LeadActivities
+    **/
+    _count?: true | LeadActivityCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LeadActivityMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LeadActivityMaxAggregateInputType
+  }
+
+  export type GetLeadActivityAggregateType<T extends LeadActivityAggregateArgs> = {
+        [P in keyof T & keyof AggregateLeadActivity]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLeadActivity[P]>
+      : GetScalarType<T[P], AggregateLeadActivity[P]>
+  }
+
+
+
+
+  export type LeadActivityGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LeadActivityWhereInput
+    orderBy?: LeadActivityOrderByWithAggregationInput | LeadActivityOrderByWithAggregationInput[]
+    by: LeadActivityScalarFieldEnum[] | LeadActivityScalarFieldEnum
+    having?: LeadActivityScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LeadActivityCountAggregateInputType | true
+    _min?: LeadActivityMinAggregateInputType
+    _max?: LeadActivityMaxAggregateInputType
+  }
+
+  export type LeadActivityGroupByOutputType = {
+    id: string
+    leadId: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId: string | null
+    title: string
+    body: string | null
+    metadata: JsonValue
+    createdAt: Date
+    _count: LeadActivityCountAggregateOutputType | null
+    _min: LeadActivityMinAggregateOutputType | null
+    _max: LeadActivityMaxAggregateOutputType | null
+  }
+
+  type GetLeadActivityGroupByPayload<T extends LeadActivityGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LeadActivityGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LeadActivityGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LeadActivityGroupByOutputType[P]>
+            : GetScalarType<T[P], LeadActivityGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LeadActivitySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    type?: boolean
+    actorType?: boolean
+    actorId?: boolean
+    title?: boolean
+    body?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadActivity"]>
+
+  export type LeadActivitySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    type?: boolean
+    actorType?: boolean
+    actorId?: boolean
+    title?: boolean
+    body?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadActivity"]>
+
+  export type LeadActivitySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    type?: boolean
+    actorType?: boolean
+    actorId?: boolean
+    title?: boolean
+    body?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadActivity"]>
+
+  export type LeadActivitySelectScalar = {
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    type?: boolean
+    actorType?: boolean
+    actorId?: boolean
+    title?: boolean
+    body?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type LeadActivityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "leadId" | "companyId" | "type" | "actorType" | "actorId" | "title" | "body" | "metadata" | "createdAt", ExtArgs["result"]["leadActivity"]>
+  export type LeadActivityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+  export type LeadActivityIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+  export type LeadActivityIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+
+  export type $LeadActivityPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LeadActivity"
+    objects: {
+      lead: Prisma.$LeadPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      leadId: string
+      companyId: string
+      type: $Enums.LeadActivityType
+      actorType: string
+      actorId: string | null
+      title: string
+      body: string | null
+      metadata: Prisma.JsonValue
+      createdAt: Date
+    }, ExtArgs["result"]["leadActivity"]>
+    composites: {}
+  }
+
+  type LeadActivityGetPayload<S extends boolean | null | undefined | LeadActivityDefaultArgs> = $Result.GetResult<Prisma.$LeadActivityPayload, S>
+
+  type LeadActivityCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LeadActivityFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LeadActivityCountAggregateInputType | true
+    }
+
+  export interface LeadActivityDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LeadActivity'], meta: { name: 'LeadActivity' } }
+    /**
+     * Find zero or one LeadActivity that matches the filter.
+     * @param {LeadActivityFindUniqueArgs} args - Arguments to find a LeadActivity
+     * @example
+     * // Get one LeadActivity
+     * const leadActivity = await prisma.leadActivity.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LeadActivityFindUniqueArgs>(args: SelectSubset<T, LeadActivityFindUniqueArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LeadActivity that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LeadActivityFindUniqueOrThrowArgs} args - Arguments to find a LeadActivity
+     * @example
+     * // Get one LeadActivity
+     * const leadActivity = await prisma.leadActivity.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LeadActivityFindUniqueOrThrowArgs>(args: SelectSubset<T, LeadActivityFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LeadActivity that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityFindFirstArgs} args - Arguments to find a LeadActivity
+     * @example
+     * // Get one LeadActivity
+     * const leadActivity = await prisma.leadActivity.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LeadActivityFindFirstArgs>(args?: SelectSubset<T, LeadActivityFindFirstArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LeadActivity that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityFindFirstOrThrowArgs} args - Arguments to find a LeadActivity
+     * @example
+     * // Get one LeadActivity
+     * const leadActivity = await prisma.leadActivity.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LeadActivityFindFirstOrThrowArgs>(args?: SelectSubset<T, LeadActivityFindFirstOrThrowArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LeadActivities that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LeadActivities
+     * const leadActivities = await prisma.leadActivity.findMany()
+     * 
+     * // Get first 10 LeadActivities
+     * const leadActivities = await prisma.leadActivity.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const leadActivityWithIdOnly = await prisma.leadActivity.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LeadActivityFindManyArgs>(args?: SelectSubset<T, LeadActivityFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LeadActivity.
+     * @param {LeadActivityCreateArgs} args - Arguments to create a LeadActivity.
+     * @example
+     * // Create one LeadActivity
+     * const LeadActivity = await prisma.leadActivity.create({
+     *   data: {
+     *     // ... data to create a LeadActivity
+     *   }
+     * })
+     * 
+     */
+    create<T extends LeadActivityCreateArgs>(args: SelectSubset<T, LeadActivityCreateArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LeadActivities.
+     * @param {LeadActivityCreateManyArgs} args - Arguments to create many LeadActivities.
+     * @example
+     * // Create many LeadActivities
+     * const leadActivity = await prisma.leadActivity.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LeadActivityCreateManyArgs>(args?: SelectSubset<T, LeadActivityCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LeadActivities and returns the data saved in the database.
+     * @param {LeadActivityCreateManyAndReturnArgs} args - Arguments to create many LeadActivities.
+     * @example
+     * // Create many LeadActivities
+     * const leadActivity = await prisma.leadActivity.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LeadActivities and only return the `id`
+     * const leadActivityWithIdOnly = await prisma.leadActivity.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LeadActivityCreateManyAndReturnArgs>(args?: SelectSubset<T, LeadActivityCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LeadActivity.
+     * @param {LeadActivityDeleteArgs} args - Arguments to delete one LeadActivity.
+     * @example
+     * // Delete one LeadActivity
+     * const LeadActivity = await prisma.leadActivity.delete({
+     *   where: {
+     *     // ... filter to delete one LeadActivity
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LeadActivityDeleteArgs>(args: SelectSubset<T, LeadActivityDeleteArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LeadActivity.
+     * @param {LeadActivityUpdateArgs} args - Arguments to update one LeadActivity.
+     * @example
+     * // Update one LeadActivity
+     * const leadActivity = await prisma.leadActivity.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LeadActivityUpdateArgs>(args: SelectSubset<T, LeadActivityUpdateArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LeadActivities.
+     * @param {LeadActivityDeleteManyArgs} args - Arguments to filter LeadActivities to delete.
+     * @example
+     * // Delete a few LeadActivities
+     * const { count } = await prisma.leadActivity.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LeadActivityDeleteManyArgs>(args?: SelectSubset<T, LeadActivityDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LeadActivities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LeadActivities
+     * const leadActivity = await prisma.leadActivity.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LeadActivityUpdateManyArgs>(args: SelectSubset<T, LeadActivityUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LeadActivities and returns the data updated in the database.
+     * @param {LeadActivityUpdateManyAndReturnArgs} args - Arguments to update many LeadActivities.
+     * @example
+     * // Update many LeadActivities
+     * const leadActivity = await prisma.leadActivity.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LeadActivities and only return the `id`
+     * const leadActivityWithIdOnly = await prisma.leadActivity.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LeadActivityUpdateManyAndReturnArgs>(args: SelectSubset<T, LeadActivityUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LeadActivity.
+     * @param {LeadActivityUpsertArgs} args - Arguments to update or create a LeadActivity.
+     * @example
+     * // Update or create a LeadActivity
+     * const leadActivity = await prisma.leadActivity.upsert({
+     *   create: {
+     *     // ... data to create a LeadActivity
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LeadActivity we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LeadActivityUpsertArgs>(args: SelectSubset<T, LeadActivityUpsertArgs<ExtArgs>>): Prisma__LeadActivityClient<$Result.GetResult<Prisma.$LeadActivityPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LeadActivities.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityCountArgs} args - Arguments to filter LeadActivities to count.
+     * @example
+     * // Count the number of LeadActivities
+     * const count = await prisma.leadActivity.count({
+     *   where: {
+     *     // ... the filter for the LeadActivities we want to count
+     *   }
+     * })
+    **/
+    count<T extends LeadActivityCountArgs>(
+      args?: Subset<T, LeadActivityCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LeadActivityCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LeadActivity.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LeadActivityAggregateArgs>(args: Subset<T, LeadActivityAggregateArgs>): Prisma.PrismaPromise<GetLeadActivityAggregateType<T>>
+
+    /**
+     * Group by LeadActivity.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadActivityGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LeadActivityGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LeadActivityGroupByArgs['orderBy'] }
+        : { orderBy?: LeadActivityGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LeadActivityGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLeadActivityGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LeadActivity model
+   */
+  readonly fields: LeadActivityFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LeadActivity.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LeadActivityClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    lead<T extends LeadDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LeadDefaultArgs<ExtArgs>>): Prisma__LeadClient<$Result.GetResult<Prisma.$LeadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LeadActivity model
+   */
+  interface LeadActivityFieldRefs {
+    readonly id: FieldRef<"LeadActivity", 'String'>
+    readonly leadId: FieldRef<"LeadActivity", 'String'>
+    readonly companyId: FieldRef<"LeadActivity", 'String'>
+    readonly type: FieldRef<"LeadActivity", 'LeadActivityType'>
+    readonly actorType: FieldRef<"LeadActivity", 'String'>
+    readonly actorId: FieldRef<"LeadActivity", 'String'>
+    readonly title: FieldRef<"LeadActivity", 'String'>
+    readonly body: FieldRef<"LeadActivity", 'String'>
+    readonly metadata: FieldRef<"LeadActivity", 'Json'>
+    readonly createdAt: FieldRef<"LeadActivity", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LeadActivity findUnique
+   */
+  export type LeadActivityFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadActivity to fetch.
+     */
+    where: LeadActivityWhereUniqueInput
+  }
+
+  /**
+   * LeadActivity findUniqueOrThrow
+   */
+  export type LeadActivityFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadActivity to fetch.
+     */
+    where: LeadActivityWhereUniqueInput
+  }
+
+  /**
+   * LeadActivity findFirst
+   */
+  export type LeadActivityFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadActivity to fetch.
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadActivities to fetch.
+     */
+    orderBy?: LeadActivityOrderByWithRelationInput | LeadActivityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LeadActivities.
+     */
+    cursor?: LeadActivityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadActivities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadActivities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadActivities.
+     */
+    distinct?: LeadActivityScalarFieldEnum | LeadActivityScalarFieldEnum[]
+  }
+
+  /**
+   * LeadActivity findFirstOrThrow
+   */
+  export type LeadActivityFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadActivity to fetch.
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadActivities to fetch.
+     */
+    orderBy?: LeadActivityOrderByWithRelationInput | LeadActivityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LeadActivities.
+     */
+    cursor?: LeadActivityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadActivities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadActivities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadActivities.
+     */
+    distinct?: LeadActivityScalarFieldEnum | LeadActivityScalarFieldEnum[]
+  }
+
+  /**
+   * LeadActivity findMany
+   */
+  export type LeadActivityFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadActivities to fetch.
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadActivities to fetch.
+     */
+    orderBy?: LeadActivityOrderByWithRelationInput | LeadActivityOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LeadActivities.
+     */
+    cursor?: LeadActivityWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadActivities from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadActivities.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadActivities.
+     */
+    distinct?: LeadActivityScalarFieldEnum | LeadActivityScalarFieldEnum[]
+  }
+
+  /**
+   * LeadActivity create
+   */
+  export type LeadActivityCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LeadActivity.
+     */
+    data: XOR<LeadActivityCreateInput, LeadActivityUncheckedCreateInput>
+  }
+
+  /**
+   * LeadActivity createMany
+   */
+  export type LeadActivityCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LeadActivities.
+     */
+    data: LeadActivityCreateManyInput | LeadActivityCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LeadActivity createManyAndReturn
+   */
+  export type LeadActivityCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * The data used to create many LeadActivities.
+     */
+    data: LeadActivityCreateManyInput | LeadActivityCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LeadActivity update
+   */
+  export type LeadActivityUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LeadActivity.
+     */
+    data: XOR<LeadActivityUpdateInput, LeadActivityUncheckedUpdateInput>
+    /**
+     * Choose, which LeadActivity to update.
+     */
+    where: LeadActivityWhereUniqueInput
+  }
+
+  /**
+   * LeadActivity updateMany
+   */
+  export type LeadActivityUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LeadActivities.
+     */
+    data: XOR<LeadActivityUpdateManyMutationInput, LeadActivityUncheckedUpdateManyInput>
+    /**
+     * Filter which LeadActivities to update
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * Limit how many LeadActivities to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LeadActivity updateManyAndReturn
+   */
+  export type LeadActivityUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * The data used to update LeadActivities.
+     */
+    data: XOR<LeadActivityUpdateManyMutationInput, LeadActivityUncheckedUpdateManyInput>
+    /**
+     * Filter which LeadActivities to update
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * Limit how many LeadActivities to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LeadActivity upsert
+   */
+  export type LeadActivityUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LeadActivity to update in case it exists.
+     */
+    where: LeadActivityWhereUniqueInput
+    /**
+     * In case the LeadActivity found by the `where` argument doesn't exist, create a new LeadActivity with this data.
+     */
+    create: XOR<LeadActivityCreateInput, LeadActivityUncheckedCreateInput>
+    /**
+     * In case the LeadActivity was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LeadActivityUpdateInput, LeadActivityUncheckedUpdateInput>
+  }
+
+  /**
+   * LeadActivity delete
+   */
+  export type LeadActivityDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+    /**
+     * Filter which LeadActivity to delete.
+     */
+    where: LeadActivityWhereUniqueInput
+  }
+
+  /**
+   * LeadActivity deleteMany
+   */
+  export type LeadActivityDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LeadActivities to delete
+     */
+    where?: LeadActivityWhereInput
+    /**
+     * Limit how many LeadActivities to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LeadActivity without action
+   */
+  export type LeadActivityDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadActivity
+     */
+    select?: LeadActivitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadActivity
+     */
+    omit?: LeadActivityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadActivityInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LeadScoreEvent
+   */
+
+  export type AggregateLeadScoreEvent = {
+    _count: LeadScoreEventCountAggregateOutputType | null
+    _avg: LeadScoreEventAvgAggregateOutputType | null
+    _sum: LeadScoreEventSumAggregateOutputType | null
+    _min: LeadScoreEventMinAggregateOutputType | null
+    _max: LeadScoreEventMaxAggregateOutputType | null
+  }
+
+  export type LeadScoreEventAvgAggregateOutputType = {
+    delta: number | null
+    newScore: number | null
+  }
+
+  export type LeadScoreEventSumAggregateOutputType = {
+    delta: number | null
+    newScore: number | null
+  }
+
+  export type LeadScoreEventMinAggregateOutputType = {
+    id: string | null
+    leadId: string | null
+    companyId: string | null
+    delta: number | null
+    newScore: number | null
+    reason: string | null
+    source: string | null
+    createdAt: Date | null
+  }
+
+  export type LeadScoreEventMaxAggregateOutputType = {
+    id: string | null
+    leadId: string | null
+    companyId: string | null
+    delta: number | null
+    newScore: number | null
+    reason: string | null
+    source: string | null
+    createdAt: Date | null
+  }
+
+  export type LeadScoreEventCountAggregateOutputType = {
+    id: number
+    leadId: number
+    companyId: number
+    delta: number
+    newScore: number
+    reason: number
+    source: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type LeadScoreEventAvgAggregateInputType = {
+    delta?: true
+    newScore?: true
+  }
+
+  export type LeadScoreEventSumAggregateInputType = {
+    delta?: true
+    newScore?: true
+  }
+
+  export type LeadScoreEventMinAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    delta?: true
+    newScore?: true
+    reason?: true
+    source?: true
+    createdAt?: true
+  }
+
+  export type LeadScoreEventMaxAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    delta?: true
+    newScore?: true
+    reason?: true
+    source?: true
+    createdAt?: true
+  }
+
+  export type LeadScoreEventCountAggregateInputType = {
+    id?: true
+    leadId?: true
+    companyId?: true
+    delta?: true
+    newScore?: true
+    reason?: true
+    source?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type LeadScoreEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LeadScoreEvent to aggregate.
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadScoreEvents to fetch.
+     */
+    orderBy?: LeadScoreEventOrderByWithRelationInput | LeadScoreEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LeadScoreEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadScoreEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadScoreEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LeadScoreEvents
+    **/
+    _count?: true | LeadScoreEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LeadScoreEventAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LeadScoreEventSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LeadScoreEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LeadScoreEventMaxAggregateInputType
+  }
+
+  export type GetLeadScoreEventAggregateType<T extends LeadScoreEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateLeadScoreEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLeadScoreEvent[P]>
+      : GetScalarType<T[P], AggregateLeadScoreEvent[P]>
+  }
+
+
+
+
+  export type LeadScoreEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LeadScoreEventWhereInput
+    orderBy?: LeadScoreEventOrderByWithAggregationInput | LeadScoreEventOrderByWithAggregationInput[]
+    by: LeadScoreEventScalarFieldEnum[] | LeadScoreEventScalarFieldEnum
+    having?: LeadScoreEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LeadScoreEventCountAggregateInputType | true
+    _avg?: LeadScoreEventAvgAggregateInputType
+    _sum?: LeadScoreEventSumAggregateInputType
+    _min?: LeadScoreEventMinAggregateInputType
+    _max?: LeadScoreEventMaxAggregateInputType
+  }
+
+  export type LeadScoreEventGroupByOutputType = {
+    id: string
+    leadId: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt: Date
+    _count: LeadScoreEventCountAggregateOutputType | null
+    _avg: LeadScoreEventAvgAggregateOutputType | null
+    _sum: LeadScoreEventSumAggregateOutputType | null
+    _min: LeadScoreEventMinAggregateOutputType | null
+    _max: LeadScoreEventMaxAggregateOutputType | null
+  }
+
+  type GetLeadScoreEventGroupByPayload<T extends LeadScoreEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LeadScoreEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LeadScoreEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LeadScoreEventGroupByOutputType[P]>
+            : GetScalarType<T[P], LeadScoreEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LeadScoreEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    delta?: boolean
+    newScore?: boolean
+    reason?: boolean
+    source?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadScoreEvent"]>
+
+  export type LeadScoreEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    delta?: boolean
+    newScore?: boolean
+    reason?: boolean
+    source?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadScoreEvent"]>
+
+  export type LeadScoreEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    delta?: boolean
+    newScore?: boolean
+    reason?: boolean
+    source?: boolean
+    createdAt?: boolean
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["leadScoreEvent"]>
+
+  export type LeadScoreEventSelectScalar = {
+    id?: boolean
+    leadId?: boolean
+    companyId?: boolean
+    delta?: boolean
+    newScore?: boolean
+    reason?: boolean
+    source?: boolean
+    createdAt?: boolean
+  }
+
+  export type LeadScoreEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "leadId" | "companyId" | "delta" | "newScore" | "reason" | "source" | "createdAt", ExtArgs["result"]["leadScoreEvent"]>
+  export type LeadScoreEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+  export type LeadScoreEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+  export type LeadScoreEventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lead?: boolean | LeadDefaultArgs<ExtArgs>
+  }
+
+  export type $LeadScoreEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LeadScoreEvent"
+    objects: {
+      lead: Prisma.$LeadPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      leadId: string
+      companyId: string
+      delta: number
+      newScore: number
+      reason: string
+      source: string
+      createdAt: Date
+    }, ExtArgs["result"]["leadScoreEvent"]>
+    composites: {}
+  }
+
+  type LeadScoreEventGetPayload<S extends boolean | null | undefined | LeadScoreEventDefaultArgs> = $Result.GetResult<Prisma.$LeadScoreEventPayload, S>
+
+  type LeadScoreEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LeadScoreEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LeadScoreEventCountAggregateInputType | true
+    }
+
+  export interface LeadScoreEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LeadScoreEvent'], meta: { name: 'LeadScoreEvent' } }
+    /**
+     * Find zero or one LeadScoreEvent that matches the filter.
+     * @param {LeadScoreEventFindUniqueArgs} args - Arguments to find a LeadScoreEvent
+     * @example
+     * // Get one LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LeadScoreEventFindUniqueArgs>(args: SelectSubset<T, LeadScoreEventFindUniqueArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LeadScoreEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LeadScoreEventFindUniqueOrThrowArgs} args - Arguments to find a LeadScoreEvent
+     * @example
+     * // Get one LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LeadScoreEventFindUniqueOrThrowArgs>(args: SelectSubset<T, LeadScoreEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LeadScoreEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventFindFirstArgs} args - Arguments to find a LeadScoreEvent
+     * @example
+     * // Get one LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LeadScoreEventFindFirstArgs>(args?: SelectSubset<T, LeadScoreEventFindFirstArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LeadScoreEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventFindFirstOrThrowArgs} args - Arguments to find a LeadScoreEvent
+     * @example
+     * // Get one LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LeadScoreEventFindFirstOrThrowArgs>(args?: SelectSubset<T, LeadScoreEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LeadScoreEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LeadScoreEvents
+     * const leadScoreEvents = await prisma.leadScoreEvent.findMany()
+     * 
+     * // Get first 10 LeadScoreEvents
+     * const leadScoreEvents = await prisma.leadScoreEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const leadScoreEventWithIdOnly = await prisma.leadScoreEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LeadScoreEventFindManyArgs>(args?: SelectSubset<T, LeadScoreEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LeadScoreEvent.
+     * @param {LeadScoreEventCreateArgs} args - Arguments to create a LeadScoreEvent.
+     * @example
+     * // Create one LeadScoreEvent
+     * const LeadScoreEvent = await prisma.leadScoreEvent.create({
+     *   data: {
+     *     // ... data to create a LeadScoreEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends LeadScoreEventCreateArgs>(args: SelectSubset<T, LeadScoreEventCreateArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LeadScoreEvents.
+     * @param {LeadScoreEventCreateManyArgs} args - Arguments to create many LeadScoreEvents.
+     * @example
+     * // Create many LeadScoreEvents
+     * const leadScoreEvent = await prisma.leadScoreEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LeadScoreEventCreateManyArgs>(args?: SelectSubset<T, LeadScoreEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LeadScoreEvents and returns the data saved in the database.
+     * @param {LeadScoreEventCreateManyAndReturnArgs} args - Arguments to create many LeadScoreEvents.
+     * @example
+     * // Create many LeadScoreEvents
+     * const leadScoreEvent = await prisma.leadScoreEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LeadScoreEvents and only return the `id`
+     * const leadScoreEventWithIdOnly = await prisma.leadScoreEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LeadScoreEventCreateManyAndReturnArgs>(args?: SelectSubset<T, LeadScoreEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LeadScoreEvent.
+     * @param {LeadScoreEventDeleteArgs} args - Arguments to delete one LeadScoreEvent.
+     * @example
+     * // Delete one LeadScoreEvent
+     * const LeadScoreEvent = await prisma.leadScoreEvent.delete({
+     *   where: {
+     *     // ... filter to delete one LeadScoreEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LeadScoreEventDeleteArgs>(args: SelectSubset<T, LeadScoreEventDeleteArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LeadScoreEvent.
+     * @param {LeadScoreEventUpdateArgs} args - Arguments to update one LeadScoreEvent.
+     * @example
+     * // Update one LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LeadScoreEventUpdateArgs>(args: SelectSubset<T, LeadScoreEventUpdateArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LeadScoreEvents.
+     * @param {LeadScoreEventDeleteManyArgs} args - Arguments to filter LeadScoreEvents to delete.
+     * @example
+     * // Delete a few LeadScoreEvents
+     * const { count } = await prisma.leadScoreEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LeadScoreEventDeleteManyArgs>(args?: SelectSubset<T, LeadScoreEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LeadScoreEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LeadScoreEvents
+     * const leadScoreEvent = await prisma.leadScoreEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LeadScoreEventUpdateManyArgs>(args: SelectSubset<T, LeadScoreEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LeadScoreEvents and returns the data updated in the database.
+     * @param {LeadScoreEventUpdateManyAndReturnArgs} args - Arguments to update many LeadScoreEvents.
+     * @example
+     * // Update many LeadScoreEvents
+     * const leadScoreEvent = await prisma.leadScoreEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LeadScoreEvents and only return the `id`
+     * const leadScoreEventWithIdOnly = await prisma.leadScoreEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LeadScoreEventUpdateManyAndReturnArgs>(args: SelectSubset<T, LeadScoreEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LeadScoreEvent.
+     * @param {LeadScoreEventUpsertArgs} args - Arguments to update or create a LeadScoreEvent.
+     * @example
+     * // Update or create a LeadScoreEvent
+     * const leadScoreEvent = await prisma.leadScoreEvent.upsert({
+     *   create: {
+     *     // ... data to create a LeadScoreEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LeadScoreEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LeadScoreEventUpsertArgs>(args: SelectSubset<T, LeadScoreEventUpsertArgs<ExtArgs>>): Prisma__LeadScoreEventClient<$Result.GetResult<Prisma.$LeadScoreEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LeadScoreEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventCountArgs} args - Arguments to filter LeadScoreEvents to count.
+     * @example
+     * // Count the number of LeadScoreEvents
+     * const count = await prisma.leadScoreEvent.count({
+     *   where: {
+     *     // ... the filter for the LeadScoreEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends LeadScoreEventCountArgs>(
+      args?: Subset<T, LeadScoreEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LeadScoreEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LeadScoreEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LeadScoreEventAggregateArgs>(args: Subset<T, LeadScoreEventAggregateArgs>): Prisma.PrismaPromise<GetLeadScoreEventAggregateType<T>>
+
+    /**
+     * Group by LeadScoreEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LeadScoreEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LeadScoreEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LeadScoreEventGroupByArgs['orderBy'] }
+        : { orderBy?: LeadScoreEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LeadScoreEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLeadScoreEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LeadScoreEvent model
+   */
+  readonly fields: LeadScoreEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LeadScoreEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LeadScoreEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    lead<T extends LeadDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LeadDefaultArgs<ExtArgs>>): Prisma__LeadClient<$Result.GetResult<Prisma.$LeadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LeadScoreEvent model
+   */
+  interface LeadScoreEventFieldRefs {
+    readonly id: FieldRef<"LeadScoreEvent", 'String'>
+    readonly leadId: FieldRef<"LeadScoreEvent", 'String'>
+    readonly companyId: FieldRef<"LeadScoreEvent", 'String'>
+    readonly delta: FieldRef<"LeadScoreEvent", 'Int'>
+    readonly newScore: FieldRef<"LeadScoreEvent", 'Int'>
+    readonly reason: FieldRef<"LeadScoreEvent", 'String'>
+    readonly source: FieldRef<"LeadScoreEvent", 'String'>
+    readonly createdAt: FieldRef<"LeadScoreEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LeadScoreEvent findUnique
+   */
+  export type LeadScoreEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadScoreEvent to fetch.
+     */
+    where: LeadScoreEventWhereUniqueInput
+  }
+
+  /**
+   * LeadScoreEvent findUniqueOrThrow
+   */
+  export type LeadScoreEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadScoreEvent to fetch.
+     */
+    where: LeadScoreEventWhereUniqueInput
+  }
+
+  /**
+   * LeadScoreEvent findFirst
+   */
+  export type LeadScoreEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadScoreEvent to fetch.
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadScoreEvents to fetch.
+     */
+    orderBy?: LeadScoreEventOrderByWithRelationInput | LeadScoreEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LeadScoreEvents.
+     */
+    cursor?: LeadScoreEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadScoreEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadScoreEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadScoreEvents.
+     */
+    distinct?: LeadScoreEventScalarFieldEnum | LeadScoreEventScalarFieldEnum[]
+  }
+
+  /**
+   * LeadScoreEvent findFirstOrThrow
+   */
+  export type LeadScoreEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadScoreEvent to fetch.
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadScoreEvents to fetch.
+     */
+    orderBy?: LeadScoreEventOrderByWithRelationInput | LeadScoreEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LeadScoreEvents.
+     */
+    cursor?: LeadScoreEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadScoreEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadScoreEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadScoreEvents.
+     */
+    distinct?: LeadScoreEventScalarFieldEnum | LeadScoreEventScalarFieldEnum[]
+  }
+
+  /**
+   * LeadScoreEvent findMany
+   */
+  export type LeadScoreEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter, which LeadScoreEvents to fetch.
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LeadScoreEvents to fetch.
+     */
+    orderBy?: LeadScoreEventOrderByWithRelationInput | LeadScoreEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LeadScoreEvents.
+     */
+    cursor?: LeadScoreEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LeadScoreEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LeadScoreEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadScoreEvents.
+     */
+    distinct?: LeadScoreEventScalarFieldEnum | LeadScoreEventScalarFieldEnum[]
+  }
+
+  /**
+   * LeadScoreEvent create
+   */
+  export type LeadScoreEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LeadScoreEvent.
+     */
+    data: XOR<LeadScoreEventCreateInput, LeadScoreEventUncheckedCreateInput>
+  }
+
+  /**
+   * LeadScoreEvent createMany
+   */
+  export type LeadScoreEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LeadScoreEvents.
+     */
+    data: LeadScoreEventCreateManyInput | LeadScoreEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LeadScoreEvent createManyAndReturn
+   */
+  export type LeadScoreEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many LeadScoreEvents.
+     */
+    data: LeadScoreEventCreateManyInput | LeadScoreEventCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LeadScoreEvent update
+   */
+  export type LeadScoreEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LeadScoreEvent.
+     */
+    data: XOR<LeadScoreEventUpdateInput, LeadScoreEventUncheckedUpdateInput>
+    /**
+     * Choose, which LeadScoreEvent to update.
+     */
+    where: LeadScoreEventWhereUniqueInput
+  }
+
+  /**
+   * LeadScoreEvent updateMany
+   */
+  export type LeadScoreEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LeadScoreEvents.
+     */
+    data: XOR<LeadScoreEventUpdateManyMutationInput, LeadScoreEventUncheckedUpdateManyInput>
+    /**
+     * Filter which LeadScoreEvents to update
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * Limit how many LeadScoreEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LeadScoreEvent updateManyAndReturn
+   */
+  export type LeadScoreEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * The data used to update LeadScoreEvents.
+     */
+    data: XOR<LeadScoreEventUpdateManyMutationInput, LeadScoreEventUncheckedUpdateManyInput>
+    /**
+     * Filter which LeadScoreEvents to update
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * Limit how many LeadScoreEvents to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LeadScoreEvent upsert
+   */
+  export type LeadScoreEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LeadScoreEvent to update in case it exists.
+     */
+    where: LeadScoreEventWhereUniqueInput
+    /**
+     * In case the LeadScoreEvent found by the `where` argument doesn't exist, create a new LeadScoreEvent with this data.
+     */
+    create: XOR<LeadScoreEventCreateInput, LeadScoreEventUncheckedCreateInput>
+    /**
+     * In case the LeadScoreEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LeadScoreEventUpdateInput, LeadScoreEventUncheckedUpdateInput>
+  }
+
+  /**
+   * LeadScoreEvent delete
+   */
+  export type LeadScoreEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
+    /**
+     * Filter which LeadScoreEvent to delete.
+     */
+    where: LeadScoreEventWhereUniqueInput
+  }
+
+  /**
+   * LeadScoreEvent deleteMany
+   */
+  export type LeadScoreEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LeadScoreEvents to delete
+     */
+    where?: LeadScoreEventWhereInput
+    /**
+     * Limit how many LeadScoreEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LeadScoreEvent without action
+   */
+  export type LeadScoreEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LeadScoreEvent
+     */
+    select?: LeadScoreEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LeadScoreEvent
+     */
+    omit?: LeadScoreEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LeadScoreEventInclude<ExtArgs> | null
   }
 
 
@@ -73226,20 +75939,60 @@ export namespace Prisma {
     title: 'title',
     status: 'status',
     source: 'source',
+    priority: 'priority',
     score: 'score',
+    probability: 'probability',
     estimatedValue: 'estimatedValue',
     currency: 'currency',
+    tags: 'tags',
     notes: 'notes',
     customFields: 'customFields',
+    expectedCloseAt: 'expectedCloseAt',
+    nextActionAt: 'nextActionAt',
+    nextActionNote: 'nextActionNote',
+    qualifiedAt: 'qualifiedAt',
+    disqualifiedAt: 'disqualifiedAt',
+    disqualifiedReason: 'disqualifiedReason',
     lostReason: 'lostReason',
     wonAt: 'wonAt',
     lostAt: 'lostAt',
+    slaFirstResponseAt: 'slaFirstResponseAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     deletedAt: 'deletedAt'
   };
 
   export type LeadScalarFieldEnum = (typeof LeadScalarFieldEnum)[keyof typeof LeadScalarFieldEnum]
+
+
+  export const LeadActivityScalarFieldEnum: {
+    id: 'id',
+    leadId: 'leadId',
+    companyId: 'companyId',
+    type: 'type',
+    actorType: 'actorType',
+    actorId: 'actorId',
+    title: 'title',
+    body: 'body',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type LeadActivityScalarFieldEnum = (typeof LeadActivityScalarFieldEnum)[keyof typeof LeadActivityScalarFieldEnum]
+
+
+  export const LeadScoreEventScalarFieldEnum: {
+    id: 'id',
+    leadId: 'leadId',
+    companyId: 'companyId',
+    delta: 'delta',
+    newScore: 'newScore',
+    reason: 'reason',
+    source: 'source',
+    createdAt: 'createdAt'
+  };
+
+  export type LeadScoreEventScalarFieldEnum = (typeof LeadScoreEventScalarFieldEnum)[keyof typeof LeadScoreEventScalarFieldEnum]
 
 
   export const DealScalarFieldEnum: {
@@ -74260,6 +77013,48 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'LeadSource'
+   */
+  export type EnumLeadSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadSource'>
+    
+
+
+  /**
+   * Reference to a field of type 'LeadSource[]'
+   */
+  export type ListEnumLeadSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadSource[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LeadPriority'
+   */
+  export type EnumLeadPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadPriority'>
+    
+
+
+  /**
+   * Reference to a field of type 'LeadPriority[]'
+   */
+  export type ListEnumLeadPriorityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadPriority[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'LeadActivityType'
+   */
+  export type EnumLeadActivityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadActivityType'>
+    
+
+
+  /**
+   * Reference to a field of type 'LeadActivityType[]'
+   */
+  export type ListEnumLeadActivityTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LeadActivityType[]'>
+    
+
+
+  /**
    * Reference to a field of type 'DealStage'
    */
   export type EnumDealStageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealStage'>
@@ -75229,15 +78024,25 @@ export namespace Prisma {
     assignedAgentId?: StringNullableFilter<"Lead"> | string | null
     title?: StringFilter<"Lead"> | string
     status?: EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
-    source?: StringNullableFilter<"Lead"> | string | null
+    source?: EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
+    priority?: EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
     score?: IntFilter<"Lead"> | number
+    probability?: IntFilter<"Lead"> | number
     estimatedValue?: FloatNullableFilter<"Lead"> | number | null
     currency?: StringFilter<"Lead"> | string
+    tags?: StringNullableListFilter<"Lead">
     notes?: StringNullableFilter<"Lead"> | string | null
     customFields?: JsonFilter<"Lead">
+    expectedCloseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionNote?: StringNullableFilter<"Lead"> | string | null
+    qualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedReason?: StringNullableFilter<"Lead"> | string | null
     lostReason?: StringNullableFilter<"Lead"> | string | null
     wonAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     lostAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    slaFirstResponseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     createdAt?: DateTimeFilter<"Lead"> | Date | string
     updatedAt?: DateTimeFilter<"Lead"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
@@ -75245,6 +78050,8 @@ export namespace Prisma {
     contact?: XOR<ContactScalarRelationFilter, ContactWhereInput>
     assignedAgent?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     deals?: DealListRelationFilter
+    activities?: LeadActivityListRelationFilter
+    scoreEvents?: LeadScoreEventListRelationFilter
   }
 
   export type LeadOrderByWithRelationInput = {
@@ -75254,15 +78061,25 @@ export namespace Prisma {
     assignedAgentId?: SortOrderInput | SortOrder
     title?: SortOrder
     status?: SortOrder
-    source?: SortOrderInput | SortOrder
+    source?: SortOrder
+    priority?: SortOrder
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrderInput | SortOrder
     currency?: SortOrder
+    tags?: SortOrder
     notes?: SortOrderInput | SortOrder
     customFields?: SortOrder
+    expectedCloseAt?: SortOrderInput | SortOrder
+    nextActionAt?: SortOrderInput | SortOrder
+    nextActionNote?: SortOrderInput | SortOrder
+    qualifiedAt?: SortOrderInput | SortOrder
+    disqualifiedAt?: SortOrderInput | SortOrder
+    disqualifiedReason?: SortOrderInput | SortOrder
     lostReason?: SortOrderInput | SortOrder
     wonAt?: SortOrderInput | SortOrder
     lostAt?: SortOrderInput | SortOrder
+    slaFirstResponseAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -75270,6 +78087,8 @@ export namespace Prisma {
     contact?: ContactOrderByWithRelationInput
     assignedAgent?: UserOrderByWithRelationInput
     deals?: DealOrderByRelationAggregateInput
+    activities?: LeadActivityOrderByRelationAggregateInput
+    scoreEvents?: LeadScoreEventOrderByRelationAggregateInput
   }
 
   export type LeadWhereUniqueInput = Prisma.AtLeast<{
@@ -75282,15 +78101,25 @@ export namespace Prisma {
     assignedAgentId?: StringNullableFilter<"Lead"> | string | null
     title?: StringFilter<"Lead"> | string
     status?: EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
-    source?: StringNullableFilter<"Lead"> | string | null
+    source?: EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
+    priority?: EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
     score?: IntFilter<"Lead"> | number
+    probability?: IntFilter<"Lead"> | number
     estimatedValue?: FloatNullableFilter<"Lead"> | number | null
     currency?: StringFilter<"Lead"> | string
+    tags?: StringNullableListFilter<"Lead">
     notes?: StringNullableFilter<"Lead"> | string | null
     customFields?: JsonFilter<"Lead">
+    expectedCloseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionNote?: StringNullableFilter<"Lead"> | string | null
+    qualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedReason?: StringNullableFilter<"Lead"> | string | null
     lostReason?: StringNullableFilter<"Lead"> | string | null
     wonAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     lostAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    slaFirstResponseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     createdAt?: DateTimeFilter<"Lead"> | Date | string
     updatedAt?: DateTimeFilter<"Lead"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
@@ -75298,6 +78127,8 @@ export namespace Prisma {
     contact?: XOR<ContactScalarRelationFilter, ContactWhereInput>
     assignedAgent?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     deals?: DealListRelationFilter
+    activities?: LeadActivityListRelationFilter
+    scoreEvents?: LeadScoreEventListRelationFilter
   }, "id">
 
   export type LeadOrderByWithAggregationInput = {
@@ -75307,15 +78138,25 @@ export namespace Prisma {
     assignedAgentId?: SortOrderInput | SortOrder
     title?: SortOrder
     status?: SortOrder
-    source?: SortOrderInput | SortOrder
+    source?: SortOrder
+    priority?: SortOrder
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrderInput | SortOrder
     currency?: SortOrder
+    tags?: SortOrder
     notes?: SortOrderInput | SortOrder
     customFields?: SortOrder
+    expectedCloseAt?: SortOrderInput | SortOrder
+    nextActionAt?: SortOrderInput | SortOrder
+    nextActionNote?: SortOrderInput | SortOrder
+    qualifiedAt?: SortOrderInput | SortOrder
+    disqualifiedAt?: SortOrderInput | SortOrder
+    disqualifiedReason?: SortOrderInput | SortOrder
     lostReason?: SortOrderInput | SortOrder
     wonAt?: SortOrderInput | SortOrder
     lostAt?: SortOrderInput | SortOrder
+    slaFirstResponseAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -75336,18 +78177,180 @@ export namespace Prisma {
     assignedAgentId?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     title?: StringWithAggregatesFilter<"Lead"> | string
     status?: EnumLeadStatusWithAggregatesFilter<"Lead"> | $Enums.LeadStatus
-    source?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    source?: EnumLeadSourceWithAggregatesFilter<"Lead"> | $Enums.LeadSource
+    priority?: EnumLeadPriorityWithAggregatesFilter<"Lead"> | $Enums.LeadPriority
     score?: IntWithAggregatesFilter<"Lead"> | number
+    probability?: IntWithAggregatesFilter<"Lead"> | number
     estimatedValue?: FloatNullableWithAggregatesFilter<"Lead"> | number | null
     currency?: StringWithAggregatesFilter<"Lead"> | string
+    tags?: StringNullableListFilter<"Lead">
     notes?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     customFields?: JsonWithAggregatesFilter<"Lead">
+    expectedCloseAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+    nextActionAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+    nextActionNote?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    qualifiedAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+    disqualifiedAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+    disqualifiedReason?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     lostReason?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     wonAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
     lostAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+    slaFirstResponseAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Lead"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Lead"> | Date | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
+  }
+
+  export type LeadActivityWhereInput = {
+    AND?: LeadActivityWhereInput | LeadActivityWhereInput[]
+    OR?: LeadActivityWhereInput[]
+    NOT?: LeadActivityWhereInput | LeadActivityWhereInput[]
+    id?: StringFilter<"LeadActivity"> | string
+    leadId?: StringFilter<"LeadActivity"> | string
+    companyId?: StringFilter<"LeadActivity"> | string
+    type?: EnumLeadActivityTypeFilter<"LeadActivity"> | $Enums.LeadActivityType
+    actorType?: StringFilter<"LeadActivity"> | string
+    actorId?: StringNullableFilter<"LeadActivity"> | string | null
+    title?: StringFilter<"LeadActivity"> | string
+    body?: StringNullableFilter<"LeadActivity"> | string | null
+    metadata?: JsonFilter<"LeadActivity">
+    createdAt?: DateTimeFilter<"LeadActivity"> | Date | string
+    lead?: XOR<LeadScalarRelationFilter, LeadWhereInput>
+  }
+
+  export type LeadActivityOrderByWithRelationInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    type?: SortOrder
+    actorType?: SortOrder
+    actorId?: SortOrderInput | SortOrder
+    title?: SortOrder
+    body?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    lead?: LeadOrderByWithRelationInput
+  }
+
+  export type LeadActivityWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LeadActivityWhereInput | LeadActivityWhereInput[]
+    OR?: LeadActivityWhereInput[]
+    NOT?: LeadActivityWhereInput | LeadActivityWhereInput[]
+    leadId?: StringFilter<"LeadActivity"> | string
+    companyId?: StringFilter<"LeadActivity"> | string
+    type?: EnumLeadActivityTypeFilter<"LeadActivity"> | $Enums.LeadActivityType
+    actorType?: StringFilter<"LeadActivity"> | string
+    actorId?: StringNullableFilter<"LeadActivity"> | string | null
+    title?: StringFilter<"LeadActivity"> | string
+    body?: StringNullableFilter<"LeadActivity"> | string | null
+    metadata?: JsonFilter<"LeadActivity">
+    createdAt?: DateTimeFilter<"LeadActivity"> | Date | string
+    lead?: XOR<LeadScalarRelationFilter, LeadWhereInput>
+  }, "id">
+
+  export type LeadActivityOrderByWithAggregationInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    type?: SortOrder
+    actorType?: SortOrder
+    actorId?: SortOrderInput | SortOrder
+    title?: SortOrder
+    body?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    _count?: LeadActivityCountOrderByAggregateInput
+    _max?: LeadActivityMaxOrderByAggregateInput
+    _min?: LeadActivityMinOrderByAggregateInput
+  }
+
+  export type LeadActivityScalarWhereWithAggregatesInput = {
+    AND?: LeadActivityScalarWhereWithAggregatesInput | LeadActivityScalarWhereWithAggregatesInput[]
+    OR?: LeadActivityScalarWhereWithAggregatesInput[]
+    NOT?: LeadActivityScalarWhereWithAggregatesInput | LeadActivityScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LeadActivity"> | string
+    leadId?: StringWithAggregatesFilter<"LeadActivity"> | string
+    companyId?: StringWithAggregatesFilter<"LeadActivity"> | string
+    type?: EnumLeadActivityTypeWithAggregatesFilter<"LeadActivity"> | $Enums.LeadActivityType
+    actorType?: StringWithAggregatesFilter<"LeadActivity"> | string
+    actorId?: StringNullableWithAggregatesFilter<"LeadActivity"> | string | null
+    title?: StringWithAggregatesFilter<"LeadActivity"> | string
+    body?: StringNullableWithAggregatesFilter<"LeadActivity"> | string | null
+    metadata?: JsonWithAggregatesFilter<"LeadActivity">
+    createdAt?: DateTimeWithAggregatesFilter<"LeadActivity"> | Date | string
+  }
+
+  export type LeadScoreEventWhereInput = {
+    AND?: LeadScoreEventWhereInput | LeadScoreEventWhereInput[]
+    OR?: LeadScoreEventWhereInput[]
+    NOT?: LeadScoreEventWhereInput | LeadScoreEventWhereInput[]
+    id?: StringFilter<"LeadScoreEvent"> | string
+    leadId?: StringFilter<"LeadScoreEvent"> | string
+    companyId?: StringFilter<"LeadScoreEvent"> | string
+    delta?: IntFilter<"LeadScoreEvent"> | number
+    newScore?: IntFilter<"LeadScoreEvent"> | number
+    reason?: StringFilter<"LeadScoreEvent"> | string
+    source?: StringFilter<"LeadScoreEvent"> | string
+    createdAt?: DateTimeFilter<"LeadScoreEvent"> | Date | string
+    lead?: XOR<LeadScalarRelationFilter, LeadWhereInput>
+  }
+
+  export type LeadScoreEventOrderByWithRelationInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    delta?: SortOrder
+    newScore?: SortOrder
+    reason?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    lead?: LeadOrderByWithRelationInput
+  }
+
+  export type LeadScoreEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LeadScoreEventWhereInput | LeadScoreEventWhereInput[]
+    OR?: LeadScoreEventWhereInput[]
+    NOT?: LeadScoreEventWhereInput | LeadScoreEventWhereInput[]
+    leadId?: StringFilter<"LeadScoreEvent"> | string
+    companyId?: StringFilter<"LeadScoreEvent"> | string
+    delta?: IntFilter<"LeadScoreEvent"> | number
+    newScore?: IntFilter<"LeadScoreEvent"> | number
+    reason?: StringFilter<"LeadScoreEvent"> | string
+    source?: StringFilter<"LeadScoreEvent"> | string
+    createdAt?: DateTimeFilter<"LeadScoreEvent"> | Date | string
+    lead?: XOR<LeadScalarRelationFilter, LeadWhereInput>
+  }, "id">
+
+  export type LeadScoreEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    delta?: SortOrder
+    newScore?: SortOrder
+    reason?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+    _count?: LeadScoreEventCountOrderByAggregateInput
+    _avg?: LeadScoreEventAvgOrderByAggregateInput
+    _max?: LeadScoreEventMaxOrderByAggregateInput
+    _min?: LeadScoreEventMinOrderByAggregateInput
+    _sum?: LeadScoreEventSumOrderByAggregateInput
+  }
+
+  export type LeadScoreEventScalarWhereWithAggregatesInput = {
+    AND?: LeadScoreEventScalarWhereWithAggregatesInput | LeadScoreEventScalarWhereWithAggregatesInput[]
+    OR?: LeadScoreEventScalarWhereWithAggregatesInput[]
+    NOT?: LeadScoreEventScalarWhereWithAggregatesInput | LeadScoreEventScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LeadScoreEvent"> | string
+    leadId?: StringWithAggregatesFilter<"LeadScoreEvent"> | string
+    companyId?: StringWithAggregatesFilter<"LeadScoreEvent"> | string
+    delta?: IntWithAggregatesFilter<"LeadScoreEvent"> | number
+    newScore?: IntWithAggregatesFilter<"LeadScoreEvent"> | number
+    reason?: StringWithAggregatesFilter<"LeadScoreEvent"> | string
+    source?: StringWithAggregatesFilter<"LeadScoreEvent"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"LeadScoreEvent"> | Date | string
   }
 
   export type DealWhereInput = {
@@ -80300,15 +83303,25 @@ export namespace Prisma {
     id?: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -80316,6 +83329,8 @@ export namespace Prisma {
     contact: ContactCreateNestedOneWithoutLeadsInput
     assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
     deals?: DealCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUncheckedCreateInput = {
@@ -80325,34 +83340,56 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -80360,6 +83397,8 @@ export namespace Prisma {
     contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
     assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
     deals?: DealUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateInput = {
@@ -80369,19 +83408,31 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadCreateManyInput = {
@@ -80391,15 +83442,25 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -80409,15 +83470,25 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -80430,18 +83501,194 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type LeadActivityCreateInput = {
+    id?: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    lead: LeadCreateNestedOneWithoutActivitiesInput
+  }
+
+  export type LeadActivityUncheckedCreateInput = {
+    id?: string
+    leadId: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type LeadActivityUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lead?: LeadUpdateOneRequiredWithoutActivitiesNestedInput
+  }
+
+  export type LeadActivityUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    leadId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadActivityCreateManyInput = {
+    id?: string
+    leadId: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type LeadActivityUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadActivityUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    leadId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventCreateInput = {
+    id?: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+    lead: LeadCreateNestedOneWithoutScoreEventsInput
+  }
+
+  export type LeadScoreEventUncheckedCreateInput = {
+    id?: string
+    leadId: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+  }
+
+  export type LeadScoreEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lead?: LeadUpdateOneRequiredWithoutScoreEventsNestedInput
+  }
+
+  export type LeadScoreEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    leadId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventCreateManyInput = {
+    id?: string
+    leadId: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+  }
+
+  export type LeadScoreEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    leadId?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type DealCreateInput = {
@@ -85861,6 +89108,40 @@ export namespace Prisma {
     not?: NestedEnumLeadStatusFilter<$PrismaModel> | $Enums.LeadStatus
   }
 
+  export type EnumLeadSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadSource | EnumLeadSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadSourceFilter<$PrismaModel> | $Enums.LeadSource
+  }
+
+  export type EnumLeadPriorityFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadPriority | EnumLeadPriorityFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadPriorityFilter<$PrismaModel> | $Enums.LeadPriority
+  }
+
+  export type LeadActivityListRelationFilter = {
+    every?: LeadActivityWhereInput
+    some?: LeadActivityWhereInput
+    none?: LeadActivityWhereInput
+  }
+
+  export type LeadScoreEventListRelationFilter = {
+    every?: LeadScoreEventWhereInput
+    some?: LeadScoreEventWhereInput
+    none?: LeadScoreEventWhereInput
+  }
+
+  export type LeadActivityOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type LeadScoreEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type LeadCountOrderByAggregateInput = {
     id?: SortOrder
     companyId?: SortOrder
@@ -85869,14 +89150,24 @@ export namespace Prisma {
     title?: SortOrder
     status?: SortOrder
     source?: SortOrder
+    priority?: SortOrder
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrder
     currency?: SortOrder
+    tags?: SortOrder
     notes?: SortOrder
     customFields?: SortOrder
+    expectedCloseAt?: SortOrder
+    nextActionAt?: SortOrder
+    nextActionNote?: SortOrder
+    qualifiedAt?: SortOrder
+    disqualifiedAt?: SortOrder
+    disqualifiedReason?: SortOrder
     lostReason?: SortOrder
     wonAt?: SortOrder
     lostAt?: SortOrder
+    slaFirstResponseAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
@@ -85884,6 +89175,7 @@ export namespace Prisma {
 
   export type LeadAvgOrderByAggregateInput = {
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrder
   }
 
@@ -85895,13 +89187,22 @@ export namespace Prisma {
     title?: SortOrder
     status?: SortOrder
     source?: SortOrder
+    priority?: SortOrder
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrder
     currency?: SortOrder
     notes?: SortOrder
+    expectedCloseAt?: SortOrder
+    nextActionAt?: SortOrder
+    nextActionNote?: SortOrder
+    qualifiedAt?: SortOrder
+    disqualifiedAt?: SortOrder
+    disqualifiedReason?: SortOrder
     lostReason?: SortOrder
     wonAt?: SortOrder
     lostAt?: SortOrder
+    slaFirstResponseAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
@@ -85915,13 +89216,22 @@ export namespace Prisma {
     title?: SortOrder
     status?: SortOrder
     source?: SortOrder
+    priority?: SortOrder
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrder
     currency?: SortOrder
     notes?: SortOrder
+    expectedCloseAt?: SortOrder
+    nextActionAt?: SortOrder
+    nextActionNote?: SortOrder
+    qualifiedAt?: SortOrder
+    disqualifiedAt?: SortOrder
+    disqualifiedReason?: SortOrder
     lostReason?: SortOrder
     wonAt?: SortOrder
     lostAt?: SortOrder
+    slaFirstResponseAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrder
@@ -85929,6 +89239,7 @@ export namespace Prisma {
 
   export type LeadSumOrderByAggregateInput = {
     score?: SortOrder
+    probability?: SortOrder
     estimatedValue?: SortOrder
   }
 
@@ -85940,6 +89251,128 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumLeadStatusFilter<$PrismaModel>
     _max?: NestedEnumLeadStatusFilter<$PrismaModel>
+  }
+
+  export type EnumLeadSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadSource | EnumLeadSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadSourceWithAggregatesFilter<$PrismaModel> | $Enums.LeadSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadSourceFilter<$PrismaModel>
+    _max?: NestedEnumLeadSourceFilter<$PrismaModel>
+  }
+
+  export type EnumLeadPriorityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadPriority | EnumLeadPriorityFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadPriorityWithAggregatesFilter<$PrismaModel> | $Enums.LeadPriority
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadPriorityFilter<$PrismaModel>
+    _max?: NestedEnumLeadPriorityFilter<$PrismaModel>
+  }
+
+  export type EnumLeadActivityTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadActivityType | EnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadActivityTypeFilter<$PrismaModel> | $Enums.LeadActivityType
+  }
+
+  export type LeadScalarRelationFilter = {
+    is?: LeadWhereInput
+    isNot?: LeadWhereInput
+  }
+
+  export type LeadActivityCountOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    type?: SortOrder
+    actorType?: SortOrder
+    actorId?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LeadActivityMaxOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    type?: SortOrder
+    actorType?: SortOrder
+    actorId?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LeadActivityMinOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    type?: SortOrder
+    actorType?: SortOrder
+    actorId?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumLeadActivityTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadActivityType | EnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadActivityTypeWithAggregatesFilter<$PrismaModel> | $Enums.LeadActivityType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadActivityTypeFilter<$PrismaModel>
+    _max?: NestedEnumLeadActivityTypeFilter<$PrismaModel>
+  }
+
+  export type LeadScoreEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    delta?: SortOrder
+    newScore?: SortOrder
+    reason?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LeadScoreEventAvgOrderByAggregateInput = {
+    delta?: SortOrder
+    newScore?: SortOrder
+  }
+
+  export type LeadScoreEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    delta?: SortOrder
+    newScore?: SortOrder
+    reason?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LeadScoreEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    leadId?: SortOrder
+    companyId?: SortOrder
+    delta?: SortOrder
+    newScore?: SortOrder
+    reason?: SortOrder
+    source?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LeadScoreEventSumOrderByAggregateInput = {
+    delta?: SortOrder
+    newScore?: SortOrder
   }
 
   export type EnumDealStageFilter<$PrismaModel = never> = {
@@ -89968,6 +93401,10 @@ export namespace Prisma {
     deleteMany?: MessageScalarWhereInput | MessageScalarWhereInput[]
   }
 
+  export type LeadCreatetagsInput = {
+    set: string[]
+  }
+
   export type CompanyCreateNestedOneWithoutLeadsInput = {
     create?: XOR<CompanyCreateWithoutLeadsInput, CompanyUncheckedCreateWithoutLeadsInput>
     connectOrCreate?: CompanyCreateOrConnectWithoutLeadsInput
@@ -89993,6 +93430,20 @@ export namespace Prisma {
     connect?: DealWhereUniqueInput | DealWhereUniqueInput[]
   }
 
+  export type LeadActivityCreateNestedManyWithoutLeadInput = {
+    create?: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput> | LeadActivityCreateWithoutLeadInput[] | LeadActivityUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadActivityCreateOrConnectWithoutLeadInput | LeadActivityCreateOrConnectWithoutLeadInput[]
+    createMany?: LeadActivityCreateManyLeadInputEnvelope
+    connect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+  }
+
+  export type LeadScoreEventCreateNestedManyWithoutLeadInput = {
+    create?: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput> | LeadScoreEventCreateWithoutLeadInput[] | LeadScoreEventUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadScoreEventCreateOrConnectWithoutLeadInput | LeadScoreEventCreateOrConnectWithoutLeadInput[]
+    createMany?: LeadScoreEventCreateManyLeadInputEnvelope
+    connect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+  }
+
   export type DealUncheckedCreateNestedManyWithoutLeadInput = {
     create?: XOR<DealCreateWithoutLeadInput, DealUncheckedCreateWithoutLeadInput> | DealCreateWithoutLeadInput[] | DealUncheckedCreateWithoutLeadInput[]
     connectOrCreate?: DealCreateOrConnectWithoutLeadInput | DealCreateOrConnectWithoutLeadInput[]
@@ -90000,8 +93451,35 @@ export namespace Prisma {
     connect?: DealWhereUniqueInput | DealWhereUniqueInput[]
   }
 
+  export type LeadActivityUncheckedCreateNestedManyWithoutLeadInput = {
+    create?: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput> | LeadActivityCreateWithoutLeadInput[] | LeadActivityUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadActivityCreateOrConnectWithoutLeadInput | LeadActivityCreateOrConnectWithoutLeadInput[]
+    createMany?: LeadActivityCreateManyLeadInputEnvelope
+    connect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+  }
+
+  export type LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput = {
+    create?: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput> | LeadScoreEventCreateWithoutLeadInput[] | LeadScoreEventUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadScoreEventCreateOrConnectWithoutLeadInput | LeadScoreEventCreateOrConnectWithoutLeadInput[]
+    createMany?: LeadScoreEventCreateManyLeadInputEnvelope
+    connect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+  }
+
   export type EnumLeadStatusFieldUpdateOperationsInput = {
     set?: $Enums.LeadStatus
+  }
+
+  export type EnumLeadSourceFieldUpdateOperationsInput = {
+    set?: $Enums.LeadSource
+  }
+
+  export type EnumLeadPriorityFieldUpdateOperationsInput = {
+    set?: $Enums.LeadPriority
+  }
+
+  export type LeadUpdatetagsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type CompanyUpdateOneRequiredWithoutLeadsNestedInput = {
@@ -90044,6 +93522,34 @@ export namespace Prisma {
     deleteMany?: DealScalarWhereInput | DealScalarWhereInput[]
   }
 
+  export type LeadActivityUpdateManyWithoutLeadNestedInput = {
+    create?: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput> | LeadActivityCreateWithoutLeadInput[] | LeadActivityUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadActivityCreateOrConnectWithoutLeadInput | LeadActivityCreateOrConnectWithoutLeadInput[]
+    upsert?: LeadActivityUpsertWithWhereUniqueWithoutLeadInput | LeadActivityUpsertWithWhereUniqueWithoutLeadInput[]
+    createMany?: LeadActivityCreateManyLeadInputEnvelope
+    set?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    disconnect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    delete?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    connect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    update?: LeadActivityUpdateWithWhereUniqueWithoutLeadInput | LeadActivityUpdateWithWhereUniqueWithoutLeadInput[]
+    updateMany?: LeadActivityUpdateManyWithWhereWithoutLeadInput | LeadActivityUpdateManyWithWhereWithoutLeadInput[]
+    deleteMany?: LeadActivityScalarWhereInput | LeadActivityScalarWhereInput[]
+  }
+
+  export type LeadScoreEventUpdateManyWithoutLeadNestedInput = {
+    create?: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput> | LeadScoreEventCreateWithoutLeadInput[] | LeadScoreEventUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadScoreEventCreateOrConnectWithoutLeadInput | LeadScoreEventCreateOrConnectWithoutLeadInput[]
+    upsert?: LeadScoreEventUpsertWithWhereUniqueWithoutLeadInput | LeadScoreEventUpsertWithWhereUniqueWithoutLeadInput[]
+    createMany?: LeadScoreEventCreateManyLeadInputEnvelope
+    set?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    disconnect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    delete?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    connect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    update?: LeadScoreEventUpdateWithWhereUniqueWithoutLeadInput | LeadScoreEventUpdateWithWhereUniqueWithoutLeadInput[]
+    updateMany?: LeadScoreEventUpdateManyWithWhereWithoutLeadInput | LeadScoreEventUpdateManyWithWhereWithoutLeadInput[]
+    deleteMany?: LeadScoreEventScalarWhereInput | LeadScoreEventScalarWhereInput[]
+  }
+
   export type DealUncheckedUpdateManyWithoutLeadNestedInput = {
     create?: XOR<DealCreateWithoutLeadInput, DealUncheckedCreateWithoutLeadInput> | DealCreateWithoutLeadInput[] | DealUncheckedCreateWithoutLeadInput[]
     connectOrCreate?: DealCreateOrConnectWithoutLeadInput | DealCreateOrConnectWithoutLeadInput[]
@@ -90056,6 +93562,66 @@ export namespace Prisma {
     update?: DealUpdateWithWhereUniqueWithoutLeadInput | DealUpdateWithWhereUniqueWithoutLeadInput[]
     updateMany?: DealUpdateManyWithWhereWithoutLeadInput | DealUpdateManyWithWhereWithoutLeadInput[]
     deleteMany?: DealScalarWhereInput | DealScalarWhereInput[]
+  }
+
+  export type LeadActivityUncheckedUpdateManyWithoutLeadNestedInput = {
+    create?: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput> | LeadActivityCreateWithoutLeadInput[] | LeadActivityUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadActivityCreateOrConnectWithoutLeadInput | LeadActivityCreateOrConnectWithoutLeadInput[]
+    upsert?: LeadActivityUpsertWithWhereUniqueWithoutLeadInput | LeadActivityUpsertWithWhereUniqueWithoutLeadInput[]
+    createMany?: LeadActivityCreateManyLeadInputEnvelope
+    set?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    disconnect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    delete?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    connect?: LeadActivityWhereUniqueInput | LeadActivityWhereUniqueInput[]
+    update?: LeadActivityUpdateWithWhereUniqueWithoutLeadInput | LeadActivityUpdateWithWhereUniqueWithoutLeadInput[]
+    updateMany?: LeadActivityUpdateManyWithWhereWithoutLeadInput | LeadActivityUpdateManyWithWhereWithoutLeadInput[]
+    deleteMany?: LeadActivityScalarWhereInput | LeadActivityScalarWhereInput[]
+  }
+
+  export type LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput = {
+    create?: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput> | LeadScoreEventCreateWithoutLeadInput[] | LeadScoreEventUncheckedCreateWithoutLeadInput[]
+    connectOrCreate?: LeadScoreEventCreateOrConnectWithoutLeadInput | LeadScoreEventCreateOrConnectWithoutLeadInput[]
+    upsert?: LeadScoreEventUpsertWithWhereUniqueWithoutLeadInput | LeadScoreEventUpsertWithWhereUniqueWithoutLeadInput[]
+    createMany?: LeadScoreEventCreateManyLeadInputEnvelope
+    set?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    disconnect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    delete?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    connect?: LeadScoreEventWhereUniqueInput | LeadScoreEventWhereUniqueInput[]
+    update?: LeadScoreEventUpdateWithWhereUniqueWithoutLeadInput | LeadScoreEventUpdateWithWhereUniqueWithoutLeadInput[]
+    updateMany?: LeadScoreEventUpdateManyWithWhereWithoutLeadInput | LeadScoreEventUpdateManyWithWhereWithoutLeadInput[]
+    deleteMany?: LeadScoreEventScalarWhereInput | LeadScoreEventScalarWhereInput[]
+  }
+
+  export type LeadCreateNestedOneWithoutActivitiesInput = {
+    create?: XOR<LeadCreateWithoutActivitiesInput, LeadUncheckedCreateWithoutActivitiesInput>
+    connectOrCreate?: LeadCreateOrConnectWithoutActivitiesInput
+    connect?: LeadWhereUniqueInput
+  }
+
+  export type EnumLeadActivityTypeFieldUpdateOperationsInput = {
+    set?: $Enums.LeadActivityType
+  }
+
+  export type LeadUpdateOneRequiredWithoutActivitiesNestedInput = {
+    create?: XOR<LeadCreateWithoutActivitiesInput, LeadUncheckedCreateWithoutActivitiesInput>
+    connectOrCreate?: LeadCreateOrConnectWithoutActivitiesInput
+    upsert?: LeadUpsertWithoutActivitiesInput
+    connect?: LeadWhereUniqueInput
+    update?: XOR<XOR<LeadUpdateToOneWithWhereWithoutActivitiesInput, LeadUpdateWithoutActivitiesInput>, LeadUncheckedUpdateWithoutActivitiesInput>
+  }
+
+  export type LeadCreateNestedOneWithoutScoreEventsInput = {
+    create?: XOR<LeadCreateWithoutScoreEventsInput, LeadUncheckedCreateWithoutScoreEventsInput>
+    connectOrCreate?: LeadCreateOrConnectWithoutScoreEventsInput
+    connect?: LeadWhereUniqueInput
+  }
+
+  export type LeadUpdateOneRequiredWithoutScoreEventsNestedInput = {
+    create?: XOR<LeadCreateWithoutScoreEventsInput, LeadUncheckedCreateWithoutScoreEventsInput>
+    connectOrCreate?: LeadCreateOrConnectWithoutScoreEventsInput
+    upsert?: LeadUpsertWithoutScoreEventsInput
+    connect?: LeadWhereUniqueInput
+    update?: XOR<XOR<LeadUpdateToOneWithWhereWithoutScoreEventsInput, LeadUpdateWithoutScoreEventsInput>, LeadUncheckedUpdateWithoutScoreEventsInput>
   }
 
   export type CompanyCreateNestedOneWithoutDealsInput = {
@@ -91566,6 +95132,20 @@ export namespace Prisma {
     not?: NestedEnumLeadStatusFilter<$PrismaModel> | $Enums.LeadStatus
   }
 
+  export type NestedEnumLeadSourceFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadSource | EnumLeadSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadSourceFilter<$PrismaModel> | $Enums.LeadSource
+  }
+
+  export type NestedEnumLeadPriorityFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadPriority | EnumLeadPriorityFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadPriorityFilter<$PrismaModel> | $Enums.LeadPriority
+  }
+
   export type NestedEnumLeadStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.LeadStatus | EnumLeadStatusFieldRefInput<$PrismaModel>
     in?: $Enums.LeadStatus[] | ListEnumLeadStatusFieldRefInput<$PrismaModel>
@@ -91574,6 +95154,43 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumLeadStatusFilter<$PrismaModel>
     _max?: NestedEnumLeadStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLeadSourceWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadSource | EnumLeadSourceFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadSource[] | ListEnumLeadSourceFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadSourceWithAggregatesFilter<$PrismaModel> | $Enums.LeadSource
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadSourceFilter<$PrismaModel>
+    _max?: NestedEnumLeadSourceFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLeadPriorityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadPriority | EnumLeadPriorityFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadPriority[] | ListEnumLeadPriorityFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadPriorityWithAggregatesFilter<$PrismaModel> | $Enums.LeadPriority
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadPriorityFilter<$PrismaModel>
+    _max?: NestedEnumLeadPriorityFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLeadActivityTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadActivityType | EnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadActivityTypeFilter<$PrismaModel> | $Enums.LeadActivityType
+  }
+
+  export type NestedEnumLeadActivityTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LeadActivityType | EnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LeadActivityType[] | ListEnumLeadActivityTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLeadActivityTypeWithAggregatesFilter<$PrismaModel> | $Enums.LeadActivityType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLeadActivityTypeFilter<$PrismaModel>
+    _max?: NestedEnumLeadActivityTypeFilter<$PrismaModel>
   }
 
   export type NestedEnumDealStageFilter<$PrismaModel = never> = {
@@ -91972,21 +95589,33 @@ export namespace Prisma {
     id?: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     contact: ContactCreateNestedOneWithoutLeadsInput
     assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
     deals?: DealCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUncheckedCreateWithoutCompanyInput = {
@@ -91995,19 +95624,31 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
   }
 
   export type LeadCreateOrConnectWithoutCompanyInput = {
@@ -92524,15 +96165,25 @@ export namespace Prisma {
     assignedAgentId?: StringNullableFilter<"Lead"> | string | null
     title?: StringFilter<"Lead"> | string
     status?: EnumLeadStatusFilter<"Lead"> | $Enums.LeadStatus
-    source?: StringNullableFilter<"Lead"> | string | null
+    source?: EnumLeadSourceFilter<"Lead"> | $Enums.LeadSource
+    priority?: EnumLeadPriorityFilter<"Lead"> | $Enums.LeadPriority
     score?: IntFilter<"Lead"> | number
+    probability?: IntFilter<"Lead"> | number
     estimatedValue?: FloatNullableFilter<"Lead"> | number | null
     currency?: StringFilter<"Lead"> | string
+    tags?: StringNullableListFilter<"Lead">
     notes?: StringNullableFilter<"Lead"> | string | null
     customFields?: JsonFilter<"Lead">
+    expectedCloseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    nextActionNote?: StringNullableFilter<"Lead"> | string | null
+    qualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    disqualifiedReason?: StringNullableFilter<"Lead"> | string | null
     lostReason?: StringNullableFilter<"Lead"> | string | null
     wonAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     lostAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
+    slaFirstResponseAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
     createdAt?: DateTimeFilter<"Lead"> | Date | string
     updatedAt?: DateTimeFilter<"Lead"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Lead"> | Date | string | null
@@ -92939,21 +96590,33 @@ export namespace Prisma {
     id?: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     company: CompanyCreateNestedOneWithoutLeadsInput
     contact: ContactCreateNestedOneWithoutLeadsInput
     deals?: DealCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUncheckedCreateWithoutAssignedAgentInput = {
@@ -92962,19 +96625,31 @@ export namespace Prisma {
     contactId: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
   }
 
   export type LeadCreateOrConnectWithoutAssignedAgentInput = {
@@ -93894,21 +97569,33 @@ export namespace Prisma {
     id?: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     company: CompanyCreateNestedOneWithoutLeadsInput
     assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
     deals?: DealCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUncheckedCreateWithoutContactInput = {
@@ -93917,19 +97604,31 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
   }
 
   export type LeadCreateOrConnectWithoutContactInput = {
@@ -95671,6 +99370,70 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type LeadActivityCreateWithoutLeadInput = {
+    id?: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type LeadActivityUncheckedCreateWithoutLeadInput = {
+    id?: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type LeadActivityCreateOrConnectWithoutLeadInput = {
+    where: LeadActivityWhereUniqueInput
+    create: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput>
+  }
+
+  export type LeadActivityCreateManyLeadInputEnvelope = {
+    data: LeadActivityCreateManyLeadInput | LeadActivityCreateManyLeadInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type LeadScoreEventCreateWithoutLeadInput = {
+    id?: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+  }
+
+  export type LeadScoreEventUncheckedCreateWithoutLeadInput = {
+    id?: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+  }
+
+  export type LeadScoreEventCreateOrConnectWithoutLeadInput = {
+    where: LeadScoreEventWhereUniqueInput
+    create: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput>
+  }
+
+  export type LeadScoreEventCreateManyLeadInputEnvelope = {
+    data: LeadScoreEventCreateManyLeadInput | LeadScoreEventCreateManyLeadInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompanyUpsertWithoutLeadsInput = {
     update: XOR<CompanyUpdateWithoutLeadsInput, CompanyUncheckedUpdateWithoutLeadsInput>
     create: XOR<CompanyCreateWithoutLeadsInput, CompanyUncheckedCreateWithoutLeadsInput>
@@ -95884,6 +99647,364 @@ export namespace Prisma {
     data: XOR<DealUpdateManyMutationInput, DealUncheckedUpdateManyWithoutLeadInput>
   }
 
+  export type LeadActivityUpsertWithWhereUniqueWithoutLeadInput = {
+    where: LeadActivityWhereUniqueInput
+    update: XOR<LeadActivityUpdateWithoutLeadInput, LeadActivityUncheckedUpdateWithoutLeadInput>
+    create: XOR<LeadActivityCreateWithoutLeadInput, LeadActivityUncheckedCreateWithoutLeadInput>
+  }
+
+  export type LeadActivityUpdateWithWhereUniqueWithoutLeadInput = {
+    where: LeadActivityWhereUniqueInput
+    data: XOR<LeadActivityUpdateWithoutLeadInput, LeadActivityUncheckedUpdateWithoutLeadInput>
+  }
+
+  export type LeadActivityUpdateManyWithWhereWithoutLeadInput = {
+    where: LeadActivityScalarWhereInput
+    data: XOR<LeadActivityUpdateManyMutationInput, LeadActivityUncheckedUpdateManyWithoutLeadInput>
+  }
+
+  export type LeadActivityScalarWhereInput = {
+    AND?: LeadActivityScalarWhereInput | LeadActivityScalarWhereInput[]
+    OR?: LeadActivityScalarWhereInput[]
+    NOT?: LeadActivityScalarWhereInput | LeadActivityScalarWhereInput[]
+    id?: StringFilter<"LeadActivity"> | string
+    leadId?: StringFilter<"LeadActivity"> | string
+    companyId?: StringFilter<"LeadActivity"> | string
+    type?: EnumLeadActivityTypeFilter<"LeadActivity"> | $Enums.LeadActivityType
+    actorType?: StringFilter<"LeadActivity"> | string
+    actorId?: StringNullableFilter<"LeadActivity"> | string | null
+    title?: StringFilter<"LeadActivity"> | string
+    body?: StringNullableFilter<"LeadActivity"> | string | null
+    metadata?: JsonFilter<"LeadActivity">
+    createdAt?: DateTimeFilter<"LeadActivity"> | Date | string
+  }
+
+  export type LeadScoreEventUpsertWithWhereUniqueWithoutLeadInput = {
+    where: LeadScoreEventWhereUniqueInput
+    update: XOR<LeadScoreEventUpdateWithoutLeadInput, LeadScoreEventUncheckedUpdateWithoutLeadInput>
+    create: XOR<LeadScoreEventCreateWithoutLeadInput, LeadScoreEventUncheckedCreateWithoutLeadInput>
+  }
+
+  export type LeadScoreEventUpdateWithWhereUniqueWithoutLeadInput = {
+    where: LeadScoreEventWhereUniqueInput
+    data: XOR<LeadScoreEventUpdateWithoutLeadInput, LeadScoreEventUncheckedUpdateWithoutLeadInput>
+  }
+
+  export type LeadScoreEventUpdateManyWithWhereWithoutLeadInput = {
+    where: LeadScoreEventScalarWhereInput
+    data: XOR<LeadScoreEventUpdateManyMutationInput, LeadScoreEventUncheckedUpdateManyWithoutLeadInput>
+  }
+
+  export type LeadScoreEventScalarWhereInput = {
+    AND?: LeadScoreEventScalarWhereInput | LeadScoreEventScalarWhereInput[]
+    OR?: LeadScoreEventScalarWhereInput[]
+    NOT?: LeadScoreEventScalarWhereInput | LeadScoreEventScalarWhereInput[]
+    id?: StringFilter<"LeadScoreEvent"> | string
+    leadId?: StringFilter<"LeadScoreEvent"> | string
+    companyId?: StringFilter<"LeadScoreEvent"> | string
+    delta?: IntFilter<"LeadScoreEvent"> | number
+    newScore?: IntFilter<"LeadScoreEvent"> | number
+    reason?: StringFilter<"LeadScoreEvent"> | string
+    source?: StringFilter<"LeadScoreEvent"> | string
+    createdAt?: DateTimeFilter<"LeadScoreEvent"> | Date | string
+  }
+
+  export type LeadCreateWithoutActivitiesInput = {
+    id?: string
+    title: string
+    status?: $Enums.LeadStatus
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
+    score?: number
+    probability?: number
+    estimatedValue?: number | null
+    currency?: string
+    tags?: LeadCreatetagsInput | string[]
+    notes?: string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
+    lostReason?: string | null
+    wonAt?: Date | string | null
+    lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    company: CompanyCreateNestedOneWithoutLeadsInput
+    contact: ContactCreateNestedOneWithoutLeadsInput
+    assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
+    deals?: DealCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
+  }
+
+  export type LeadUncheckedCreateWithoutActivitiesInput = {
+    id?: string
+    companyId: string
+    contactId: string
+    assignedAgentId?: string | null
+    title: string
+    status?: $Enums.LeadStatus
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
+    score?: number
+    probability?: number
+    estimatedValue?: number | null
+    currency?: string
+    tags?: LeadCreatetagsInput | string[]
+    notes?: string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
+    lostReason?: string | null
+    wonAt?: Date | string | null
+    lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
+  }
+
+  export type LeadCreateOrConnectWithoutActivitiesInput = {
+    where: LeadWhereUniqueInput
+    create: XOR<LeadCreateWithoutActivitiesInput, LeadUncheckedCreateWithoutActivitiesInput>
+  }
+
+  export type LeadUpsertWithoutActivitiesInput = {
+    update: XOR<LeadUpdateWithoutActivitiesInput, LeadUncheckedUpdateWithoutActivitiesInput>
+    create: XOR<LeadCreateWithoutActivitiesInput, LeadUncheckedCreateWithoutActivitiesInput>
+    where?: LeadWhereInput
+  }
+
+  export type LeadUpdateToOneWithWhereWithoutActivitiesInput = {
+    where?: LeadWhereInput
+    data: XOR<LeadUpdateWithoutActivitiesInput, LeadUncheckedUpdateWithoutActivitiesInput>
+  }
+
+  export type LeadUpdateWithoutActivitiesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+    score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
+    estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    lostReason?: NullableStringFieldUpdateOperationsInput | string | null
+    wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    company?: CompanyUpdateOneRequiredWithoutLeadsNestedInput
+    contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
+    assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
+    deals?: DealUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
+  }
+
+  export type LeadUncheckedUpdateWithoutActivitiesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    contactId?: StringFieldUpdateOperationsInput | string
+    assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+    score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
+    estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    lostReason?: NullableStringFieldUpdateOperationsInput | string | null
+    wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
+  }
+
+  export type LeadCreateWithoutScoreEventsInput = {
+    id?: string
+    title: string
+    status?: $Enums.LeadStatus
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
+    score?: number
+    probability?: number
+    estimatedValue?: number | null
+    currency?: string
+    tags?: LeadCreatetagsInput | string[]
+    notes?: string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
+    lostReason?: string | null
+    wonAt?: Date | string | null
+    lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    company: CompanyCreateNestedOneWithoutLeadsInput
+    contact: ContactCreateNestedOneWithoutLeadsInput
+    assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
+    deals?: DealCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+  }
+
+  export type LeadUncheckedCreateWithoutScoreEventsInput = {
+    id?: string
+    companyId: string
+    contactId: string
+    assignedAgentId?: string | null
+    title: string
+    status?: $Enums.LeadStatus
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
+    score?: number
+    probability?: number
+    estimatedValue?: number | null
+    currency?: string
+    tags?: LeadCreatetagsInput | string[]
+    notes?: string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
+    lostReason?: string | null
+    wonAt?: Date | string | null
+    lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    deals?: DealUncheckedCreateNestedManyWithoutLeadInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+  }
+
+  export type LeadCreateOrConnectWithoutScoreEventsInput = {
+    where: LeadWhereUniqueInput
+    create: XOR<LeadCreateWithoutScoreEventsInput, LeadUncheckedCreateWithoutScoreEventsInput>
+  }
+
+  export type LeadUpsertWithoutScoreEventsInput = {
+    update: XOR<LeadUpdateWithoutScoreEventsInput, LeadUncheckedUpdateWithoutScoreEventsInput>
+    create: XOR<LeadCreateWithoutScoreEventsInput, LeadUncheckedCreateWithoutScoreEventsInput>
+    where?: LeadWhereInput
+  }
+
+  export type LeadUpdateToOneWithWhereWithoutScoreEventsInput = {
+    where?: LeadWhereInput
+    data: XOR<LeadUpdateWithoutScoreEventsInput, LeadUncheckedUpdateWithoutScoreEventsInput>
+  }
+
+  export type LeadUpdateWithoutScoreEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+    score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
+    estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    lostReason?: NullableStringFieldUpdateOperationsInput | string | null
+    wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    company?: CompanyUpdateOneRequiredWithoutLeadsNestedInput
+    contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
+    assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
+    deals?: DealUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+  }
+
+  export type LeadUncheckedUpdateWithoutScoreEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    contactId?: StringFieldUpdateOperationsInput | string
+    assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
+    score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
+    estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
+    currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    lostReason?: NullableStringFieldUpdateOperationsInput | string | null
+    wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+  }
+
   export type CompanyCreateWithoutDealsInput = {
     id?: string
     name: string
@@ -96020,21 +100141,33 @@ export namespace Prisma {
     id?: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     company: CompanyCreateNestedOneWithoutLeadsInput
     contact: ContactCreateNestedOneWithoutLeadsInput
     assignedAgent?: UserCreateNestedOneWithoutAssignedLeadsInput
+    activities?: LeadActivityCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventCreateNestedManyWithoutLeadInput
   }
 
   export type LeadUncheckedCreateWithoutDealsInput = {
@@ -96044,18 +100177,30 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutLeadInput
+    scoreEvents?: LeadScoreEventUncheckedCreateNestedManyWithoutLeadInput
   }
 
   export type LeadCreateOrConnectWithoutDealsInput = {
@@ -96361,21 +100506,33 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     company?: CompanyUpdateOneRequiredWithoutLeadsNestedInput
     contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
     assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateWithoutDealsInput = {
@@ -96385,18 +100542,30 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
   }
 
   export type UserUpsertWithoutAssignedDealsInput = {
@@ -99892,15 +104061,25 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -100278,21 +104457,33 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
     assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
     deals?: DealUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateWithoutCompanyInput = {
@@ -100301,19 +104492,31 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateManyWithoutCompanyInput = {
@@ -100322,15 +104525,25 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -100644,15 +104857,25 @@ export namespace Prisma {
     contactId: string
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -100781,21 +105004,33 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     company?: CompanyUpdateOneRequiredWithoutLeadsNestedInput
     contact?: ContactUpdateOneRequiredWithoutLeadsNestedInput
     deals?: DealUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateWithoutAssignedAgentInput = {
@@ -100804,19 +105039,31 @@ export namespace Prisma {
     contactId?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateManyWithoutAssignedAgentInput = {
@@ -100825,15 +105072,25 @@ export namespace Prisma {
     contactId?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -101283,15 +105540,25 @@ export namespace Prisma {
     assignedAgentId?: string | null
     title: string
     status?: $Enums.LeadStatus
-    source?: string | null
+    source?: $Enums.LeadSource
+    priority?: $Enums.LeadPriority
     score?: number
+    probability?: number
     estimatedValue?: number | null
     currency?: string
+    tags?: LeadCreatetagsInput | string[]
     notes?: string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: Date | string | null
+    nextActionAt?: Date | string | null
+    nextActionNote?: string | null
+    qualifiedAt?: Date | string | null
+    disqualifiedAt?: Date | string | null
+    disqualifiedReason?: string | null
     lostReason?: string | null
     wonAt?: Date | string | null
     lostAt?: Date | string | null
+    slaFirstResponseAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
@@ -101513,21 +105780,33 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     company?: CompanyUpdateOneRequiredWithoutLeadsNestedInput
     assignedAgent?: UserUpdateOneWithoutAssignedLeadsNestedInput
     deals?: DealUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateWithoutContactInput = {
@@ -101536,19 +105815,31 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deals?: DealUncheckedUpdateManyWithoutLeadNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutLeadNestedInput
+    scoreEvents?: LeadScoreEventUncheckedUpdateManyWithoutLeadNestedInput
   }
 
   export type LeadUncheckedUpdateManyWithoutContactInput = {
@@ -101557,15 +105848,25 @@ export namespace Prisma {
     assignedAgentId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     status?: EnumLeadStatusFieldUpdateOperationsInput | $Enums.LeadStatus
-    source?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: EnumLeadSourceFieldUpdateOperationsInput | $Enums.LeadSource
+    priority?: EnumLeadPriorityFieldUpdateOperationsInput | $Enums.LeadPriority
     score?: IntFieldUpdateOperationsInput | number
+    probability?: IntFieldUpdateOperationsInput | number
     estimatedValue?: NullableFloatFieldUpdateOperationsInput | number | null
     currency?: StringFieldUpdateOperationsInput | string
+    tags?: LeadUpdatetagsInput | string[]
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     customFields?: JsonNullValueInput | InputJsonValue
+    expectedCloseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextActionNote?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    disqualifiedReason?: NullableStringFieldUpdateOperationsInput | string | null
     lostReason?: NullableStringFieldUpdateOperationsInput | string | null
     wonAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lostAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    slaFirstResponseAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -102035,6 +106336,28 @@ export namespace Prisma {
     deletedAt?: Date | string | null
   }
 
+  export type LeadActivityCreateManyLeadInput = {
+    id?: string
+    companyId: string
+    type: $Enums.LeadActivityType
+    actorType: string
+    actorId?: string | null
+    title: string
+    body?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type LeadScoreEventCreateManyLeadInput = {
+    id?: string
+    companyId: string
+    delta: number
+    newScore: number
+    reason: string
+    source: string
+    createdAt?: Date | string
+  }
+
   export type DealUpdateWithoutLeadInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -102100,6 +106423,72 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type LeadActivityUpdateWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadActivityUncheckedUpdateWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadActivityUncheckedUpdateManyWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    type?: EnumLeadActivityTypeFieldUpdateOperationsInput | $Enums.LeadActivityType
+    actorType?: StringFieldUpdateOperationsInput | string
+    actorId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    body?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventUpdateWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventUncheckedUpdateWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LeadScoreEventUncheckedUpdateManyWithoutLeadInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    delta?: IntFieldUpdateOperationsInput | number
+    newScore?: IntFieldUpdateOperationsInput | number
+    reason?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PaymentCreateManyDealInput = {

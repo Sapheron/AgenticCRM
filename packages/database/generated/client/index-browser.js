@@ -258,17 +258,51 @@ exports.Prisma.LeadScalarFieldEnum = {
   title: 'title',
   status: 'status',
   source: 'source',
+  priority: 'priority',
   score: 'score',
+  probability: 'probability',
   estimatedValue: 'estimatedValue',
   currency: 'currency',
+  tags: 'tags',
   notes: 'notes',
   customFields: 'customFields',
+  expectedCloseAt: 'expectedCloseAt',
+  nextActionAt: 'nextActionAt',
+  nextActionNote: 'nextActionNote',
+  qualifiedAt: 'qualifiedAt',
+  disqualifiedAt: 'disqualifiedAt',
+  disqualifiedReason: 'disqualifiedReason',
   lostReason: 'lostReason',
   wonAt: 'wonAt',
   lostAt: 'lostAt',
+  slaFirstResponseAt: 'slaFirstResponseAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
+};
+
+exports.Prisma.LeadActivityScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.LeadScoreEventScalarFieldEnum = {
+  id: 'id',
+  leadId: 'leadId',
+  companyId: 'companyId',
+  delta: 'delta',
+  newScore: 'newScore',
+  reason: 'reason',
+  source: 'source',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.DealScalarFieldEnum = {
@@ -988,6 +1022,48 @@ exports.LeadStatus = exports.$Enums.LeadStatus = {
   DISQUALIFIED: 'DISQUALIFIED'
 };
 
+exports.LeadSource = exports.$Enums.LeadSource = {
+  WHATSAPP: 'WHATSAPP',
+  WEBSITE: 'WEBSITE',
+  REFERRAL: 'REFERRAL',
+  INBOUND_EMAIL: 'INBOUND_EMAIL',
+  OUTBOUND: 'OUTBOUND',
+  CAMPAIGN: 'CAMPAIGN',
+  FORM: 'FORM',
+  IMPORT: 'IMPORT',
+  AI_CHAT: 'AI_CHAT',
+  MANUAL: 'MANUAL',
+  OTHER: 'OTHER'
+};
+
+exports.LeadPriority = exports.$Enums.LeadPriority = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  URGENT: 'URGENT'
+};
+
+exports.LeadActivityType = exports.$Enums.LeadActivityType = {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+  ASSIGNED: 'ASSIGNED',
+  UNASSIGNED: 'UNASSIGNED',
+  SCORED: 'SCORED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  TAG_ADDED: 'TAG_ADDED',
+  TAG_REMOVED: 'TAG_REMOVED',
+  CONTACTED: 'CONTACTED',
+  RESPONDED: 'RESPONDED',
+  MEETING_BOOKED: 'MEETING_BOOKED',
+  PROPOSAL_SENT: 'PROPOSAL_SENT',
+  CONVERTED: 'CONVERTED',
+  WON: 'WON',
+  LOST: 'LOST',
+  DISQUALIFIED: 'DISQUALIFIED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.DealStage = exports.$Enums.DealStage = {
   LEAD_IN: 'LEAD_IN',
   QUALIFIED: 'QUALIFIED',
@@ -1069,6 +1145,8 @@ exports.Prisma.ModelName = {
   Conversation: 'Conversation',
   Message: 'Message',
   Lead: 'Lead',
+  LeadActivity: 'LeadActivity',
+  LeadScoreEvent: 'LeadScoreEvent',
   Deal: 'Deal',
   Task: 'Task',
   AiConfig: 'AiConfig',
