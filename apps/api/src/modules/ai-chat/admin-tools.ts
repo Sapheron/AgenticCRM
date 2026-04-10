@@ -11,6 +11,8 @@ import { DealsService } from '../deals/deals.service';
 import type { DealActor } from '../deals/deals.types';
 import { TasksService } from '../tasks/tasks.service';
 import type { TaskActor } from '../tasks/tasks.types';
+import { ProductsService } from '../products/products.service';
+import type { ProductActor } from '../products/products.types';
 import type { ChatAttachment } from './attachments';
 
 // Memory service is a plain class (no DI deps), so we can instantiate it once
@@ -20,9 +22,11 @@ const memoryService = new MemoryService();
 const leadsService = new LeadsService();
 const dealsService = new DealsService();
 const tasksService = new TasksService();
+const productsService = new ProductsService();
 const AI_ACTOR: LeadActor = { type: 'ai' };
 const AI_DEAL_ACTOR: DealActor = { type: 'ai' };
 const AI_TASK_ACTOR: TaskActor = { type: 'ai' };
+const AI_PRODUCT_ACTOR: ProductActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -2404,20 +2408,469 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Products ──────────────────────────────────────────────────────────────
+  // ── Products (full catalog management, all routed through ProductsService)
   {
-    definition: { name: 'create_product', description: 'Add a product to the catalog.', parameters: { type: 'object', properties: { name: { type: 'string' }, price: { type: 'number', description: 'Price in smallest unit (paise/cents)' }, description: { type: 'string' }, sku: { type: 'string' } }, required: ['name', 'price'] } },
+    definition: {
+      name: 'list_products',
+      description: 'List products in the catalog with rich filters. By default returns active, non-archived products.',
+      parameters: {
+        type: 'object',
+        properties: {
+          search: { type: 'string', description: 'Free-text search over name / description / sku / barcode' },
+          category: { type: 'string' },
+          tag: { type: 'string' },
+          isActive: { type: 'boolean' },
+          archived: { type: 'boolean', description: 'Include archived products' },
+          inStockOnly: { type: 'boolean' },
+          priceMin: { type: 'number', description: 'Minimum price in smallest unit (paise/cents)' },
+          priceMax: { type: 'number' },
+          sort: { type: 'string', enum: ['recent', 'name', 'price', 'stock', 'sold'] },
+          limit: { type: 'number' },
+        },
+        required: [],
+      },
+    },
     execute: async (args, companyId) => {
-      const p = await prisma.product.create({ data: { companyId, name: args.name as string, price: args.price as number, description: (args.description as string) || undefined, sku: (args.sku as string) || undefined } });
-      return `Created product "${p.name}" — ₹${p.price / 100}`;
+      const result = await productsService.list(companyId, {
+        isActive: args.isActive as boolean | undefined,
+        category: args.category as string | undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        priceMin: args.priceMin as number | undefined,
+        priceMax: args.priceMax as number | undefined,
+        inStockOnly: args.inStockOnly as boolean | undefined,
+        archived: args.archived as boolean | undefined,
+        sort: args.sort as never,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No products match those filters.';
+      return [
+        `Found ${result.total} product(s) (showing ${result.items.length}):`,
+        ...result.items.map((p) => {
+          const price = `${p.currency} ${(p.price / 100).toFixed(2)}`;
+          const stock = p.trackInventory ? ` · stock ${p.stock}` : '';
+          const sku = p.sku ? ` · SKU ${p.sku}` : '';
+          return `- ${p.name} · ${price}${stock}${sku} · ID: ${p.id}`;
+        }),
+      ].join('\n');
     },
   },
   {
-    definition: { name: 'list_products', description: 'List products in the catalog.', parameters: { type: 'object', properties: {}, required: [] } },
+    definition: {
+      name: 'get_product',
+      description: 'Fetch a product with its variants, last 10 timeline activities, and full details.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' } },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.get(companyId, args.productId as string);
+      const variants = (Array.isArray(p.variants) ? p.variants : []) as Array<{ id: string; name: string; price?: number; stock?: number }>;
+      const recent = p.activities.slice(0, 10);
+      const lines = [
+        `Product "${p.name}" (ID: ${p.id})`,
+        `Price: ${p.currency} ${(p.price / 100).toFixed(2)}${p.costPrice ? ` · Cost: ${(p.costPrice / 100).toFixed(2)}` : ''}`,
+        p.sku ? `SKU: ${p.sku}` : '',
+        p.barcode ? `Barcode: ${p.barcode}` : '',
+        p.category ? `Category: ${p.category}` : '',
+        p.tags.length ? `Tags: ${p.tags.join(', ')}` : '',
+        p.trackInventory ? `Stock: ${p.stock}${p.reorderLevel > 0 ? ` (reorder at ${p.reorderLevel})` : ''}` : 'Inventory not tracked',
+        `Status: ${p.archivedAt ? 'ARCHIVED' : p.isActive ? 'active' : 'inactive'}`,
+        p.totalSold ? `Total sold: ${p.totalSold}` : '',
+        variants.length ? `Variants: ${variants.length}` : '',
+        '',
+        'Recent activity:',
+        ...recent.map((a) => `  • ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`),
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_product',
+      description: 'Create a new product in the catalog. Prices are in the smallest currency unit (paise/cents).',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          price: { type: 'number', description: 'Price in smallest unit (paise/cents)' },
+          costPrice: { type: 'number', description: 'Cost in smallest unit, used to compute margin' },
+          currency: { type: 'string', description: 'ISO code, defaults to INR' },
+          sku: { type: 'string' },
+          barcode: { type: 'string' },
+          category: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          trackInventory: { type: 'boolean' },
+          stock: { type: 'number' },
+          reorderLevel: { type: 'number' },
+          images: { type: 'array', items: { type: 'string' } },
+          isActive: { type: 'boolean' },
+        },
+        required: ['name', 'price'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.create(
+        companyId,
+        {
+          name: args.name as string,
+          description: args.description as string | undefined,
+          price: args.price as number,
+          costPrice: args.costPrice as number | undefined,
+          currency: args.currency as string | undefined,
+          sku: args.sku as string | undefined,
+          barcode: args.barcode as string | undefined,
+          category: args.category as string | undefined,
+          tags: args.tags as string[] | undefined,
+          trackInventory: args.trackInventory as boolean | undefined,
+          stock: args.stock as number | undefined,
+          reorderLevel: args.reorderLevel as number | undefined,
+          images: args.images as string[] | undefined,
+          isActive: args.isActive as boolean | undefined,
+        },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Created product "${p.name}" (ID: ${p.id}, ${p.currency} ${(p.price / 100).toFixed(2)})`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_product',
+      description: 'Update arbitrary product fields. Field-level changes are diffed and logged.',
+      parameters: {
+        type: 'object',
+        properties: {
+          productId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          price: { type: 'number' },
+          costPrice: { type: 'number' },
+          currency: { type: 'string' },
+          sku: { type: 'string' },
+          barcode: { type: 'string' },
+          category: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          trackInventory: { type: 'boolean' },
+          reorderLevel: { type: 'number' },
+          isActive: { type: 'boolean' },
+        },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.update(
+        companyId,
+        args.productId as string,
+        {
+          name: args.name as string | undefined,
+          description: args.description as string | undefined,
+          price: args.price as number | undefined,
+          costPrice: args.costPrice as number | undefined,
+          currency: args.currency as string | undefined,
+          sku: args.sku as string | undefined,
+          barcode: args.barcode as string | undefined,
+          category: args.category as string | undefined,
+          tags: args.tags as string[] | undefined,
+          trackInventory: args.trackInventory as boolean | undefined,
+          reorderLevel: args.reorderLevel as number | undefined,
+          isActive: args.isActive as boolean | undefined,
+        },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Updated product "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_product_price',
+      description: 'Set a product\'s price (in smallest currency unit, e.g. 9999 = ₹99.99).',
+      parameters: {
+        type: 'object',
+        properties: {
+          productId: { type: 'string' },
+          price: { type: 'number', description: 'New price in smallest unit (paise/cents)' },
+        },
+        required: ['productId', 'price'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.update(
+        companyId,
+        args.productId as string,
+        { price: args.price as number },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Set price of "${p.name}" to ${p.currency} ${(p.price / 100).toFixed(2)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'adjust_product_stock',
+      description: 'Adjust a product\'s stock by delta. Positive to add inventory, negative to subtract. Pass `variantId` to target a specific variant.',
+      parameters: {
+        type: 'object',
+        properties: {
+          productId: { type: 'string' },
+          delta: { type: 'number', description: 'Positive to add, negative to subtract' },
+          reason: { type: 'string' },
+          variantId: { type: 'string' },
+        },
+        required: ['productId', 'delta'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.adjustStock(
+        companyId,
+        args.productId as string,
+        {
+          delta: args.delta as number,
+          reason: args.reason as string | undefined,
+          variantId: args.variantId as string | undefined,
+        },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Adjusted "${p.name}" stock by ${args.delta as number} → ${p.stock}`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_product_stock',
+      description: 'Set a product\'s stock to an absolute value.',
+      parameters: {
+        type: 'object',
+        properties: {
+          productId: { type: 'string' },
+          stock: { type: 'number' },
+          reason: { type: 'string' },
+          variantId: { type: 'string' },
+        },
+        required: ['productId', 'stock'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.setStock(
+        companyId,
+        args.productId as string,
+        {
+          stock: args.stock as number,
+          reason: args.reason as string | undefined,
+          variantId: args.variantId as string | undefined,
+        },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Set "${p.name}" stock to ${p.stock}`;
+    },
+  },
+  {
+    definition: {
+      name: 'tag_product',
+      description: 'Add a tag to a product.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' }, tag: { type: 'string' } },
+        required: ['productId', 'tag'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.addTag(companyId, args.productId as string, args.tag as string, AI_PRODUCT_ACTOR);
+      return `Tagged "${p.name}" with "${args.tag as string}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'untag_product',
+      description: 'Remove a tag from a product.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' }, tag: { type: 'string' } },
+        required: ['productId', 'tag'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.removeTag(companyId, args.productId as string, args.tag as string, AI_PRODUCT_ACTOR);
+      return `Removed tag "${args.tag as string}" from "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'archive_product',
+      description: 'Archive a product (hides from active catalog without deleting).',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' } },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.archive(companyId, args.productId as string, AI_PRODUCT_ACTOR);
+      return `Archived "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'unarchive_product',
+      description: 'Restore an archived product back to the active catalog.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' } },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.unarchive(companyId, args.productId as string, AI_PRODUCT_ACTOR);
+      return `Unarchived "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_product',
+      description: 'Delete a product. If it\'s referenced by any deal line item, it will be archived instead of hard-deleted.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' } },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await productsService.delete(companyId, args.productId as string, AI_PRODUCT_ACTOR);
+      return `Removed product ${args.productId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_product_variant',
+      description: 'Add a variant (size/color/material) to a product. Variants can override the base price and stock.',
+      parameters: {
+        type: 'object',
+        properties: {
+          productId: { type: 'string' },
+          name: { type: 'string', description: 'Variant name e.g. "Red - Large"' },
+          sku: { type: 'string' },
+          price: { type: 'number', description: 'Override price in smallest unit' },
+          stock: { type: 'number', description: 'Variant stock count' },
+        },
+        required: ['productId', 'name'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.addVariant(
+        companyId,
+        args.productId as string,
+        {
+          name: args.name as string,
+          sku: args.sku as string | undefined,
+          price: args.price as number | undefined,
+          stock: args.stock as number | undefined,
+        },
+        AI_PRODUCT_ACTOR,
+      );
+      return `Added variant "${args.name as string}" to "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'remove_product_variant',
+      description: 'Remove a variant from a product.',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' }, variantId: { type: 'string' } },
+        required: ['productId', 'variantId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const p = await productsService.removeVariant(companyId, args.productId as string, args.variantId as string, AI_PRODUCT_ACTOR);
+      return `Removed variant from "${p.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_product_timeline',
+      description: 'Fetch the activity timeline for a product (newest first).',
+      parameters: {
+        type: 'object',
+        properties: { productId: { type: 'string' }, limit: { type: 'number' } },
+        required: ['productId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await productsService.getTimeline(companyId, args.productId as string, (args.limit as number) ?? 20);
+      if (!items.length) return 'No timeline activity yet.';
+      return items
+        .map((a) => `- ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}${a.body ? `\n    ${a.body}` : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_product_stats',
+      description: 'Catalog stats — total / active / archived counts, low stock and out-of-stock counts, category breakdown, total catalog value.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
     execute: async (_args, companyId) => {
-      const products = await prisma.product.findMany({ where: { companyId, isActive: true }, take: 20 });
-      if (!products.length) return 'No products found';
-      return products.map((p) => `- ${p.name} | ₹${p.price / 100} | SKU: ${p.sku || 'N/A'}`).join('\n');
+      const s = await productsService.stats(companyId);
+      return [
+        'Catalog stats',
+        `Total: ${s.total} (${s.active} active, ${s.archived} archived)`,
+        `Low stock: ${s.lowStock}`,
+        `Out of stock: ${s.outOfStock}`,
+        `Catalog value: ${(s.catalogValue / 100).toLocaleString()}`,
+        `By category: ${Object.entries(s.byCategory).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'list_low_stock_products',
+      description: 'List products whose inventory is at or below the reorder level. Use this when the user asks "what needs restocking".',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+    execute: async (_args, companyId) => {
+      const items = await productsService.findLowStockProducts(companyId);
+      if (!items.length) return 'No products are low on stock.';
+      return items
+        .map((p) => `- "${p.name}" · stock ${p.stock} (reorder at ${p.reorderLevel}) · ID: ${p.id}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_archive_products',
+      description: 'Archive many products at once.',
+      parameters: {
+        type: 'object',
+        properties: { productIds: { type: 'array', items: { type: 'string' } } },
+        required: ['productIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await productsService.bulkArchive(companyId, args.productIds as string[], AI_PRODUCT_ACTOR);
+      return `Bulk archive: ${result.updated}/${result.requested} archived`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_set_product_category',
+      description: 'Set the category of many products at once. Pass `category: null` to clear.',
+      parameters: {
+        type: 'object',
+        properties: {
+          productIds: { type: 'array', items: { type: 'string' } },
+          category: { type: 'string' },
+        },
+        required: ['productIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await productsService.bulkSetCategory(
+        companyId,
+        args.productIds as string[],
+        (args.category as string | null) ?? null,
+        AI_PRODUCT_ACTOR,
+      );
+      return `Bulk category: ${result.updated}/${result.requested} updated`;
     },
   },
 
@@ -2725,6 +3178,9 @@ const CORE_TOOL_NAMES = new Set([
   // Tasks (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
   'list_tasks', 'get_task', 'create_task', 'update_task',
   'mark_task_done', 'add_task_comment', 'assign_task', 'reschedule_task',
+  // Products (full catalog — see admin-tools.ts for the additional ~12 callable-by-name tools)
+  'list_products', 'get_product', 'create_product', 'update_product',
+  'adjust_product_stock', 'list_low_stock_products',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics

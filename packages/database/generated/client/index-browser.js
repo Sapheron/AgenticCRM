@@ -709,9 +709,35 @@ exports.Prisma.ProductScalarFieldEnum = {
   name: 'name',
   description: 'description',
   price: 'price',
+  costPrice: 'costPrice',
   currency: 'currency',
   sku: 'sku',
-  isActive: 'isActive'
+  barcode: 'barcode',
+  category: 'category',
+  tags: 'tags',
+  trackInventory: 'trackInventory',
+  stock: 'stock',
+  reorderLevel: 'reorderLevel',
+  images: 'images',
+  variants: 'variants',
+  isActive: 'isActive',
+  archivedAt: 'archivedAt',
+  totalSold: 'totalSold',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ProductActivityScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.QuoteScalarFieldEnum = {
@@ -1378,6 +1404,29 @@ exports.AuditAction = exports.$Enums.AuditAction = {
   SETTINGS_CHANGE: 'SETTINGS_CHANGE'
 };
 
+exports.ProductActivityType = exports.$Enums.ProductActivityType = {
+  CREATED: 'CREATED',
+  UPDATED: 'UPDATED',
+  PRICE_CHANGED: 'PRICE_CHANGED',
+  COST_CHANGED: 'COST_CHANGED',
+  STOCK_ADJUSTED: 'STOCK_ADJUSTED',
+  STOCK_RESTOCKED: 'STOCK_RESTOCKED',
+  STOCK_LOW: 'STOCK_LOW',
+  STOCK_OUT: 'STOCK_OUT',
+  CATEGORY_CHANGED: 'CATEGORY_CHANGED',
+  TAG_ADDED: 'TAG_ADDED',
+  TAG_REMOVED: 'TAG_REMOVED',
+  IMAGE_ADDED: 'IMAGE_ADDED',
+  IMAGE_REMOVED: 'IMAGE_REMOVED',
+  VARIANT_ADDED: 'VARIANT_ADDED',
+  VARIANT_UPDATED: 'VARIANT_UPDATED',
+  VARIANT_REMOVED: 'VARIANT_REMOVED',
+  ACTIVATED: 'ACTIVATED',
+  ARCHIVED: 'ARCHIVED',
+  DELETED: 'DELETED',
+  CUSTOM: 'CUSTOM'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   User: 'User',
@@ -1418,6 +1467,7 @@ exports.Prisma.ModelName = {
   Pipeline: 'Pipeline',
   PipelineStage: 'PipelineStage',
   Product: 'Product',
+  ProductActivity: 'ProductActivity',
   Quote: 'Quote',
   QuoteLineItem: 'QuoteLineItem',
   Invoice: 'Invoice',

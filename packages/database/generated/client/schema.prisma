@@ -1202,20 +1202,87 @@ model PipelineStage {
   @@index([pipelineId])
 }
 
+enum ProductActivityType {
+  CREATED
+  UPDATED
+  PRICE_CHANGED
+  COST_CHANGED
+  STOCK_ADJUSTED
+  STOCK_RESTOCKED
+  STOCK_LOW
+  STOCK_OUT
+  CATEGORY_CHANGED
+  TAG_ADDED
+  TAG_REMOVED
+  IMAGE_ADDED
+  IMAGE_REMOVED
+  VARIANT_ADDED
+  VARIANT_UPDATED
+  VARIANT_REMOVED
+  ACTIVATED
+  ARCHIVED
+  DELETED
+  CUSTOM
+}
+
 model Product {
-  id          String  @id @default(cuid())
-  companyId   String
-  name        String
-  description String?
-  price       Int     @default(0) // in smallest unit (paise/cents)
-  currency    String  @default("INR")
-  sku         String?
-  isActive    Boolean @default(true)
+  id             String    @id @default(cuid())
+  companyId      String
+  name           String
+  description    String?
+  // Pricing — all amounts in smallest unit (paise/cents)
+  price          Int       @default(0)
+  costPrice      Int? // Used to compute margin
+  currency       String    @default("INR")
+  // Identification
+  sku            String?
+  barcode        String?
+  // Categorization
+  category       String?
+  tags           String[]  @default([])
+  // Inventory
+  trackInventory Boolean   @default(false)
+  stock          Int       @default(0)
+  reorderLevel   Int       @default(0)
+  // Media
+  images         String[]  @default([]) // public URLs
+  // Variants — JSON array of {id, name, sku, price?, stock?, attributes: {color, size, ...}}
+  variants       Json      @default("[]")
+  // State
+  isActive       Boolean   @default(true)
+  archivedAt     DateTime?
+  // Counters maintained by service
+  totalSold      Int       @default(0)
+  // Audit
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   dealLineItems DealLineItem[]
+  activities    ProductActivity[]
 
   @@unique([companyId, sku])
   @@index([companyId])
+  @@index([companyId, isActive])
+  @@index([companyId, category])
+  @@index([companyId, archivedAt])
+}
+
+model ProductActivity {
+  id        String              @id @default(cuid())
+  productId String
+  companyId String
+  type      ProductActivityType
+  actorType String // user | ai | system
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json                @default("{}")
+  createdAt DateTime            @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([companyId, type])
 }
 
 model Quote {
