@@ -3,18 +3,70 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
-import { Bot, Send, Plus, Trash2, Loader2, User, Wrench, MessageSquare } from 'lucide-react';
+import { Bot, Send, Plus, Trash2, Loader2, User, Wrench, MessageSquare, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface ToolAction { tool: string; args: Record<string, unknown>; result: string; }
-interface ChatMsg { id: string; role: string; content: string; toolCalls?: ToolAction[]; createdAt: string; }
+interface PersistedAttachment {
+  kind: 'image' | 'text';
+  mimeType: string;
+  fileName: string;
+  size: number;
+  text?: string;
+}
+interface RawAttachment extends PersistedAttachment {
+  /** Local preview URL for images (object URL); not sent to server. */
+  previewUrl?: string;
+  /** Base64 payload sent to server. Stripped from persisted version. */
+  dataBase64: string;
+}
+interface ChatMsg {
+  id: string;
+  role: string;
+  content: string;
+  toolCalls?: ToolAction[];
+  attachments?: PersistedAttachment[];
+  createdAt: string;
+}
 interface Conv { id: string; title: string; updatedAt: string; }
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_ATTACHMENTS = 8;
+const TEXT_EXT = /\.(txt|md|markdown|json|jsonl|ya?ml|toml|ini|csv|tsv|log|env|jsx?|tsx?|mjs|cjs|py|rb|go|rs|java|kt|cs|cpp|c|h|hpp|php|swift|scala|sh|bash|zsh|fish|ps1|sql|graphql|gql|proto|html?|css|s[ac]ss|less|xml|svg|dockerfile|gitignore|editorconfig)$/i;
+
+function classifyFile(file: File): 'image' | 'text' | null {
+  if (file.type.startsWith('image/')) return 'image';
+  if (
+    file.type.startsWith('text/') ||
+    file.type === 'application/json' ||
+    file.type === 'application/xml' ||
+    file.type === 'application/javascript' ||
+    file.type === 'application/x-yaml' ||
+    file.type === 'application/csv'
+  ) return 'text';
+  if (TEXT_EXT.test(file.name)) return 'text';
+  return null;
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  // btoa needs a binary string; build it in chunks to avoid stack overflow on big files.
+  let binary = '';
+  const bytes = new Uint8Array(buf);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
 
 export default function AiChatPage() {
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [input, setInput] = useState('');
-  const [pendingMsgs, setPendingMsgs] = useState<Array<{ role: string; content: string; toolCalls?: ToolAction[] }>>([]);
+  const [pendingMsgs, setPendingMsgs] = useState<Array<{ role: string; content: string; toolCalls?: ToolAction[]; attachments?: PersistedAttachment[] }>>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<RawAttachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -59,11 +111,35 @@ export default function AiChatPage() {
   });
 
   const chatMutation = useMutation({
-    mutationFn: async (userMessage: string) => {
+    mutationFn: async ({ userMessage, attachments }: { userMessage: string; attachments: RawAttachment[] }) => {
       if (!activeConvId) return null;
-      const allMsgs = [...(messages || []).map((m) => ({ role: m.role, content: m.content })), ...pendingMsgs, { role: 'user', content: userMessage }];
-      setPendingMsgs((p) => [...p, { role: 'user', content: userMessage }]);
+
+      // Build the message history for the request. Only the LAST user message
+      // carries the new attachments — historical messages from the DB don't
+      // need their attachments re-sent (the model already saw them).
+      const history = (messages || []).map((m) => ({ role: m.role, content: m.content }));
+      const newMsg = {
+        role: 'user',
+        content: userMessage,
+        attachments: attachments.map((a) => ({
+          mimeType: a.mimeType,
+          fileName: a.fileName,
+          dataBase64: a.dataBase64,
+        })),
+      };
+      const allMsgs = [...history, ...pendingMsgs.map((p) => ({ role: p.role, content: p.content })), newMsg];
+
+      // Optimistic UI: show the new user message immediately with persisted-style attachments
+      const optimistic: PersistedAttachment[] = attachments.map((a) => ({
+        kind: a.kind,
+        mimeType: a.mimeType,
+        fileName: a.fileName,
+        size: a.size,
+        ...(a.kind === 'text' ? { text: a.text } : {}),
+      }));
+      setPendingMsgs((p) => [...p, { role: 'user', content: userMessage, attachments: optimistic.length ? optimistic : undefined }]);
       setInput('');
+      setPendingAttachments([]);
 
       const r = await api.post<{ data: { content: string; actions: ToolAction[]; provider: string; model: string; latencyMs: number } }>(
         '/ai/chat',
@@ -77,18 +153,96 @@ export default function AiChatPage() {
       void qc.invalidateQueries({ queryKey: ['chat-messages', activeConvId] });
       void qc.invalidateQueries({ queryKey: ['chat-conversations'] });
     },
-    onError: () => {
-      setPendingMsgs((p) => [...p, { role: 'assistant', content: 'Failed to get response.' }]);
+    onError: (err: unknown) => {
+      const msg = (err && typeof err === 'object' && 'response' in err
+        ? ((err as { response?: { data?: { message?: string } } }).response?.data?.message)
+        : null) ?? 'Failed to get response.';
+      setPendingMsgs((p) => [...p, { role: 'assistant', content: msg }]);
     },
   });
 
-  const handleSend = () => {
-    if (!input.trim() || chatMutation.isPending) return;
-    if (!activeConvId) { toast.error('Create a new chat first'); return; }
-    chatMutation.mutate(input.trim());
+  const addFiles = async (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    const room = MAX_ATTACHMENTS - pendingAttachments.length;
+    if (room <= 0) {
+      toast.error(`Max ${MAX_ATTACHMENTS} attachments per message`);
+      return;
+    }
+
+    const newOnes: RawAttachment[] = [];
+    for (const file of arr.slice(0, room)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is too large (max 5 MB)`);
+        continue;
+      }
+      const kind = classifyFile(file);
+      if (!kind) {
+        toast.error(`${file.name}: unsupported type. Use images or text/code files.`);
+        continue;
+      }
+      try {
+        const dataBase64 = await fileToBase64(file);
+        const att: RawAttachment = {
+          kind,
+          mimeType: file.type || (kind === 'text' ? 'text/plain' : 'application/octet-stream'),
+          fileName: file.name,
+          size: file.size,
+          dataBase64,
+          ...(kind === 'image' ? { previewUrl: URL.createObjectURL(file) } : {}),
+          ...(kind === 'text' ? { text: await file.text() } : {}),
+        };
+        newOnes.push(att);
+      } catch {
+        toast.error(`${file.name}: failed to read`);
+      }
+    }
+    if (newOnes.length) setPendingAttachments((prev) => [...prev, ...newOnes]);
   };
 
-  const allMessages = [...(messages || []).map((m) => ({ role: m.role, content: m.content, toolCalls: (m.toolCalls as ToolAction[] | null) ?? undefined })), ...pendingMsgs];
+  const removeAttachment = (idx: number) => {
+    setPendingAttachments((prev) => {
+      const next = prev.slice();
+      const removed = next.splice(idx, 1);
+      removed.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+      return next;
+    });
+  };
+
+  const handleSend = () => {
+    if ((!input.trim() && pendingAttachments.length === 0) || chatMutation.isPending) return;
+    if (!activeConvId) { toast.error('Create a new chat first'); return; }
+    chatMutation.mutate({ userMessage: input.trim(), attachments: pendingAttachments });
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const files = items
+      .filter((it) => it.kind === 'file')
+      .map((it) => it.getAsFile())
+      .filter((f): f is File => !!f);
+    if (files.length > 0) {
+      e.preventDefault();
+      void addFiles(files);
+    }
+  };
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      pendingAttachments.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const allMessages = [
+    ...(messages || []).map((m) => ({
+      role: m.role,
+      content: m.content,
+      toolCalls: (m.toolCalls as ToolAction[] | null) ?? undefined,
+      attachments: (m.attachments as PersistedAttachment[] | null) ?? undefined,
+    })),
+    ...pendingMsgs,
+  ];
 
   return (
     <div className="flex h-full">
@@ -197,7 +351,26 @@ export default function AiChatPage() {
                           ))}
                         </div>
                       )}
-                      <p className="whitespace-pre-wrap">{(msg.content || '').replace(/\\n/g, '\n')}</p>
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="mb-1.5 flex flex-wrap gap-1.5">
+                          {msg.attachments.map((att, ai) => (
+                            <span
+                              key={ai}
+                              className={cn(
+                                'inline-flex items-center gap-1 text-[10px] rounded px-1.5 py-0.5 border',
+                                msg.role === 'user'
+                                  ? 'bg-white/10 border-white/20 text-white'
+                                  : 'bg-violet-50 border-violet-100 text-violet-700',
+                              )}
+                              title={`${att.fileName} (${att.size} bytes)`}
+                            >
+                              {att.kind === 'image' ? <ImageIcon size={9} /> : <FileText size={9} />}
+                              {att.fileName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {msg.content && <p className="whitespace-pre-wrap">{(msg.content || '').replace(/\\n/g, '\n')}</p>}
                     </div>
                     {msg.role === 'user' && (
                       <div className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center shrink-0 mt-0.5">
@@ -226,19 +399,65 @@ export default function AiChatPage() {
 
         {/* Input */}
         <div className="border-t border-gray-200 bg-white px-4 py-2.5 shrink-0">
+          {/* Attachment previews */}
+          {pendingAttachments.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {pendingAttachments.map((att, idx) => (
+                <div
+                  key={idx}
+                  className="group relative flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-[10px] text-gray-700 max-w-[180px]"
+                >
+                  {att.kind === 'image' && att.previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={att.previewUrl} alt={att.fileName} className="w-6 h-6 object-cover rounded shrink-0" />
+                  ) : (
+                    <FileText size={11} className="text-violet-500 shrink-0" />
+                  )}
+                  <span className="truncate flex-1">{att.fileName}</span>
+                  <button
+                    onClick={() => removeAttachment(idx)}
+                    className="text-gray-400 hover:text-red-500 shrink-0"
+                    title="Remove"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-end gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,text/*,.md,.json,.csv,.tsv,.yaml,.yml,.toml,.ini,.env,.log,.js,.jsx,.ts,.tsx,.mjs,.cjs,.py,.rb,.go,.rs,.java,.kt,.cs,.cpp,.c,.h,.hpp,.php,.swift,.scala,.sh,.bash,.zsh,.sql,.graphql,.gql,.proto,.html,.htm,.css,.scss,.sass,.less,.xml,.svg"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) void addFiles(e.target.files);
+                e.target.value = ''; // allow re-adding the same file
+              }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!activeConvId || !config?.apiKeySet || pendingAttachments.length >= MAX_ATTACHMENTS}
+              className="text-gray-400 hover:text-violet-500 disabled:opacity-30 disabled:cursor-not-allowed p-2 shrink-0"
+              title={`Attach files (max ${MAX_ATTACHMENTS}, 5 MB each)`}
+            >
+              <Paperclip size={14} />
+            </button>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={activeConvId ? (config?.apiKeySet ? 'Ask AI anything...' : 'Configure AI in Settings first') : 'Create a new chat to start'}
+              onPaste={handlePaste}
+              placeholder={activeConvId ? (config?.apiKeySet ? 'Ask AI anything... (paste or attach files)' : 'Configure AI in Settings first') : 'Create a new chat to start'}
               disabled={!activeConvId || !config?.apiKeySet}
               rows={1}
               className="flex-1 border border-gray-200 rounded-lg px-2.5 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 max-h-24 disabled:bg-gray-50 disabled:text-gray-300 placeholder:text-gray-300"
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || chatMutation.isPending || !activeConvId}
+              disabled={(!input.trim() && pendingAttachments.length === 0) || chatMutation.isPending || !activeConvId}
               className="bg-gray-900 hover:bg-gray-800 disabled:opacity-30 text-white rounded-lg p-2 transition shrink-0"
             >
               <Send size={13} />

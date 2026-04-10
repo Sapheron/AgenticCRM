@@ -4,6 +4,12 @@
  */
 import { prisma } from '@wacrm/database';
 import Redis from 'ioredis';
+import { MemoryService } from '../memory/memory.service';
+
+// Memory service is a plain class (no DI deps), so we can instantiate it once
+// here and reuse across tool calls. Tools that don't go through Nest's DI
+// container (like the chat tools) need this.
+const memoryService = new MemoryService();
 
 const redis = new Redis((process.env.REDIS_URL || '').trim());
 
@@ -1055,83 +1061,94 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Memory ────────────────────────────────────────────────────────────────
+  // ── Memory (OpenClaw-style: file-based markdown + hybrid vector/FTS) ──────
   {
     definition: {
-      name: 'save_to_memory',
-      description: 'Save important information to long-term memory. Use this when the user shares facts about themselves, their business, products, policies, preferences, or anything they\'d want you to remember in future conversations. Examples: user mentions their interests, hobbies, business hours, pricing, return policies, team members, etc.',
+      name: 'memory_search',
+      description: 'Mandatory recall step: semantically search memory files before answering questions about prior work, decisions, dates, people, preferences, or todos. Always call this first when the user asks anything about themselves, their business, or past context.',
       parameters: {
         type: 'object',
         properties: {
-          title: { type: 'string', description: 'Short title for this memory (e.g., "User Interests", "Business Hours")' },
-          content: { type: 'string', description: 'The fact or knowledge to remember in detail' },
-          category: { type: 'string', enum: ['general', 'product', 'policy', 'faq', 'instruction'], description: 'Category for organization' },
+          query: { type: 'string', description: 'Natural-language query to search memory for' },
+          maxResults: { type: 'number', description: 'How many results to return (default 10, max 50)' },
+          minScore: { type: 'number', description: 'Drop hits below this score (0-1)' },
+        },
+        required: ['query'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const hits = await memoryService.search(companyId, args.query as string, {
+        maxResults: typeof args.maxResults === 'number' ? args.maxResults : 10,
+        minScore: typeof args.minScore === 'number' ? args.minScore : undefined,
+      });
+      if (hits.length === 0) return 'No memory hits.';
+      return hits
+        .map(
+          (h, i) =>
+            `${i + 1}. [score=${h.score.toFixed(3)}] ${h.path}:${h.startLine}-${h.endLine}\n${h.text.slice(0, 300)}`,
+        )
+        .join('\n\n');
+    },
+  },
+  {
+    definition: {
+      name: 'memory_get',
+      description: 'Read specific lines from a memory file. Use after memory_search to fetch the exact passage you need (cite path + line range).',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'File path returned by memory_search (e.g. "MEMORY.md")' },
+          from: { type: 'number', description: '1-based line to start reading from (optional, defaults to start)' },
+          lines: { type: 'number', description: 'Number of lines to read (optional, defaults to whole file)' },
+        },
+        required: ['path'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const content = await memoryService.readFile(
+        companyId,
+        args.path as string,
+        typeof args.from === 'number' ? args.from : undefined,
+        typeof args.lines === 'number' ? args.lines : undefined,
+      );
+      if (content === null) return `Memory file not found: ${args.path as string}`;
+      return content || '(empty file)';
+    },
+  },
+  {
+    definition: {
+      name: 'memory_write',
+      description: 'Append a fact to long-term memory (MEMORY.md). Use proactively when the user shares anything worth persisting across all future conversations: their name, role, interests, business policies, prices, hours, decisions, etc. Save silently — do not ask permission.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short section heading (e.g. "User Interests", "Pricing")' },
+          content: { type: 'string', description: 'The fact to remember, in 1-3 sentences' },
         },
         required: ['title', 'content'],
       },
     },
     execute: async (args, companyId) => {
-      const m = await prisma.aiMemory.create({
-        data: {
-          companyId,
-          title: args.title as string,
-          content: args.content as string,
-          category: (args.category as string) || 'general',
-        },
-      });
-      return `Saved to memory: "${m.title}" [${m.category}]`;
+      await memoryService.appendToMemoryDoc(
+        companyId,
+        args.title as string,
+        args.content as string,
+      );
+      return `Saved to MEMORY.md: ${args.title as string}`;
     },
   },
   {
     definition: {
-      name: 'search_memory',
-      description: 'Search saved memories by keyword or category. Use this to recall facts you previously saved.',
-      parameters: {
-        type: 'object',
-        properties: {
-          query: { type: 'string', description: 'Search keyword (matches title or content)' },
-          category: { type: 'string', description: 'Filter by category' },
-        },
-        required: [],
-      },
-    },
-    execute: async (args, companyId) => {
-      const where: Record<string, unknown> = { companyId, isActive: true };
-      if (args.category) where.category = args.category;
-      if (args.query) {
-        where.OR = [
-          { title: { contains: args.query as string, mode: 'insensitive' as const } },
-          { content: { contains: args.query as string, mode: 'insensitive' as const } },
-        ];
-      }
-      const memories = await prisma.aiMemory.findMany({ where: where as any, take: 10, orderBy: { updatedAt: 'desc' } });
-      if (!memories.length) return 'No memories found';
-      return memories.map((m) => `- [${m.category}] ${m.title}: ${m.content}`).join('\n');
-    },
-  },
-  {
-    definition: {
-      name: 'list_memories',
-      description: 'List all saved memories.',
+      name: 'memory_list_files',
+      description: 'List all memory files for this workspace, including session transcripts and ad-hoc memory files.',
       parameters: { type: 'object', properties: {}, required: [] },
     },
     execute: async (_args, companyId) => {
-      const memories = await prisma.aiMemory.findMany({ where: { companyId, isActive: true }, orderBy: { category: 'asc' } });
-      if (!memories.length) return 'No memories saved yet';
-      return memories.map((m) => `- [${m.category}] ${m.title}: ${m.content.slice(0, 80)}`).join('\n');
-    },
-  },
-  {
-    definition: {
-      name: 'delete_memory',
-      description: 'Delete a memory by ID.',
-      parameters: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
-    },
-    execute: async (args, companyId) => {
-      const m = await prisma.aiMemory.findFirst({ where: { id: args.id as string, companyId } });
-      if (!m) return 'Memory not found';
-      await prisma.aiMemory.delete({ where: { id: m.id } });
-      return `Deleted memory: ${m.title}`;
+      const files = await memoryService.listFiles(companyId);
+      if (!files.length) return 'No memory files yet.';
+      return files
+        .map((f) => `- ${f.path} (${f.source}, ${f.size} bytes, updated ${f.updatedAt.toISOString().slice(0, 10)})`)
+        .join('\n');
     },
   },
 ];
@@ -1142,7 +1159,7 @@ const tools: AdminTool[] = [
 
 const CORE_TOOL_NAMES = new Set([
   // Memory (priority — for context retention)
-  'save_to_memory', 'search_memory', 'list_memories', 'delete_memory',
+  'memory_search', 'memory_get', 'memory_write', 'memory_list_files',
   // Contacts
   'create_contact', 'update_contact', 'delete_contact', 'search_contacts', 'get_contact',
   'tag_contact', 'add_contact_note', 'get_contact_timeline',

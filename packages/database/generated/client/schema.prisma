@@ -1215,6 +1215,7 @@ model ChatMessage {
   role           String // user, assistant
   content        String
   toolCalls      Json? // [{tool, args, result}]
+  attachments    Json? // [{kind, mimeType, fileName, size, dataBase64?, text?}]
   provider       String?
   model          String?
   latencyMs      Int?
@@ -1226,7 +1227,8 @@ model ChatMessage {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// AI MEMORY (knowledge base for AI context)
+// AI MEMORY (knowledge base for AI context — legacy key/value store, deprecated
+// in favor of MemoryFile/MemoryChunk/RecallEntry. Kept for backward compatibility.)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model AiMemory {
@@ -1241,4 +1243,81 @@ model AiMemory {
 
   @@index([companyId, isActive])
   @@index([companyId, category])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPENCLAW-STYLE MEMORY SYSTEM
+//   - MemoryFile: a markdown file (e.g. MEMORY.md, memory/2026-04-09-foo.md)
+//   - MemoryChunk: a chunk of a file with embedding + tsvector for hybrid search
+//   - RecallEntry: tracks how often a chunk was recalled, used by the dreaming
+//     job to promote short-term recalls into long-term MEMORY.md
+// The vector(1536) and tsvector columns are added by manual_pgvector.sql.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model MemoryFile {
+  id        String   @id @default(cuid())
+  companyId String
+  path      String // e.g. "MEMORY.md", "memory/2026-04-09-api-fix.md"
+  source    String   @default("memory") // memory | wiki | session
+  hash      String // SHA-256 of content for change detection
+  content   String // Full markdown content
+  size      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chunks MemoryChunk[]
+
+  @@unique([companyId, path])
+  @@index([companyId])
+  @@index([companyId, source])
+}
+
+model MemoryChunk {
+  id         String                       @id @default(cuid())
+  companyId  String
+  fileId     String
+  path       String // duplicated for fast filtering
+  source     String // memory | wiki | session
+  startLine  Int
+  endLine    Int
+  hash       String
+  text       String
+  model      String // embedding model used (or "none" for keyword-only)
+  // Vector & FTS columns are managed by manual_pgvector.sql:
+  //   embedding   vector(1536)
+  //   textSearch  tsvector (GENERATED from text)
+  embedding  Unsupported("vector(1536)")?
+  textSearch Unsupported("tsvector")?
+  createdAt  DateTime                     @default(now())
+  updatedAt  DateTime                     @updatedAt
+
+  file MemoryFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([companyId, source])
+  @@index([fileId])
+}
+
+model RecallEntry {
+  id              String    @id @default(cuid())
+  companyId       String
+  key             String // "{source}:{path}:{startLine}:{endLine}"
+  path            String
+  startLine       Int
+  endLine         Int
+  source          String
+  snippet         String
+  recallCount     Int       @default(1)
+  totalScore      Float     @default(0)
+  maxScore        Float     @default(0)
+  firstRecalledAt DateTime  @default(now())
+  lastRecalledAt  DateTime  @default(now())
+  queryHashes     String[] // up to 32
+  recallDays      String[] // ISO dates, up to 16
+  conceptTags     String[] // up to 8
+  promotedAt      DateTime?
+
+  @@unique([companyId, key])
+  @@index([companyId])
+  @@index([companyId, promotedAt])
 }

@@ -12,7 +12,15 @@ import { decrypt } from '@wacrm/shared';
 import { PROVIDER_BASE_URLS } from '../settings/ai-settings.service';
 import { getAdminToolDefinitions, executeAdminTool } from './admin-tools';
 import { AiMemoryService } from '../ai-memory/ai-memory.service';
+import { MemoryService } from '../memory/memory.service';
 import { ChatConversationsService } from '../chat-conversations/chat-conversations.service';
+import {
+  type ChatAttachment,
+  modelSupportsImages,
+  inlineMessageText,
+  buildOpenAIContent,
+  buildAnthropicContent,
+} from './attachments';
 
 const MAX_TOOL_ITERATIONS = 8;
 
@@ -20,14 +28,19 @@ const ADMIN_SYSTEM_PROMPT = `You are an AI assistant for a WhatsApp CRM. You hav
 
 You can: create/update/delete/search contacts, manage leads, deals, tasks, products, templates, sequences, campaigns, forms, quotes, invoices, tickets, knowledge base articles, workflows, reports, calendar events, documents. You can send WhatsApp messages, create broadcasts, and view analytics.
 
-MEMORY (CRITICAL):
-You have access to a long-term memory system. PROACTIVELY save important information using the \`save_to_memory\` tool whenever the user shares:
-- Personal info: their name, role, company, interests, hobbies, preferences
-- Business info: pricing, products, services, hours, policies, return policy
-- Important facts: team members, contact details, decisions, plans
-- Instructions: how the user wants you to behave
-Use \`search_memory\` or \`list_memories\` to recall facts before answering questions about the user or their business.
-Save memories silently — don't ask the user "should I remember this?", just do it and briefly mention "I'll remember that."
+MEMORY (CRITICAL — OpenClaw-style file memory):
+You have a file-based long-term memory system backed by markdown files (\`MEMORY.md\` and \`memory/YYYY-MM-DD-{slug}.md\`). Use these tools:
+- \`memory_search(query)\` — semantic + keyword hybrid search across all memory files. **Mandatory recall step** before answering anything about prior work, the user, their business, or past decisions.
+- \`memory_get(path, from?, lines?)\` — read a specific passage from a memory file after searching.
+- \`memory_write(title, content)\` — append a fact to MEMORY.md. Call this PROACTIVELY whenever the user shares anything worth persisting:
+  • Personal info: name, role, company, interests, hobbies, preferences
+  • Business info: pricing, products, services, hours, policies
+  • Important facts: team members, decisions, plans
+  • Instructions: how you should behave
+- \`memory_list_files\` — see what's in memory.
+
+Save memories silently — don't ask "should I remember this?", just write and briefly mention "I'll remember that."
+Search memory FIRST before answering anything about the user or their business — never guess from training data.
 
 RULES:
 1. Use the appropriate tool immediately when asked to do something.
@@ -44,6 +57,8 @@ interface ChatMessage {
   content: string;
   tool_call_id?: string;
   tool_calls?: ToolCall[];
+  /** Original attachments — present on user messages, used to build provider-specific multimodal payloads. */
+  attachments?: ChatAttachment[];
 }
 
 interface ToolCall {
@@ -62,10 +77,15 @@ interface ToolAction {
 export class AiChatService {
   constructor(
     private readonly memoryService: AiMemoryService,
+    private readonly memory: MemoryService,
     private readonly chatConvService: ChatConversationsService,
   ) {}
 
-  async chat(companyId: string, userMessages: { role: string; content: string }[], _conversationId?: string) {
+  async chat(
+    companyId: string,
+    userMessages: { role: string; content: string; attachments?: ChatAttachment[] }[],
+    _conversationId?: string,
+  ) {
     const config = await prisma.aiConfig.findUnique({ where: { companyId } });
     if (!config || !config.apiKeyEncrypted) {
       throw new BadRequestException('AI provider not configured. Go to Settings > AI to set up.');
@@ -75,17 +95,34 @@ export class AiChatService {
     const tools = getAdminToolDefinitions();
     const actions: ToolAction[] = [];
     const start = Date.now();
+    const supportsImages = modelSupportsImages(config.model);
 
-    // Inject memory into system prompt
-    const memoryContext = await this.memoryService.getMemoryContext(companyId);
-    const fullSystemPrompt = memoryContext
-      ? `${ADMIN_SYSTEM_PROMPT}\n\n${memoryContext}`
-      : ADMIN_SYSTEM_PROMPT;
+    // Inject memory into system prompt:
+    //   1. Legacy AiMemory key/value entries (still rendered for backward compat)
+    //   2. The new OpenClaw-style MEMORY.md document, verbatim
+    const [legacyContext, memoryDoc] = await Promise.all([
+      this.memoryService.getMemoryContext(companyId),
+      this.memory.getSystemPromptMemory(companyId),
+    ]);
+    const fullSystemPrompt = [ADMIN_SYSTEM_PROMPT, memoryDoc, legacyContext]
+      .filter((s) => s && s.trim().length > 0)
+      .join('\n\n');
 
-    // Build messages with system prompt + memory
+    // Build messages with system prompt + memory. Attachment text is inlined
+    // into `content` here so it survives the agent loop and tool messages.
+    // The raw attachments stay on the message so the per-provider serializer
+    // can also emit native multimodal blocks (image_url / image source).
     const messages: ChatMessage[] = [
       { role: 'system', content: fullSystemPrompt },
-      ...userMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ...userMessages.map((m) => {
+        const atts = m.attachments ?? [];
+        const inlined = inlineMessageText(m.content, atts, { dropImages: !supportsImages });
+        return {
+          role: m.role as 'user' | 'assistant',
+          content: inlined,
+          attachments: atts.length ? atts : undefined,
+        };
+      }),
     ];
 
     // Agent loop — iterate on tool calls
@@ -214,13 +251,22 @@ export class AiChatService {
       function: { name: t.name, description: t.description, parameters: t.parameters },
     }));
 
-    // Convert messages to OpenAI format
+    // Convert messages to OpenAI format. User messages with image attachments
+    // become structured content arrays with `image_url` blocks; everything else
+    // stays as a plain string for backwards compat with smaller / older models.
+    const supportsImages = modelSupportsImages(model);
     const openaiMessages = messages.map((m) => {
       if (m.role === 'tool') {
         return { role: 'tool' as const, content: m.content, tool_call_id: m.tool_call_id };
       }
       if (m.tool_calls?.length) {
         return { role: 'assistant' as const, content: m.content || null, tool_calls: m.tool_calls };
+      }
+      if (m.role === 'user' && m.attachments?.length) {
+        return {
+          role: 'user' as const,
+          content: buildOpenAIContent(m.content, m.attachments, !supportsImages),
+        };
       }
       return { role: m.role, content: m.content };
     });
@@ -275,6 +321,7 @@ export class AiChatService {
     maxTokens: number, temperature: number,
   ): Promise<{ content?: string; toolCalls?: ToolCall[] }> {
     const system = messages.find((m) => m.role === 'system')?.content;
+    const supportsImages = modelSupportsImages(model);
 
     // Convert messages to Anthropic format
     const anthropicMessages: Array<Record<string, unknown>> = [];
@@ -294,6 +341,11 @@ export class AiChatService {
             name: tc.function.name,
             input: JSON.parse(tc.function.arguments),
           })),
+        });
+      } else if (m.role === 'user' && m.attachments?.length) {
+        anthropicMessages.push({
+          role: 'user',
+          content: buildAnthropicContent(m.content, m.attachments, !supportsImages),
         });
       } else {
         anthropicMessages.push({ role: m.role, content: m.content });

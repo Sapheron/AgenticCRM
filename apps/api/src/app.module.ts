@@ -17,6 +17,7 @@ import { BroadcastModule } from './modules/broadcast/broadcast.module';
 import { AiChatModule } from './modules/ai-chat/ai-chat.module';
 import { ChatConversationsModule } from './modules/chat-conversations/chat-conversations.module';
 import { AiMemoryModule } from './modules/ai-memory/ai-memory.module';
+import { MemoryModule } from './modules/memory/memory.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { SequencesModule } from './modules/sequences/sequences.module';
@@ -66,6 +67,7 @@ import { BullModule } from '@nestjs/bullmq';
     AiChatModule,
     ChatConversationsModule,
     AiMemoryModule,
+    MemoryModule,
     TagsModule,
     TemplatesModule,
     SequencesModule,

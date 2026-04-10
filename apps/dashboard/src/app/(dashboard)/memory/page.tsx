@@ -1,145 +1,431 @@
 'use client';
 
-import { useState } from 'react';
+/**
+ * Memory file browser — OpenClaw-style two-pane view.
+ *
+ * Left: list of MemoryFile rows (MEMORY.md, memory/YYYY-MM-DD-{slug}.md, etc.)
+ * Right: markdown content of the selected file, with Edit / Save / Delete.
+ *
+ * The chunks/embeddings are managed automatically server-side: editing a file
+ * triggers a re-chunk + re-embed in MemoryService.writeFile.
+ */
+
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
-import { Brain, Plus, Trash2, Power, PowerOff } from 'lucide-react';
+import { Brain, Plus, Trash2, FileText, Search, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface Memory {
+interface MemoryFile {
   id: string;
-  title: string;
-  content: string;
-  category: string;
-  isActive: boolean;
+  path: string;
+  source: string;
+  size: number;
   createdAt: string;
   updatedAt: string;
 }
 
-const CATEGORIES = ['general', 'product', 'policy', 'faq', 'instruction'];
+interface MemoryStats {
+  files: number;
+  chunks: number;
+  recalls: number;
+  embeddedChunks: number;
+  embeddingDim: number;
+}
+
+interface SearchHit {
+  id: string;
+  path: string;
+  source: string;
+  startLine: number;
+  endLine: number;
+  text: string;
+  score: number;
+  vecScore: number;
+  textScore: number;
+}
 
 export default function MemoryPage() {
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [category, setCategory] = useState('general');
-  const [filterCat, setFilterCat] = useState('');
   const qc = useQueryClient();
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [newPath, setNewPath] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchHits, setSearchHits] = useState<SearchHit[] | null>(null);
 
-  const { data: memories, isLoading } = useQuery({
-    queryKey: ['ai-memory', filterCat],
+  const { data: files } = useQuery({
+    queryKey: ['memory-files'],
     queryFn: async () => {
-      const params = filterCat ? { category: filterCat } : {};
-      const r = await api.get<{ data: Memory[] }>('/ai/memory', { params });
-      return r.data.data;
+      const r = await api.get<MemoryFile[]>('/memory/files');
+      return r.data;
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: () => api.post('/ai/memory', { title, content, category }),
+  const { data: stats } = useQuery({
+    queryKey: ['memory-stats'],
+    queryFn: async () => {
+      const r = await api.get<MemoryStats>('/memory/stats');
+      return r.data;
+    },
+  });
+
+  // Auto-select MEMORY.md or first file
+  useEffect(() => {
+    if (selectedPath || !files?.length) return;
+    const memoryDoc = files.find((f) => f.path === 'MEMORY.md');
+    setSelectedPath(memoryDoc?.path ?? files[0].path);
+  }, [files, selectedPath]);
+
+  const { data: fileContent } = useQuery({
+    queryKey: ['memory-file', selectedPath],
+    enabled: !!selectedPath,
+    queryFn: async () => {
+      const r = await api.get<{ path: string; content: string | null }>('/memory/file', {
+        params: { path: selectedPath },
+      });
+      return r.data.content ?? '';
+    },
+  });
+
+  useEffect(() => {
+    if (!editing) setDraft(fileContent ?? '');
+  }, [fileContent, editing]);
+
+  const writeMutation = useMutation({
+    mutationFn: ({ path, content }: { path: string; content: string }) =>
+      api.post('/memory/file', { path, content }),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['ai-memory'] });
-      toast.success('Memory saved');
-      setShowForm(false); setTitle(''); setContent(''); setCategory('general');
+      void qc.invalidateQueries({ queryKey: ['memory-files'] });
+      void qc.invalidateQueries({ queryKey: ['memory-file', selectedPath] });
+      void qc.invalidateQueries({ queryKey: ['memory-stats'] });
+      setEditing(false);
+      toast.success('Memory saved & re-indexed');
     },
     onError: () => toast.error('Failed to save'),
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      api.patch(`/ai/memory/${id}`, { isActive }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['ai-memory'] }); },
+  const createMutation = useMutation({
+    mutationFn: ({ path, content }: { path: string; content: string }) =>
+      api.post('/memory/file', { path, content }),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: ['memory-files'] });
+      void qc.invalidateQueries({ queryKey: ['memory-stats'] });
+      setSelectedPath(variables.path);
+      setShowCreate(false);
+      setNewPath('');
+      setNewContent('');
+      toast.success('Memory file created');
+    },
+    onError: () => toast.error('Failed to create'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/ai/memory/${id}`),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['ai-memory'] }); toast.success('Deleted'); },
+    mutationFn: (path: string) => api.delete('/memory/file', { params: { path } }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['memory-files'] });
+      void qc.invalidateQueries({ queryKey: ['memory-stats'] });
+      setSelectedPath(null);
+      toast.success('Deleted');
+    },
   });
+
+  const searchMutation = useMutation({
+    mutationFn: (query: string) =>
+      api.post<SearchHit[]>('/memory/search', { query, maxResults: 15 }),
+    onSuccess: (r) => setSearchHits(r.data),
+    onError: () => toast.error('Search failed'),
+  });
+
+  const groupedFiles = useMemo(() => {
+    const groups: Record<string, MemoryFile[]> = { memory: [], session: [], wiki: [], other: [] };
+    for (const f of files ?? []) {
+      const key = (groups[f.source] ? f.source : 'other') as keyof typeof groups;
+      groups[key].push(f);
+    }
+    return groups;
+  }, [files]);
 
   return (
     <div className="h-full flex flex-col">
+      {/* Header */}
       <div className="h-11 border-b border-gray-200 px-4 flex items-center justify-between shrink-0 bg-white">
         <div className="flex items-center gap-2">
           <Brain size={14} className="text-violet-500" />
           <span className="text-xs font-semibold text-gray-900">AI Memory</span>
-          <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-            {memories?.filter((m) => m.isActive).length ?? 0} active
-          </span>
+          {stats && (
+            <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+              {stats.files} files · {stats.chunks} chunks · {stats.embeddedChunks} embedded · {stats.recalls} recalls
+            </span>
+          )}
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium">
-          <Plus size={11} /> Add Memory
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 border border-gray-200 rounded px-1.5">
+            <Search size={11} className="text-gray-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) searchMutation.mutate(searchQuery.trim());
+                if (e.key === 'Escape') {
+                  setSearchQuery('');
+                  setSearchHits(null);
+                }
+              }}
+              placeholder="Search memory…"
+              className="text-[11px] py-1 w-44 focus:outline-none"
+            />
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1 bg-gray-900 hover:bg-gray-800 text-white px-2.5 py-1 rounded text-[11px] font-medium"
+          >
+            <Plus size={11} /> New File
+          </button>
+        </div>
       </div>
 
-      {/* Create form */}
-      {showForm && (
-        <div className="border-b border-gray-200 bg-white p-3 space-y-2 shrink-0">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (e.g., 'Pricing Info', 'Return Policy')" className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400" />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} placeholder="Knowledge content that AI should know about...&#10;&#10;Example: Our premium plan costs $49/month and includes unlimited contacts, 10,000 messages/day, and priority support." className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none leading-relaxed" />
-          <div className="flex gap-2 items-center">
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-violet-400">
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <button onClick={() => createMutation.mutate()} disabled={!title || !content} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">Save</button>
-            <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>
+      <div className="flex-1 flex min-h-0">
+        {/* File list */}
+        <aside className="w-64 border-r border-gray-200 bg-white overflow-auto shrink-0">
+          {(['memory', 'session', 'wiki', 'other'] as const).map((src) => {
+            const list = groupedFiles[src];
+            if (!list?.length) return null;
+            return (
+              <div key={src}>
+                <p className="text-[9px] uppercase tracking-widest text-gray-400 px-3 pt-2 pb-1 font-medium">
+                  {src}
+                </p>
+                {list.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      setSelectedPath(f.path);
+                      setEditing(false);
+                    }}
+                    className={cn(
+                      'w-full text-left px-3 py-1.5 flex items-center gap-2 text-[11px] hover:bg-gray-50',
+                      selectedPath === f.path && 'bg-violet-50 text-violet-700',
+                    )}
+                  >
+                    <FileText size={11} className="shrink-0" />
+                    <span className="truncate flex-1">{f.path}</span>
+                    <span className="text-[9px] text-gray-400">{f.size}b</span>
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+          {!files?.length && (
+            <div className="p-6 text-center text-[11px] text-gray-400">
+              No memory files yet.
+              <br />
+              Click <span className="font-medium">New File</span> to start.
+            </div>
+          )}
+        </aside>
+
+        {/* Main pane */}
+        <main className="flex-1 overflow-auto bg-white">
+          {searchHits ? (
+            <SearchResults
+              hits={searchHits}
+              onClose={() => {
+                setSearchHits(null);
+                setSearchQuery('');
+              }}
+              onOpen={(path) => {
+                setSelectedPath(path);
+                setSearchHits(null);
+                setSearchQuery('');
+              }}
+            />
+          ) : selectedPath ? (
+            <FileView
+              path={selectedPath}
+              content={fileContent ?? ''}
+              draft={draft}
+              setDraft={setDraft}
+              editing={editing}
+              setEditing={setEditing}
+              onSave={() => writeMutation.mutate({ path: selectedPath, content: draft })}
+              onDelete={() => {
+                if (confirm(`Delete ${selectedPath}?`)) deleteMutation.mutate(selectedPath);
+              }}
+              saving={writeMutation.isPending}
+            />
+          ) : (
+            <div className="p-12 text-center text-[11px] text-gray-400">
+              Select a memory file from the sidebar.
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Create dialog */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow-xl w-[480px] p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold">New Memory File</h3>
+              <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            </div>
+            <input
+              value={newPath}
+              onChange={(e) => setNewPath(e.target.value)}
+              placeholder="path (e.g. memory/notes.md or MEMORY.md)"
+              className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400"
+            />
+            <textarea
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              rows={10}
+              placeholder="# Markdown content&#10;&#10;Anything you write here will be chunked, embedded, and searchable by the AI."
+              className="w-full border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 font-mono leading-relaxed"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowCreate(false)} className="text-gray-500 text-[11px] px-2 py-1">
+                Cancel
+              </button>
+              <button
+                onClick={() => createMutation.mutate({ path: newPath, content: newContent })}
+                disabled={!newPath || !newContent}
+                className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30"
+              >
+                Create
+              </button>
+            </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* Category filter */}
-      <div className="px-3 py-2 flex gap-1 border-b border-gray-100 bg-white shrink-0 flex-wrap">
-        <button onClick={() => setFilterCat('')} className={cn('text-[10px] px-2 py-0.5 rounded', !filterCat ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100')}>All</button>
-        {CATEGORIES.map((c) => (
-          <button key={c} onClick={() => setFilterCat(c)} className={cn('text-[10px] px-2 py-0.5 rounded capitalize', filterCat === c ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100')}>{c}</button>
-        ))}
+function FileView({
+  path,
+  content,
+  draft,
+  setDraft,
+  editing,
+  setEditing,
+  onSave,
+  onDelete,
+  saving,
+}: {
+  path: string;
+  content: string;
+  draft: string;
+  setDraft: (v: string) => void;
+  editing: boolean;
+  setEditing: (v: boolean) => void;
+  onSave: () => void;
+  onDelete: () => void;
+  saving: boolean;
+}) {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="h-9 border-b border-gray-100 px-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <FileText size={11} className="text-gray-400" />
+          <span className="text-[11px] text-gray-700 font-medium">{path}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {editing ? (
+            <>
+              <button
+                onClick={() => setEditing(false)}
+                className="text-gray-500 hover:text-gray-700 text-[11px] px-2 py-0.5"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-2.5 py-0.5 rounded text-[11px] disabled:opacity-50"
+              >
+                <Save size={11} /> {saving ? 'Saving…' : 'Save'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-violet-600 hover:text-violet-700 text-[11px] px-2 py-0.5"
+              >
+                Edit
+              </button>
+              <button
+                onClick={onDelete}
+                className="text-gray-400 hover:text-red-500 p-1 rounded"
+                title="Delete"
+              >
+                <Trash2 size={11} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-
-      {/* Memory list */}
-      <div className="flex-1 overflow-auto bg-white">
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-300 text-xs">Loading...</div>
-        ) : !memories?.length ? (
-          <div className="p-12 text-center">
-            <Brain size={24} className="mx-auto text-gray-200 mb-2" />
-            <p className="text-xs text-gray-400 mb-1">No memories yet</p>
-            <p className="text-[10px] text-gray-300">Add knowledge that the AI should remember across all conversations</p>
-          </div>
+      <div className="flex-1 overflow-auto p-4">
+        {editing ? (
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full h-full font-mono text-[11px] leading-relaxed focus:outline-none resize-none"
+          />
         ) : (
-          <div className="divide-y divide-gray-100">
-            {memories.map((mem) => (
-              <div key={mem.id} className={cn('px-4 py-3 hover:bg-gray-50/50 transition-colors', !mem.isActive && 'opacity-50')}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-gray-900">{mem.title}</span>
-                      <span className="text-[9px] bg-violet-50 text-violet-600 px-1.5 py-0.5 rounded capitalize">{mem.category}</span>
-                      {!mem.isActive && <span className="text-[9px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded">Disabled</span>}
-                    </div>
-                    <p className="text-[11px] text-gray-500 whitespace-pre-wrap leading-relaxed">{mem.content}</p>
-                    <p className="text-[9px] text-gray-300 mt-1">{new Date(mem.updatedAt).toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => toggleMutation.mutate({ id: mem.id, isActive: !mem.isActive })}
-                      title={mem.isActive ? 'Disable' : 'Enable'}
-                      className={cn('p-1 rounded', mem.isActive ? 'text-emerald-500 hover:bg-emerald-50' : 'text-gray-300 hover:bg-gray-100')}
-                    >
-                      {mem.isActive ? <Power size={12} /> : <PowerOff size={12} />}
-                    </button>
-                    <button onClick={() => deleteMutation.mutate(mem.id)} className="p-1 text-gray-300 hover:text-red-400 rounded hover:bg-red-50">
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <pre className="font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-gray-800">
+            {content || '(empty)'}
+          </pre>
         )}
       </div>
+    </div>
+  );
+}
 
-      <div className="h-9 border-t border-gray-200 px-3 flex items-center shrink-0 bg-white">
-        <span className="text-[10px] text-gray-400">{memories?.length ?? 0} memories ({memories?.filter((m) => m.isActive).length ?? 0} active)</span>
+function SearchResults({
+  hits,
+  onClose,
+  onOpen,
+}: {
+  hits: SearchHit[];
+  onClose: () => void;
+  onOpen: (path: string) => void;
+}) {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="h-9 border-b border-gray-100 px-4 flex items-center justify-between shrink-0">
+        <span className="text-[11px] font-medium text-gray-700">{hits.length} hit{hits.length === 1 ? '' : 's'}</span>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-[11px]">
+          Clear
+        </button>
+      </div>
+      <div className="flex-1 overflow-auto divide-y divide-gray-100">
+        {hits.map((h) => (
+          <button
+            key={h.id}
+            onClick={() => onOpen(h.path)}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <FileText size={11} className="text-gray-400" />
+              <span className="text-[11px] font-medium text-violet-600">{h.path}</span>
+              <span className="text-[9px] text-gray-400">L{h.startLine}-{h.endLine}</span>
+              <span className="text-[9px] text-gray-400 ml-auto">
+                score {h.score.toFixed(3)} · vec {h.vecScore.toFixed(2)} · text {h.textScore.toFixed(2)}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-600 line-clamp-3">{h.text}</p>
+          </button>
+        ))}
+        {hits.length === 0 && (
+          <div className="p-8 text-center text-[11px] text-gray-400">No results.</div>
+        )}
       </div>
     </div>
   );

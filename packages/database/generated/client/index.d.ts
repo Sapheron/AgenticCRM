@@ -283,6 +283,21 @@ export type ChatMessage = $Result.DefaultSelection<Prisma.$ChatMessagePayload>
  * 
  */
 export type AiMemory = $Result.DefaultSelection<Prisma.$AiMemoryPayload>
+/**
+ * Model MemoryFile
+ * 
+ */
+export type MemoryFile = $Result.DefaultSelection<Prisma.$MemoryFilePayload>
+/**
+ * Model MemoryChunk
+ * 
+ */
+export type MemoryChunk = $Result.DefaultSelection<Prisma.$MemoryChunkPayload>
+/**
+ * Model RecallEntry
+ * 
+ */
+export type RecallEntry = $Result.DefaultSelection<Prisma.$RecallEntryPayload>
 
 /**
  * Enums
@@ -1183,6 +1198,36 @@ export class PrismaClient<
     * ```
     */
   get aiMemory(): Prisma.AiMemoryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.memoryFile`: Exposes CRUD operations for the **MemoryFile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MemoryFiles
+    * const memoryFiles = await prisma.memoryFile.findMany()
+    * ```
+    */
+  get memoryFile(): Prisma.MemoryFileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.memoryChunk`: Exposes CRUD operations for the **MemoryChunk** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MemoryChunks
+    * const memoryChunks = await prisma.memoryChunk.findMany()
+    * ```
+    */
+  get memoryChunk(): Prisma.MemoryChunkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.recallEntry`: Exposes CRUD operations for the **RecallEntry** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RecallEntries
+    * const recallEntries = await prisma.recallEntry.findMany()
+    * ```
+    */
+  get recallEntry(): Prisma.RecallEntryDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1670,7 +1715,10 @@ export namespace Prisma {
     ApiKey: 'ApiKey',
     ChatConversation: 'ChatConversation',
     ChatMessage: 'ChatMessage',
-    AiMemory: 'AiMemory'
+    AiMemory: 'AiMemory',
+    MemoryFile: 'MemoryFile',
+    MemoryChunk: 'MemoryChunk',
+    RecallEntry: 'RecallEntry'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1686,7 +1734,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "company" | "user" | "whatsAppAccount" | "contact" | "conversation" | "message" | "lead" | "deal" | "task" | "aiConfig" | "aiContextCache" | "paymentConfig" | "payment" | "broadcast" | "auditLog" | "webhookEndpoint" | "contactNote" | "tag" | "segment" | "customFieldDefinition" | "notification" | "template" | "cannedResponse" | "sequence" | "sequenceStep" | "sequenceEnrollment" | "callLog" | "pipeline" | "pipelineStage" | "product" | "quote" | "quoteLineItem" | "invoice" | "invoiceLineItem" | "campaign" | "form" | "formSubmission" | "workflow" | "workflowExecution" | "ticket" | "ticketComment" | "knowledgeBaseArticle" | "slaPolicy" | "customReport" | "scheduledReport" | "integration" | "calendarEvent" | "activityLog" | "document" | "documentSignature" | "apiKey" | "chatConversation" | "chatMessage" | "aiMemory"
+      modelProps: "company" | "user" | "whatsAppAccount" | "contact" | "conversation" | "message" | "lead" | "deal" | "task" | "aiConfig" | "aiContextCache" | "paymentConfig" | "payment" | "broadcast" | "auditLog" | "webhookEndpoint" | "contactNote" | "tag" | "segment" | "customFieldDefinition" | "notification" | "template" | "cannedResponse" | "sequence" | "sequenceStep" | "sequenceEnrollment" | "callLog" | "pipeline" | "pipelineStage" | "product" | "quote" | "quoteLineItem" | "invoice" | "invoiceLineItem" | "campaign" | "form" | "formSubmission" | "workflow" | "workflowExecution" | "ticket" | "ticketComment" | "knowledgeBaseArticle" | "slaPolicy" | "customReport" | "scheduledReport" | "integration" | "calendarEvent" | "activityLog" | "document" | "documentSignature" | "apiKey" | "chatConversation" | "chatMessage" | "aiMemory" | "memoryFile" | "memoryChunk" | "recallEntry"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -5686,6 +5734,228 @@ export namespace Prisma {
           }
         }
       }
+      MemoryFile: {
+        payload: Prisma.$MemoryFilePayload<ExtArgs>
+        fields: Prisma.MemoryFileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MemoryFileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MemoryFileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          findFirst: {
+            args: Prisma.MemoryFileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MemoryFileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          findMany: {
+            args: Prisma.MemoryFileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>[]
+          }
+          create: {
+            args: Prisma.MemoryFileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          createMany: {
+            args: Prisma.MemoryFileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MemoryFileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>[]
+          }
+          delete: {
+            args: Prisma.MemoryFileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          update: {
+            args: Prisma.MemoryFileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          deleteMany: {
+            args: Prisma.MemoryFileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MemoryFileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MemoryFileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>[]
+          }
+          upsert: {
+            args: Prisma.MemoryFileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryFilePayload>
+          }
+          aggregate: {
+            args: Prisma.MemoryFileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMemoryFile>
+          }
+          groupBy: {
+            args: Prisma.MemoryFileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MemoryFileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MemoryFileCountArgs<ExtArgs>
+            result: $Utils.Optional<MemoryFileCountAggregateOutputType> | number
+          }
+        }
+      }
+      MemoryChunk: {
+        payload: Prisma.$MemoryChunkPayload<ExtArgs>
+        fields: Prisma.MemoryChunkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MemoryChunkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MemoryChunkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          findFirst: {
+            args: Prisma.MemoryChunkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MemoryChunkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          findMany: {
+            args: Prisma.MemoryChunkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>[]
+          }
+          create: {
+            args: Prisma.MemoryChunkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          createMany: {
+            args: Prisma.MemoryChunkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MemoryChunkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>[]
+          }
+          delete: {
+            args: Prisma.MemoryChunkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          update: {
+            args: Prisma.MemoryChunkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          deleteMany: {
+            args: Prisma.MemoryChunkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MemoryChunkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MemoryChunkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>[]
+          }
+          upsert: {
+            args: Prisma.MemoryChunkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MemoryChunkPayload>
+          }
+          aggregate: {
+            args: Prisma.MemoryChunkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMemoryChunk>
+          }
+          groupBy: {
+            args: Prisma.MemoryChunkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MemoryChunkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MemoryChunkCountArgs<ExtArgs>
+            result: $Utils.Optional<MemoryChunkCountAggregateOutputType> | number
+          }
+        }
+      }
+      RecallEntry: {
+        payload: Prisma.$RecallEntryPayload<ExtArgs>
+        fields: Prisma.RecallEntryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecallEntryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecallEntryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          findFirst: {
+            args: Prisma.RecallEntryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecallEntryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          findMany: {
+            args: Prisma.RecallEntryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>[]
+          }
+          create: {
+            args: Prisma.RecallEntryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          createMany: {
+            args: Prisma.RecallEntryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecallEntryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>[]
+          }
+          delete: {
+            args: Prisma.RecallEntryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          update: {
+            args: Prisma.RecallEntryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          deleteMany: {
+            args: Prisma.RecallEntryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecallEntryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RecallEntryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>[]
+          }
+          upsert: {
+            args: Prisma.RecallEntryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecallEntryPayload>
+          }
+          aggregate: {
+            args: Prisma.RecallEntryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRecallEntry>
+          }
+          groupBy: {
+            args: Prisma.RecallEntryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecallEntryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecallEntryCountArgs<ExtArgs>
+            result: $Utils.Optional<RecallEntryCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -5848,6 +6118,9 @@ export namespace Prisma {
     chatConversation?: ChatConversationOmit
     chatMessage?: ChatMessageOmit
     aiMemory?: AiMemoryOmit
+    memoryFile?: MemoryFileOmit
+    memoryChunk?: MemoryChunkOmit
+    recallEntry?: RecallEntryOmit
   }
 
   /* Types for Logging */
@@ -6663,6 +6936,37 @@ export namespace Prisma {
    */
   export type ChatConversationCountOutputTypeCountMessagesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ChatMessageWhereInput
+  }
+
+
+  /**
+   * Count Type MemoryFileCountOutputType
+   */
+
+  export type MemoryFileCountOutputType = {
+    chunks: number
+  }
+
+  export type MemoryFileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    chunks?: boolean | MemoryFileCountOutputTypeCountChunksArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * MemoryFileCountOutputType without action
+   */
+  export type MemoryFileCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFileCountOutputType
+     */
+    select?: MemoryFileCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * MemoryFileCountOutputType without action
+   */
+  export type MemoryFileCountOutputTypeCountChunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MemoryChunkWhereInput
   }
 
 
@@ -67060,6 +67364,7 @@ export namespace Prisma {
     role: number
     content: number
     toolCalls: number
+    attachments: number
     provider: number
     model: number
     latencyMs: number
@@ -67104,6 +67409,7 @@ export namespace Prisma {
     role?: true
     content?: true
     toolCalls?: true
+    attachments?: true
     provider?: true
     model?: true
     latencyMs?: true
@@ -67203,6 +67509,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls: JsonValue | null
+    attachments: JsonValue | null
     provider: string | null
     model: string | null
     latencyMs: number | null
@@ -67234,6 +67541,7 @@ export namespace Prisma {
     role?: boolean
     content?: boolean
     toolCalls?: boolean
+    attachments?: boolean
     provider?: boolean
     model?: boolean
     latencyMs?: boolean
@@ -67247,6 +67555,7 @@ export namespace Prisma {
     role?: boolean
     content?: boolean
     toolCalls?: boolean
+    attachments?: boolean
     provider?: boolean
     model?: boolean
     latencyMs?: boolean
@@ -67260,6 +67569,7 @@ export namespace Prisma {
     role?: boolean
     content?: boolean
     toolCalls?: boolean
+    attachments?: boolean
     provider?: boolean
     model?: boolean
     latencyMs?: boolean
@@ -67273,13 +67583,14 @@ export namespace Prisma {
     role?: boolean
     content?: boolean
     toolCalls?: boolean
+    attachments?: boolean
     provider?: boolean
     model?: boolean
     latencyMs?: boolean
     createdAt?: boolean
   }
 
-  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "toolCalls" | "provider" | "model" | "latencyMs" | "createdAt", ExtArgs["result"]["chatMessage"]>
+  export type ChatMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "conversationId" | "role" | "content" | "toolCalls" | "attachments" | "provider" | "model" | "latencyMs" | "createdAt", ExtArgs["result"]["chatMessage"]>
   export type ChatMessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | ChatConversationDefaultArgs<ExtArgs>
   }
@@ -67301,6 +67612,7 @@ export namespace Prisma {
       role: string
       content: string
       toolCalls: Prisma.JsonValue | null
+      attachments: Prisma.JsonValue | null
       provider: string | null
       model: string | null
       latencyMs: number | null
@@ -67734,6 +68046,7 @@ export namespace Prisma {
     readonly role: FieldRef<"ChatMessage", 'String'>
     readonly content: FieldRef<"ChatMessage", 'String'>
     readonly toolCalls: FieldRef<"ChatMessage", 'Json'>
+    readonly attachments: FieldRef<"ChatMessage", 'Json'>
     readonly provider: FieldRef<"ChatMessage", 'String'>
     readonly model: FieldRef<"ChatMessage", 'String'>
     readonly latencyMs: FieldRef<"ChatMessage", 'Int'>
@@ -69197,6 +69510,3553 @@ export namespace Prisma {
 
 
   /**
+   * Model MemoryFile
+   */
+
+  export type AggregateMemoryFile = {
+    _count: MemoryFileCountAggregateOutputType | null
+    _avg: MemoryFileAvgAggregateOutputType | null
+    _sum: MemoryFileSumAggregateOutputType | null
+    _min: MemoryFileMinAggregateOutputType | null
+    _max: MemoryFileMaxAggregateOutputType | null
+  }
+
+  export type MemoryFileAvgAggregateOutputType = {
+    size: number | null
+  }
+
+  export type MemoryFileSumAggregateOutputType = {
+    size: number | null
+  }
+
+  export type MemoryFileMinAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    path: string | null
+    source: string | null
+    hash: string | null
+    content: string | null
+    size: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MemoryFileMaxAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    path: string | null
+    source: string | null
+    hash: string | null
+    content: string | null
+    size: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MemoryFileCountAggregateOutputType = {
+    id: number
+    companyId: number
+    path: number
+    source: number
+    hash: number
+    content: number
+    size: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type MemoryFileAvgAggregateInputType = {
+    size?: true
+  }
+
+  export type MemoryFileSumAggregateInputType = {
+    size?: true
+  }
+
+  export type MemoryFileMinAggregateInputType = {
+    id?: true
+    companyId?: true
+    path?: true
+    source?: true
+    hash?: true
+    content?: true
+    size?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MemoryFileMaxAggregateInputType = {
+    id?: true
+    companyId?: true
+    path?: true
+    source?: true
+    hash?: true
+    content?: true
+    size?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MemoryFileCountAggregateInputType = {
+    id?: true
+    companyId?: true
+    path?: true
+    source?: true
+    hash?: true
+    content?: true
+    size?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type MemoryFileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MemoryFile to aggregate.
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryFiles to fetch.
+     */
+    orderBy?: MemoryFileOrderByWithRelationInput | MemoryFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MemoryFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MemoryFiles
+    **/
+    _count?: true | MemoryFileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MemoryFileAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MemoryFileSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MemoryFileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MemoryFileMaxAggregateInputType
+  }
+
+  export type GetMemoryFileAggregateType<T extends MemoryFileAggregateArgs> = {
+        [P in keyof T & keyof AggregateMemoryFile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMemoryFile[P]>
+      : GetScalarType<T[P], AggregateMemoryFile[P]>
+  }
+
+
+
+
+  export type MemoryFileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MemoryFileWhereInput
+    orderBy?: MemoryFileOrderByWithAggregationInput | MemoryFileOrderByWithAggregationInput[]
+    by: MemoryFileScalarFieldEnum[] | MemoryFileScalarFieldEnum
+    having?: MemoryFileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MemoryFileCountAggregateInputType | true
+    _avg?: MemoryFileAvgAggregateInputType
+    _sum?: MemoryFileSumAggregateInputType
+    _min?: MemoryFileMinAggregateInputType
+    _max?: MemoryFileMaxAggregateInputType
+  }
+
+  export type MemoryFileGroupByOutputType = {
+    id: string
+    companyId: string
+    path: string
+    source: string
+    hash: string
+    content: string
+    size: number
+    createdAt: Date
+    updatedAt: Date
+    _count: MemoryFileCountAggregateOutputType | null
+    _avg: MemoryFileAvgAggregateOutputType | null
+    _sum: MemoryFileSumAggregateOutputType | null
+    _min: MemoryFileMinAggregateOutputType | null
+    _max: MemoryFileMaxAggregateOutputType | null
+  }
+
+  type GetMemoryFileGroupByPayload<T extends MemoryFileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MemoryFileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MemoryFileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MemoryFileGroupByOutputType[P]>
+            : GetScalarType<T[P], MemoryFileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MemoryFileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    path?: boolean
+    source?: boolean
+    hash?: boolean
+    content?: boolean
+    size?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    chunks?: boolean | MemoryFile$chunksArgs<ExtArgs>
+    _count?: boolean | MemoryFileCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["memoryFile"]>
+
+  export type MemoryFileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    path?: boolean
+    source?: boolean
+    hash?: boolean
+    content?: boolean
+    size?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["memoryFile"]>
+
+  export type MemoryFileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    path?: boolean
+    source?: boolean
+    hash?: boolean
+    content?: boolean
+    size?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["memoryFile"]>
+
+  export type MemoryFileSelectScalar = {
+    id?: boolean
+    companyId?: boolean
+    path?: boolean
+    source?: boolean
+    hash?: boolean
+    content?: boolean
+    size?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type MemoryFileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "path" | "source" | "hash" | "content" | "size" | "createdAt" | "updatedAt", ExtArgs["result"]["memoryFile"]>
+  export type MemoryFileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    chunks?: boolean | MemoryFile$chunksArgs<ExtArgs>
+    _count?: boolean | MemoryFileCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type MemoryFileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type MemoryFileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $MemoryFilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MemoryFile"
+    objects: {
+      chunks: Prisma.$MemoryChunkPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      companyId: string
+      path: string
+      source: string
+      hash: string
+      content: string
+      size: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["memoryFile"]>
+    composites: {}
+  }
+
+  type MemoryFileGetPayload<S extends boolean | null | undefined | MemoryFileDefaultArgs> = $Result.GetResult<Prisma.$MemoryFilePayload, S>
+
+  type MemoryFileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MemoryFileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MemoryFileCountAggregateInputType | true
+    }
+
+  export interface MemoryFileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MemoryFile'], meta: { name: 'MemoryFile' } }
+    /**
+     * Find zero or one MemoryFile that matches the filter.
+     * @param {MemoryFileFindUniqueArgs} args - Arguments to find a MemoryFile
+     * @example
+     * // Get one MemoryFile
+     * const memoryFile = await prisma.memoryFile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MemoryFileFindUniqueArgs>(args: SelectSubset<T, MemoryFileFindUniqueArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MemoryFile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MemoryFileFindUniqueOrThrowArgs} args - Arguments to find a MemoryFile
+     * @example
+     * // Get one MemoryFile
+     * const memoryFile = await prisma.memoryFile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MemoryFileFindUniqueOrThrowArgs>(args: SelectSubset<T, MemoryFileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MemoryFile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileFindFirstArgs} args - Arguments to find a MemoryFile
+     * @example
+     * // Get one MemoryFile
+     * const memoryFile = await prisma.memoryFile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MemoryFileFindFirstArgs>(args?: SelectSubset<T, MemoryFileFindFirstArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MemoryFile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileFindFirstOrThrowArgs} args - Arguments to find a MemoryFile
+     * @example
+     * // Get one MemoryFile
+     * const memoryFile = await prisma.memoryFile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MemoryFileFindFirstOrThrowArgs>(args?: SelectSubset<T, MemoryFileFindFirstOrThrowArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MemoryFiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MemoryFiles
+     * const memoryFiles = await prisma.memoryFile.findMany()
+     * 
+     * // Get first 10 MemoryFiles
+     * const memoryFiles = await prisma.memoryFile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const memoryFileWithIdOnly = await prisma.memoryFile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MemoryFileFindManyArgs>(args?: SelectSubset<T, MemoryFileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MemoryFile.
+     * @param {MemoryFileCreateArgs} args - Arguments to create a MemoryFile.
+     * @example
+     * // Create one MemoryFile
+     * const MemoryFile = await prisma.memoryFile.create({
+     *   data: {
+     *     // ... data to create a MemoryFile
+     *   }
+     * })
+     * 
+     */
+    create<T extends MemoryFileCreateArgs>(args: SelectSubset<T, MemoryFileCreateArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MemoryFiles.
+     * @param {MemoryFileCreateManyArgs} args - Arguments to create many MemoryFiles.
+     * @example
+     * // Create many MemoryFiles
+     * const memoryFile = await prisma.memoryFile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MemoryFileCreateManyArgs>(args?: SelectSubset<T, MemoryFileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MemoryFiles and returns the data saved in the database.
+     * @param {MemoryFileCreateManyAndReturnArgs} args - Arguments to create many MemoryFiles.
+     * @example
+     * // Create many MemoryFiles
+     * const memoryFile = await prisma.memoryFile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MemoryFiles and only return the `id`
+     * const memoryFileWithIdOnly = await prisma.memoryFile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MemoryFileCreateManyAndReturnArgs>(args?: SelectSubset<T, MemoryFileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MemoryFile.
+     * @param {MemoryFileDeleteArgs} args - Arguments to delete one MemoryFile.
+     * @example
+     * // Delete one MemoryFile
+     * const MemoryFile = await prisma.memoryFile.delete({
+     *   where: {
+     *     // ... filter to delete one MemoryFile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MemoryFileDeleteArgs>(args: SelectSubset<T, MemoryFileDeleteArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MemoryFile.
+     * @param {MemoryFileUpdateArgs} args - Arguments to update one MemoryFile.
+     * @example
+     * // Update one MemoryFile
+     * const memoryFile = await prisma.memoryFile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MemoryFileUpdateArgs>(args: SelectSubset<T, MemoryFileUpdateArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MemoryFiles.
+     * @param {MemoryFileDeleteManyArgs} args - Arguments to filter MemoryFiles to delete.
+     * @example
+     * // Delete a few MemoryFiles
+     * const { count } = await prisma.memoryFile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MemoryFileDeleteManyArgs>(args?: SelectSubset<T, MemoryFileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MemoryFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MemoryFiles
+     * const memoryFile = await prisma.memoryFile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MemoryFileUpdateManyArgs>(args: SelectSubset<T, MemoryFileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MemoryFiles and returns the data updated in the database.
+     * @param {MemoryFileUpdateManyAndReturnArgs} args - Arguments to update many MemoryFiles.
+     * @example
+     * // Update many MemoryFiles
+     * const memoryFile = await prisma.memoryFile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MemoryFiles and only return the `id`
+     * const memoryFileWithIdOnly = await prisma.memoryFile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MemoryFileUpdateManyAndReturnArgs>(args: SelectSubset<T, MemoryFileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MemoryFile.
+     * @param {MemoryFileUpsertArgs} args - Arguments to update or create a MemoryFile.
+     * @example
+     * // Update or create a MemoryFile
+     * const memoryFile = await prisma.memoryFile.upsert({
+     *   create: {
+     *     // ... data to create a MemoryFile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MemoryFile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MemoryFileUpsertArgs>(args: SelectSubset<T, MemoryFileUpsertArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MemoryFiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileCountArgs} args - Arguments to filter MemoryFiles to count.
+     * @example
+     * // Count the number of MemoryFiles
+     * const count = await prisma.memoryFile.count({
+     *   where: {
+     *     // ... the filter for the MemoryFiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends MemoryFileCountArgs>(
+      args?: Subset<T, MemoryFileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MemoryFileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MemoryFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MemoryFileAggregateArgs>(args: Subset<T, MemoryFileAggregateArgs>): Prisma.PrismaPromise<GetMemoryFileAggregateType<T>>
+
+    /**
+     * Group by MemoryFile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryFileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MemoryFileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MemoryFileGroupByArgs['orderBy'] }
+        : { orderBy?: MemoryFileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MemoryFileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMemoryFileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MemoryFile model
+   */
+  readonly fields: MemoryFileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MemoryFile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MemoryFileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    chunks<T extends MemoryFile$chunksArgs<ExtArgs> = {}>(args?: Subset<T, MemoryFile$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MemoryFile model
+   */
+  interface MemoryFileFieldRefs {
+    readonly id: FieldRef<"MemoryFile", 'String'>
+    readonly companyId: FieldRef<"MemoryFile", 'String'>
+    readonly path: FieldRef<"MemoryFile", 'String'>
+    readonly source: FieldRef<"MemoryFile", 'String'>
+    readonly hash: FieldRef<"MemoryFile", 'String'>
+    readonly content: FieldRef<"MemoryFile", 'String'>
+    readonly size: FieldRef<"MemoryFile", 'Int'>
+    readonly createdAt: FieldRef<"MemoryFile", 'DateTime'>
+    readonly updatedAt: FieldRef<"MemoryFile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MemoryFile findUnique
+   */
+  export type MemoryFileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryFile to fetch.
+     */
+    where: MemoryFileWhereUniqueInput
+  }
+
+  /**
+   * MemoryFile findUniqueOrThrow
+   */
+  export type MemoryFileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryFile to fetch.
+     */
+    where: MemoryFileWhereUniqueInput
+  }
+
+  /**
+   * MemoryFile findFirst
+   */
+  export type MemoryFileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryFile to fetch.
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryFiles to fetch.
+     */
+    orderBy?: MemoryFileOrderByWithRelationInput | MemoryFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MemoryFiles.
+     */
+    cursor?: MemoryFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryFiles.
+     */
+    distinct?: MemoryFileScalarFieldEnum | MemoryFileScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryFile findFirstOrThrow
+   */
+  export type MemoryFileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryFile to fetch.
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryFiles to fetch.
+     */
+    orderBy?: MemoryFileOrderByWithRelationInput | MemoryFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MemoryFiles.
+     */
+    cursor?: MemoryFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryFiles.
+     */
+    distinct?: MemoryFileScalarFieldEnum | MemoryFileScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryFile findMany
+   */
+  export type MemoryFileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryFiles to fetch.
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryFiles to fetch.
+     */
+    orderBy?: MemoryFileOrderByWithRelationInput | MemoryFileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MemoryFiles.
+     */
+    cursor?: MemoryFileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryFiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryFiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryFiles.
+     */
+    distinct?: MemoryFileScalarFieldEnum | MemoryFileScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryFile create
+   */
+  export type MemoryFileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a MemoryFile.
+     */
+    data: XOR<MemoryFileCreateInput, MemoryFileUncheckedCreateInput>
+  }
+
+  /**
+   * MemoryFile createMany
+   */
+  export type MemoryFileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MemoryFiles.
+     */
+    data: MemoryFileCreateManyInput | MemoryFileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MemoryFile createManyAndReturn
+   */
+  export type MemoryFileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * The data used to create many MemoryFiles.
+     */
+    data: MemoryFileCreateManyInput | MemoryFileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MemoryFile update
+   */
+  export type MemoryFileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a MemoryFile.
+     */
+    data: XOR<MemoryFileUpdateInput, MemoryFileUncheckedUpdateInput>
+    /**
+     * Choose, which MemoryFile to update.
+     */
+    where: MemoryFileWhereUniqueInput
+  }
+
+  /**
+   * MemoryFile updateMany
+   */
+  export type MemoryFileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MemoryFiles.
+     */
+    data: XOR<MemoryFileUpdateManyMutationInput, MemoryFileUncheckedUpdateManyInput>
+    /**
+     * Filter which MemoryFiles to update
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * Limit how many MemoryFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MemoryFile updateManyAndReturn
+   */
+  export type MemoryFileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * The data used to update MemoryFiles.
+     */
+    data: XOR<MemoryFileUpdateManyMutationInput, MemoryFileUncheckedUpdateManyInput>
+    /**
+     * Filter which MemoryFiles to update
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * Limit how many MemoryFiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MemoryFile upsert
+   */
+  export type MemoryFileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the MemoryFile to update in case it exists.
+     */
+    where: MemoryFileWhereUniqueInput
+    /**
+     * In case the MemoryFile found by the `where` argument doesn't exist, create a new MemoryFile with this data.
+     */
+    create: XOR<MemoryFileCreateInput, MemoryFileUncheckedCreateInput>
+    /**
+     * In case the MemoryFile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MemoryFileUpdateInput, MemoryFileUncheckedUpdateInput>
+  }
+
+  /**
+   * MemoryFile delete
+   */
+  export type MemoryFileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+    /**
+     * Filter which MemoryFile to delete.
+     */
+    where: MemoryFileWhereUniqueInput
+  }
+
+  /**
+   * MemoryFile deleteMany
+   */
+  export type MemoryFileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MemoryFiles to delete
+     */
+    where?: MemoryFileWhereInput
+    /**
+     * Limit how many MemoryFiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * MemoryFile.chunks
+   */
+  export type MemoryFile$chunksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    where?: MemoryChunkWhereInput
+    orderBy?: MemoryChunkOrderByWithRelationInput | MemoryChunkOrderByWithRelationInput[]
+    cursor?: MemoryChunkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: MemoryChunkScalarFieldEnum | MemoryChunkScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryFile without action
+   */
+  export type MemoryFileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryFile
+     */
+    select?: MemoryFileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryFile
+     */
+    omit?: MemoryFileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryFileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MemoryChunk
+   */
+
+  export type AggregateMemoryChunk = {
+    _count: MemoryChunkCountAggregateOutputType | null
+    _avg: MemoryChunkAvgAggregateOutputType | null
+    _sum: MemoryChunkSumAggregateOutputType | null
+    _min: MemoryChunkMinAggregateOutputType | null
+    _max: MemoryChunkMaxAggregateOutputType | null
+  }
+
+  export type MemoryChunkAvgAggregateOutputType = {
+    startLine: number | null
+    endLine: number | null
+  }
+
+  export type MemoryChunkSumAggregateOutputType = {
+    startLine: number | null
+    endLine: number | null
+  }
+
+  export type MemoryChunkMinAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    fileId: string | null
+    path: string | null
+    source: string | null
+    startLine: number | null
+    endLine: number | null
+    hash: string | null
+    text: string | null
+    model: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MemoryChunkMaxAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    fileId: string | null
+    path: string | null
+    source: string | null
+    startLine: number | null
+    endLine: number | null
+    hash: string | null
+    text: string | null
+    model: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MemoryChunkCountAggregateOutputType = {
+    id: number
+    companyId: number
+    fileId: number
+    path: number
+    source: number
+    startLine: number
+    endLine: number
+    hash: number
+    text: number
+    model: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type MemoryChunkAvgAggregateInputType = {
+    startLine?: true
+    endLine?: true
+  }
+
+  export type MemoryChunkSumAggregateInputType = {
+    startLine?: true
+    endLine?: true
+  }
+
+  export type MemoryChunkMinAggregateInputType = {
+    id?: true
+    companyId?: true
+    fileId?: true
+    path?: true
+    source?: true
+    startLine?: true
+    endLine?: true
+    hash?: true
+    text?: true
+    model?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MemoryChunkMaxAggregateInputType = {
+    id?: true
+    companyId?: true
+    fileId?: true
+    path?: true
+    source?: true
+    startLine?: true
+    endLine?: true
+    hash?: true
+    text?: true
+    model?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MemoryChunkCountAggregateInputType = {
+    id?: true
+    companyId?: true
+    fileId?: true
+    path?: true
+    source?: true
+    startLine?: true
+    endLine?: true
+    hash?: true
+    text?: true
+    model?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type MemoryChunkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MemoryChunk to aggregate.
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryChunks to fetch.
+     */
+    orderBy?: MemoryChunkOrderByWithRelationInput | MemoryChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MemoryChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MemoryChunks
+    **/
+    _count?: true | MemoryChunkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MemoryChunkAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MemoryChunkSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MemoryChunkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MemoryChunkMaxAggregateInputType
+  }
+
+  export type GetMemoryChunkAggregateType<T extends MemoryChunkAggregateArgs> = {
+        [P in keyof T & keyof AggregateMemoryChunk]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMemoryChunk[P]>
+      : GetScalarType<T[P], AggregateMemoryChunk[P]>
+  }
+
+
+
+
+  export type MemoryChunkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MemoryChunkWhereInput
+    orderBy?: MemoryChunkOrderByWithAggregationInput | MemoryChunkOrderByWithAggregationInput[]
+    by: MemoryChunkScalarFieldEnum[] | MemoryChunkScalarFieldEnum
+    having?: MemoryChunkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MemoryChunkCountAggregateInputType | true
+    _avg?: MemoryChunkAvgAggregateInputType
+    _sum?: MemoryChunkSumAggregateInputType
+    _min?: MemoryChunkMinAggregateInputType
+    _max?: MemoryChunkMaxAggregateInputType
+  }
+
+  export type MemoryChunkGroupByOutputType = {
+    id: string
+    companyId: string
+    fileId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt: Date
+    updatedAt: Date
+    _count: MemoryChunkCountAggregateOutputType | null
+    _avg: MemoryChunkAvgAggregateOutputType | null
+    _sum: MemoryChunkSumAggregateOutputType | null
+    _min: MemoryChunkMinAggregateOutputType | null
+    _max: MemoryChunkMaxAggregateOutputType | null
+  }
+
+  type GetMemoryChunkGroupByPayload<T extends MemoryChunkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MemoryChunkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MemoryChunkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MemoryChunkGroupByOutputType[P]>
+            : GetScalarType<T[P], MemoryChunkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MemoryChunkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    fileId?: boolean
+    path?: boolean
+    source?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    hash?: boolean
+    text?: boolean
+    model?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["memoryChunk"]>
+
+  export type MemoryChunkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    fileId?: boolean
+    path?: boolean
+    source?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    hash?: boolean
+    text?: boolean
+    model?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["memoryChunk"]>
+
+  export type MemoryChunkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    fileId?: boolean
+    path?: boolean
+    source?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    hash?: boolean
+    text?: boolean
+    model?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["memoryChunk"]>
+
+  export type MemoryChunkSelectScalar = {
+    id?: boolean
+    companyId?: boolean
+    fileId?: boolean
+    path?: boolean
+    source?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    hash?: boolean
+    text?: boolean
+    model?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type MemoryChunkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "fileId" | "path" | "source" | "startLine" | "endLine" | "hash" | "text" | "model" | "createdAt" | "updatedAt", ExtArgs["result"]["memoryChunk"]>
+  export type MemoryChunkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }
+  export type MemoryChunkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }
+  export type MemoryChunkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    file?: boolean | MemoryFileDefaultArgs<ExtArgs>
+  }
+
+  export type $MemoryChunkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MemoryChunk"
+    objects: {
+      file: Prisma.$MemoryFilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      companyId: string
+      fileId: string
+      path: string
+      source: string
+      startLine: number
+      endLine: number
+      hash: string
+      text: string
+      model: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["memoryChunk"]>
+    composites: {}
+  }
+
+  type MemoryChunkGetPayload<S extends boolean | null | undefined | MemoryChunkDefaultArgs> = $Result.GetResult<Prisma.$MemoryChunkPayload, S>
+
+  type MemoryChunkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MemoryChunkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MemoryChunkCountAggregateInputType | true
+    }
+
+  export interface MemoryChunkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MemoryChunk'], meta: { name: 'MemoryChunk' } }
+    /**
+     * Find zero or one MemoryChunk that matches the filter.
+     * @param {MemoryChunkFindUniqueArgs} args - Arguments to find a MemoryChunk
+     * @example
+     * // Get one MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MemoryChunkFindUniqueArgs>(args: SelectSubset<T, MemoryChunkFindUniqueArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MemoryChunk that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MemoryChunkFindUniqueOrThrowArgs} args - Arguments to find a MemoryChunk
+     * @example
+     * // Get one MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MemoryChunkFindUniqueOrThrowArgs>(args: SelectSubset<T, MemoryChunkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MemoryChunk that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkFindFirstArgs} args - Arguments to find a MemoryChunk
+     * @example
+     * // Get one MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MemoryChunkFindFirstArgs>(args?: SelectSubset<T, MemoryChunkFindFirstArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MemoryChunk that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkFindFirstOrThrowArgs} args - Arguments to find a MemoryChunk
+     * @example
+     * // Get one MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MemoryChunkFindFirstOrThrowArgs>(args?: SelectSubset<T, MemoryChunkFindFirstOrThrowArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MemoryChunks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MemoryChunks
+     * const memoryChunks = await prisma.memoryChunk.findMany()
+     * 
+     * // Get first 10 MemoryChunks
+     * const memoryChunks = await prisma.memoryChunk.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const memoryChunkWithIdOnly = await prisma.memoryChunk.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MemoryChunkFindManyArgs>(args?: SelectSubset<T, MemoryChunkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MemoryChunk.
+     * @param {MemoryChunkCreateArgs} args - Arguments to create a MemoryChunk.
+     * @example
+     * // Create one MemoryChunk
+     * const MemoryChunk = await prisma.memoryChunk.create({
+     *   data: {
+     *     // ... data to create a MemoryChunk
+     *   }
+     * })
+     * 
+     */
+    create<T extends MemoryChunkCreateArgs>(args: SelectSubset<T, MemoryChunkCreateArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MemoryChunks.
+     * @param {MemoryChunkCreateManyArgs} args - Arguments to create many MemoryChunks.
+     * @example
+     * // Create many MemoryChunks
+     * const memoryChunk = await prisma.memoryChunk.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MemoryChunkCreateManyArgs>(args?: SelectSubset<T, MemoryChunkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MemoryChunks and returns the data saved in the database.
+     * @param {MemoryChunkCreateManyAndReturnArgs} args - Arguments to create many MemoryChunks.
+     * @example
+     * // Create many MemoryChunks
+     * const memoryChunk = await prisma.memoryChunk.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MemoryChunks and only return the `id`
+     * const memoryChunkWithIdOnly = await prisma.memoryChunk.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MemoryChunkCreateManyAndReturnArgs>(args?: SelectSubset<T, MemoryChunkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MemoryChunk.
+     * @param {MemoryChunkDeleteArgs} args - Arguments to delete one MemoryChunk.
+     * @example
+     * // Delete one MemoryChunk
+     * const MemoryChunk = await prisma.memoryChunk.delete({
+     *   where: {
+     *     // ... filter to delete one MemoryChunk
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MemoryChunkDeleteArgs>(args: SelectSubset<T, MemoryChunkDeleteArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MemoryChunk.
+     * @param {MemoryChunkUpdateArgs} args - Arguments to update one MemoryChunk.
+     * @example
+     * // Update one MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MemoryChunkUpdateArgs>(args: SelectSubset<T, MemoryChunkUpdateArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MemoryChunks.
+     * @param {MemoryChunkDeleteManyArgs} args - Arguments to filter MemoryChunks to delete.
+     * @example
+     * // Delete a few MemoryChunks
+     * const { count } = await prisma.memoryChunk.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MemoryChunkDeleteManyArgs>(args?: SelectSubset<T, MemoryChunkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MemoryChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MemoryChunks
+     * const memoryChunk = await prisma.memoryChunk.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MemoryChunkUpdateManyArgs>(args: SelectSubset<T, MemoryChunkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MemoryChunks and returns the data updated in the database.
+     * @param {MemoryChunkUpdateManyAndReturnArgs} args - Arguments to update many MemoryChunks.
+     * @example
+     * // Update many MemoryChunks
+     * const memoryChunk = await prisma.memoryChunk.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MemoryChunks and only return the `id`
+     * const memoryChunkWithIdOnly = await prisma.memoryChunk.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MemoryChunkUpdateManyAndReturnArgs>(args: SelectSubset<T, MemoryChunkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MemoryChunk.
+     * @param {MemoryChunkUpsertArgs} args - Arguments to update or create a MemoryChunk.
+     * @example
+     * // Update or create a MemoryChunk
+     * const memoryChunk = await prisma.memoryChunk.upsert({
+     *   create: {
+     *     // ... data to create a MemoryChunk
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MemoryChunk we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MemoryChunkUpsertArgs>(args: SelectSubset<T, MemoryChunkUpsertArgs<ExtArgs>>): Prisma__MemoryChunkClient<$Result.GetResult<Prisma.$MemoryChunkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MemoryChunks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkCountArgs} args - Arguments to filter MemoryChunks to count.
+     * @example
+     * // Count the number of MemoryChunks
+     * const count = await prisma.memoryChunk.count({
+     *   where: {
+     *     // ... the filter for the MemoryChunks we want to count
+     *   }
+     * })
+    **/
+    count<T extends MemoryChunkCountArgs>(
+      args?: Subset<T, MemoryChunkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MemoryChunkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MemoryChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MemoryChunkAggregateArgs>(args: Subset<T, MemoryChunkAggregateArgs>): Prisma.PrismaPromise<GetMemoryChunkAggregateType<T>>
+
+    /**
+     * Group by MemoryChunk.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MemoryChunkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MemoryChunkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MemoryChunkGroupByArgs['orderBy'] }
+        : { orderBy?: MemoryChunkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MemoryChunkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMemoryChunkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MemoryChunk model
+   */
+  readonly fields: MemoryChunkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MemoryChunk.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MemoryChunkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    file<T extends MemoryFileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MemoryFileDefaultArgs<ExtArgs>>): Prisma__MemoryFileClient<$Result.GetResult<Prisma.$MemoryFilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MemoryChunk model
+   */
+  interface MemoryChunkFieldRefs {
+    readonly id: FieldRef<"MemoryChunk", 'String'>
+    readonly companyId: FieldRef<"MemoryChunk", 'String'>
+    readonly fileId: FieldRef<"MemoryChunk", 'String'>
+    readonly path: FieldRef<"MemoryChunk", 'String'>
+    readonly source: FieldRef<"MemoryChunk", 'String'>
+    readonly startLine: FieldRef<"MemoryChunk", 'Int'>
+    readonly endLine: FieldRef<"MemoryChunk", 'Int'>
+    readonly hash: FieldRef<"MemoryChunk", 'String'>
+    readonly text: FieldRef<"MemoryChunk", 'String'>
+    readonly model: FieldRef<"MemoryChunk", 'String'>
+    readonly createdAt: FieldRef<"MemoryChunk", 'DateTime'>
+    readonly updatedAt: FieldRef<"MemoryChunk", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MemoryChunk findUnique
+   */
+  export type MemoryChunkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryChunk to fetch.
+     */
+    where: MemoryChunkWhereUniqueInput
+  }
+
+  /**
+   * MemoryChunk findUniqueOrThrow
+   */
+  export type MemoryChunkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryChunk to fetch.
+     */
+    where: MemoryChunkWhereUniqueInput
+  }
+
+  /**
+   * MemoryChunk findFirst
+   */
+  export type MemoryChunkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryChunk to fetch.
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryChunks to fetch.
+     */
+    orderBy?: MemoryChunkOrderByWithRelationInput | MemoryChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MemoryChunks.
+     */
+    cursor?: MemoryChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryChunks.
+     */
+    distinct?: MemoryChunkScalarFieldEnum | MemoryChunkScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryChunk findFirstOrThrow
+   */
+  export type MemoryChunkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryChunk to fetch.
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryChunks to fetch.
+     */
+    orderBy?: MemoryChunkOrderByWithRelationInput | MemoryChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MemoryChunks.
+     */
+    cursor?: MemoryChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryChunks.
+     */
+    distinct?: MemoryChunkScalarFieldEnum | MemoryChunkScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryChunk findMany
+   */
+  export type MemoryChunkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter, which MemoryChunks to fetch.
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MemoryChunks to fetch.
+     */
+    orderBy?: MemoryChunkOrderByWithRelationInput | MemoryChunkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MemoryChunks.
+     */
+    cursor?: MemoryChunkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MemoryChunks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MemoryChunks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MemoryChunks.
+     */
+    distinct?: MemoryChunkScalarFieldEnum | MemoryChunkScalarFieldEnum[]
+  }
+
+  /**
+   * MemoryChunk create
+   */
+  export type MemoryChunkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a MemoryChunk.
+     */
+    data: XOR<MemoryChunkCreateInput, MemoryChunkUncheckedCreateInput>
+  }
+
+  /**
+   * MemoryChunk createMany
+   */
+  export type MemoryChunkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MemoryChunks.
+     */
+    data: MemoryChunkCreateManyInput | MemoryChunkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MemoryChunk createManyAndReturn
+   */
+  export type MemoryChunkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * The data used to create many MemoryChunks.
+     */
+    data: MemoryChunkCreateManyInput | MemoryChunkCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * MemoryChunk update
+   */
+  export type MemoryChunkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a MemoryChunk.
+     */
+    data: XOR<MemoryChunkUpdateInput, MemoryChunkUncheckedUpdateInput>
+    /**
+     * Choose, which MemoryChunk to update.
+     */
+    where: MemoryChunkWhereUniqueInput
+  }
+
+  /**
+   * MemoryChunk updateMany
+   */
+  export type MemoryChunkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MemoryChunks.
+     */
+    data: XOR<MemoryChunkUpdateManyMutationInput, MemoryChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which MemoryChunks to update
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * Limit how many MemoryChunks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MemoryChunk updateManyAndReturn
+   */
+  export type MemoryChunkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * The data used to update MemoryChunks.
+     */
+    data: XOR<MemoryChunkUpdateManyMutationInput, MemoryChunkUncheckedUpdateManyInput>
+    /**
+     * Filter which MemoryChunks to update
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * Limit how many MemoryChunks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * MemoryChunk upsert
+   */
+  export type MemoryChunkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the MemoryChunk to update in case it exists.
+     */
+    where: MemoryChunkWhereUniqueInput
+    /**
+     * In case the MemoryChunk found by the `where` argument doesn't exist, create a new MemoryChunk with this data.
+     */
+    create: XOR<MemoryChunkCreateInput, MemoryChunkUncheckedCreateInput>
+    /**
+     * In case the MemoryChunk was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MemoryChunkUpdateInput, MemoryChunkUncheckedUpdateInput>
+  }
+
+  /**
+   * MemoryChunk delete
+   */
+  export type MemoryChunkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+    /**
+     * Filter which MemoryChunk to delete.
+     */
+    where: MemoryChunkWhereUniqueInput
+  }
+
+  /**
+   * MemoryChunk deleteMany
+   */
+  export type MemoryChunkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MemoryChunks to delete
+     */
+    where?: MemoryChunkWhereInput
+    /**
+     * Limit how many MemoryChunks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * MemoryChunk without action
+   */
+  export type MemoryChunkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MemoryChunk
+     */
+    select?: MemoryChunkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MemoryChunk
+     */
+    omit?: MemoryChunkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MemoryChunkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RecallEntry
+   */
+
+  export type AggregateRecallEntry = {
+    _count: RecallEntryCountAggregateOutputType | null
+    _avg: RecallEntryAvgAggregateOutputType | null
+    _sum: RecallEntrySumAggregateOutputType | null
+    _min: RecallEntryMinAggregateOutputType | null
+    _max: RecallEntryMaxAggregateOutputType | null
+  }
+
+  export type RecallEntryAvgAggregateOutputType = {
+    startLine: number | null
+    endLine: number | null
+    recallCount: number | null
+    totalScore: number | null
+    maxScore: number | null
+  }
+
+  export type RecallEntrySumAggregateOutputType = {
+    startLine: number | null
+    endLine: number | null
+    recallCount: number | null
+    totalScore: number | null
+    maxScore: number | null
+  }
+
+  export type RecallEntryMinAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    key: string | null
+    path: string | null
+    startLine: number | null
+    endLine: number | null
+    source: string | null
+    snippet: string | null
+    recallCount: number | null
+    totalScore: number | null
+    maxScore: number | null
+    firstRecalledAt: Date | null
+    lastRecalledAt: Date | null
+    promotedAt: Date | null
+  }
+
+  export type RecallEntryMaxAggregateOutputType = {
+    id: string | null
+    companyId: string | null
+    key: string | null
+    path: string | null
+    startLine: number | null
+    endLine: number | null
+    source: string | null
+    snippet: string | null
+    recallCount: number | null
+    totalScore: number | null
+    maxScore: number | null
+    firstRecalledAt: Date | null
+    lastRecalledAt: Date | null
+    promotedAt: Date | null
+  }
+
+  export type RecallEntryCountAggregateOutputType = {
+    id: number
+    companyId: number
+    key: number
+    path: number
+    startLine: number
+    endLine: number
+    source: number
+    snippet: number
+    recallCount: number
+    totalScore: number
+    maxScore: number
+    firstRecalledAt: number
+    lastRecalledAt: number
+    queryHashes: number
+    recallDays: number
+    conceptTags: number
+    promotedAt: number
+    _all: number
+  }
+
+
+  export type RecallEntryAvgAggregateInputType = {
+    startLine?: true
+    endLine?: true
+    recallCount?: true
+    totalScore?: true
+    maxScore?: true
+  }
+
+  export type RecallEntrySumAggregateInputType = {
+    startLine?: true
+    endLine?: true
+    recallCount?: true
+    totalScore?: true
+    maxScore?: true
+  }
+
+  export type RecallEntryMinAggregateInputType = {
+    id?: true
+    companyId?: true
+    key?: true
+    path?: true
+    startLine?: true
+    endLine?: true
+    source?: true
+    snippet?: true
+    recallCount?: true
+    totalScore?: true
+    maxScore?: true
+    firstRecalledAt?: true
+    lastRecalledAt?: true
+    promotedAt?: true
+  }
+
+  export type RecallEntryMaxAggregateInputType = {
+    id?: true
+    companyId?: true
+    key?: true
+    path?: true
+    startLine?: true
+    endLine?: true
+    source?: true
+    snippet?: true
+    recallCount?: true
+    totalScore?: true
+    maxScore?: true
+    firstRecalledAt?: true
+    lastRecalledAt?: true
+    promotedAt?: true
+  }
+
+  export type RecallEntryCountAggregateInputType = {
+    id?: true
+    companyId?: true
+    key?: true
+    path?: true
+    startLine?: true
+    endLine?: true
+    source?: true
+    snippet?: true
+    recallCount?: true
+    totalScore?: true
+    maxScore?: true
+    firstRecalledAt?: true
+    lastRecalledAt?: true
+    queryHashes?: true
+    recallDays?: true
+    conceptTags?: true
+    promotedAt?: true
+    _all?: true
+  }
+
+  export type RecallEntryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecallEntry to aggregate.
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecallEntries to fetch.
+     */
+    orderBy?: RecallEntryOrderByWithRelationInput | RecallEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecallEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecallEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecallEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RecallEntries
+    **/
+    _count?: true | RecallEntryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RecallEntryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RecallEntrySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecallEntryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecallEntryMaxAggregateInputType
+  }
+
+  export type GetRecallEntryAggregateType<T extends RecallEntryAggregateArgs> = {
+        [P in keyof T & keyof AggregateRecallEntry]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRecallEntry[P]>
+      : GetScalarType<T[P], AggregateRecallEntry[P]>
+  }
+
+
+
+
+  export type RecallEntryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecallEntryWhereInput
+    orderBy?: RecallEntryOrderByWithAggregationInput | RecallEntryOrderByWithAggregationInput[]
+    by: RecallEntryScalarFieldEnum[] | RecallEntryScalarFieldEnum
+    having?: RecallEntryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecallEntryCountAggregateInputType | true
+    _avg?: RecallEntryAvgAggregateInputType
+    _sum?: RecallEntrySumAggregateInputType
+    _min?: RecallEntryMinAggregateInputType
+    _max?: RecallEntryMaxAggregateInputType
+  }
+
+  export type RecallEntryGroupByOutputType = {
+    id: string
+    companyId: string
+    key: string
+    path: string
+    startLine: number
+    endLine: number
+    source: string
+    snippet: string
+    recallCount: number
+    totalScore: number
+    maxScore: number
+    firstRecalledAt: Date
+    lastRecalledAt: Date
+    queryHashes: string[]
+    recallDays: string[]
+    conceptTags: string[]
+    promotedAt: Date | null
+    _count: RecallEntryCountAggregateOutputType | null
+    _avg: RecallEntryAvgAggregateOutputType | null
+    _sum: RecallEntrySumAggregateOutputType | null
+    _min: RecallEntryMinAggregateOutputType | null
+    _max: RecallEntryMaxAggregateOutputType | null
+  }
+
+  type GetRecallEntryGroupByPayload<T extends RecallEntryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecallEntryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecallEntryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecallEntryGroupByOutputType[P]>
+            : GetScalarType<T[P], RecallEntryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecallEntrySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    key?: boolean
+    path?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    source?: boolean
+    snippet?: boolean
+    recallCount?: boolean
+    totalScore?: boolean
+    maxScore?: boolean
+    firstRecalledAt?: boolean
+    lastRecalledAt?: boolean
+    queryHashes?: boolean
+    recallDays?: boolean
+    conceptTags?: boolean
+    promotedAt?: boolean
+  }, ExtArgs["result"]["recallEntry"]>
+
+  export type RecallEntrySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    key?: boolean
+    path?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    source?: boolean
+    snippet?: boolean
+    recallCount?: boolean
+    totalScore?: boolean
+    maxScore?: boolean
+    firstRecalledAt?: boolean
+    lastRecalledAt?: boolean
+    queryHashes?: boolean
+    recallDays?: boolean
+    conceptTags?: boolean
+    promotedAt?: boolean
+  }, ExtArgs["result"]["recallEntry"]>
+
+  export type RecallEntrySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    companyId?: boolean
+    key?: boolean
+    path?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    source?: boolean
+    snippet?: boolean
+    recallCount?: boolean
+    totalScore?: boolean
+    maxScore?: boolean
+    firstRecalledAt?: boolean
+    lastRecalledAt?: boolean
+    queryHashes?: boolean
+    recallDays?: boolean
+    conceptTags?: boolean
+    promotedAt?: boolean
+  }, ExtArgs["result"]["recallEntry"]>
+
+  export type RecallEntrySelectScalar = {
+    id?: boolean
+    companyId?: boolean
+    key?: boolean
+    path?: boolean
+    startLine?: boolean
+    endLine?: boolean
+    source?: boolean
+    snippet?: boolean
+    recallCount?: boolean
+    totalScore?: boolean
+    maxScore?: boolean
+    firstRecalledAt?: boolean
+    lastRecalledAt?: boolean
+    queryHashes?: boolean
+    recallDays?: boolean
+    conceptTags?: boolean
+    promotedAt?: boolean
+  }
+
+  export type RecallEntryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyId" | "key" | "path" | "startLine" | "endLine" | "source" | "snippet" | "recallCount" | "totalScore" | "maxScore" | "firstRecalledAt" | "lastRecalledAt" | "queryHashes" | "recallDays" | "conceptTags" | "promotedAt", ExtArgs["result"]["recallEntry"]>
+
+  export type $RecallEntryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RecallEntry"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      companyId: string
+      key: string
+      path: string
+      startLine: number
+      endLine: number
+      source: string
+      snippet: string
+      recallCount: number
+      totalScore: number
+      maxScore: number
+      firstRecalledAt: Date
+      lastRecalledAt: Date
+      queryHashes: string[]
+      recallDays: string[]
+      conceptTags: string[]
+      promotedAt: Date | null
+    }, ExtArgs["result"]["recallEntry"]>
+    composites: {}
+  }
+
+  type RecallEntryGetPayload<S extends boolean | null | undefined | RecallEntryDefaultArgs> = $Result.GetResult<Prisma.$RecallEntryPayload, S>
+
+  type RecallEntryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RecallEntryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RecallEntryCountAggregateInputType | true
+    }
+
+  export interface RecallEntryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RecallEntry'], meta: { name: 'RecallEntry' } }
+    /**
+     * Find zero or one RecallEntry that matches the filter.
+     * @param {RecallEntryFindUniqueArgs} args - Arguments to find a RecallEntry
+     * @example
+     * // Get one RecallEntry
+     * const recallEntry = await prisma.recallEntry.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecallEntryFindUniqueArgs>(args: SelectSubset<T, RecallEntryFindUniqueArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RecallEntry that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RecallEntryFindUniqueOrThrowArgs} args - Arguments to find a RecallEntry
+     * @example
+     * // Get one RecallEntry
+     * const recallEntry = await prisma.recallEntry.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecallEntryFindUniqueOrThrowArgs>(args: SelectSubset<T, RecallEntryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RecallEntry that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryFindFirstArgs} args - Arguments to find a RecallEntry
+     * @example
+     * // Get one RecallEntry
+     * const recallEntry = await prisma.recallEntry.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecallEntryFindFirstArgs>(args?: SelectSubset<T, RecallEntryFindFirstArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RecallEntry that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryFindFirstOrThrowArgs} args - Arguments to find a RecallEntry
+     * @example
+     * // Get one RecallEntry
+     * const recallEntry = await prisma.recallEntry.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecallEntryFindFirstOrThrowArgs>(args?: SelectSubset<T, RecallEntryFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RecallEntries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RecallEntries
+     * const recallEntries = await prisma.recallEntry.findMany()
+     * 
+     * // Get first 10 RecallEntries
+     * const recallEntries = await prisma.recallEntry.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const recallEntryWithIdOnly = await prisma.recallEntry.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RecallEntryFindManyArgs>(args?: SelectSubset<T, RecallEntryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RecallEntry.
+     * @param {RecallEntryCreateArgs} args - Arguments to create a RecallEntry.
+     * @example
+     * // Create one RecallEntry
+     * const RecallEntry = await prisma.recallEntry.create({
+     *   data: {
+     *     // ... data to create a RecallEntry
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecallEntryCreateArgs>(args: SelectSubset<T, RecallEntryCreateArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RecallEntries.
+     * @param {RecallEntryCreateManyArgs} args - Arguments to create many RecallEntries.
+     * @example
+     * // Create many RecallEntries
+     * const recallEntry = await prisma.recallEntry.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecallEntryCreateManyArgs>(args?: SelectSubset<T, RecallEntryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RecallEntries and returns the data saved in the database.
+     * @param {RecallEntryCreateManyAndReturnArgs} args - Arguments to create many RecallEntries.
+     * @example
+     * // Create many RecallEntries
+     * const recallEntry = await prisma.recallEntry.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RecallEntries and only return the `id`
+     * const recallEntryWithIdOnly = await prisma.recallEntry.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecallEntryCreateManyAndReturnArgs>(args?: SelectSubset<T, RecallEntryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RecallEntry.
+     * @param {RecallEntryDeleteArgs} args - Arguments to delete one RecallEntry.
+     * @example
+     * // Delete one RecallEntry
+     * const RecallEntry = await prisma.recallEntry.delete({
+     *   where: {
+     *     // ... filter to delete one RecallEntry
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecallEntryDeleteArgs>(args: SelectSubset<T, RecallEntryDeleteArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RecallEntry.
+     * @param {RecallEntryUpdateArgs} args - Arguments to update one RecallEntry.
+     * @example
+     * // Update one RecallEntry
+     * const recallEntry = await prisma.recallEntry.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecallEntryUpdateArgs>(args: SelectSubset<T, RecallEntryUpdateArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RecallEntries.
+     * @param {RecallEntryDeleteManyArgs} args - Arguments to filter RecallEntries to delete.
+     * @example
+     * // Delete a few RecallEntries
+     * const { count } = await prisma.recallEntry.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecallEntryDeleteManyArgs>(args?: SelectSubset<T, RecallEntryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecallEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RecallEntries
+     * const recallEntry = await prisma.recallEntry.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecallEntryUpdateManyArgs>(args: SelectSubset<T, RecallEntryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecallEntries and returns the data updated in the database.
+     * @param {RecallEntryUpdateManyAndReturnArgs} args - Arguments to update many RecallEntries.
+     * @example
+     * // Update many RecallEntries
+     * const recallEntry = await prisma.recallEntry.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RecallEntries and only return the `id`
+     * const recallEntryWithIdOnly = await prisma.recallEntry.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RecallEntryUpdateManyAndReturnArgs>(args: SelectSubset<T, RecallEntryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RecallEntry.
+     * @param {RecallEntryUpsertArgs} args - Arguments to update or create a RecallEntry.
+     * @example
+     * // Update or create a RecallEntry
+     * const recallEntry = await prisma.recallEntry.upsert({
+     *   create: {
+     *     // ... data to create a RecallEntry
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RecallEntry we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecallEntryUpsertArgs>(args: SelectSubset<T, RecallEntryUpsertArgs<ExtArgs>>): Prisma__RecallEntryClient<$Result.GetResult<Prisma.$RecallEntryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RecallEntries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryCountArgs} args - Arguments to filter RecallEntries to count.
+     * @example
+     * // Count the number of RecallEntries
+     * const count = await prisma.recallEntry.count({
+     *   where: {
+     *     // ... the filter for the RecallEntries we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecallEntryCountArgs>(
+      args?: Subset<T, RecallEntryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecallEntryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RecallEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecallEntryAggregateArgs>(args: Subset<T, RecallEntryAggregateArgs>): Prisma.PrismaPromise<GetRecallEntryAggregateType<T>>
+
+    /**
+     * Group by RecallEntry.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecallEntryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecallEntryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecallEntryGroupByArgs['orderBy'] }
+        : { orderBy?: RecallEntryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecallEntryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecallEntryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RecallEntry model
+   */
+  readonly fields: RecallEntryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RecallEntry.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecallEntryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RecallEntry model
+   */
+  interface RecallEntryFieldRefs {
+    readonly id: FieldRef<"RecallEntry", 'String'>
+    readonly companyId: FieldRef<"RecallEntry", 'String'>
+    readonly key: FieldRef<"RecallEntry", 'String'>
+    readonly path: FieldRef<"RecallEntry", 'String'>
+    readonly startLine: FieldRef<"RecallEntry", 'Int'>
+    readonly endLine: FieldRef<"RecallEntry", 'Int'>
+    readonly source: FieldRef<"RecallEntry", 'String'>
+    readonly snippet: FieldRef<"RecallEntry", 'String'>
+    readonly recallCount: FieldRef<"RecallEntry", 'Int'>
+    readonly totalScore: FieldRef<"RecallEntry", 'Float'>
+    readonly maxScore: FieldRef<"RecallEntry", 'Float'>
+    readonly firstRecalledAt: FieldRef<"RecallEntry", 'DateTime'>
+    readonly lastRecalledAt: FieldRef<"RecallEntry", 'DateTime'>
+    readonly queryHashes: FieldRef<"RecallEntry", 'String[]'>
+    readonly recallDays: FieldRef<"RecallEntry", 'String[]'>
+    readonly conceptTags: FieldRef<"RecallEntry", 'String[]'>
+    readonly promotedAt: FieldRef<"RecallEntry", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RecallEntry findUnique
+   */
+  export type RecallEntryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter, which RecallEntry to fetch.
+     */
+    where: RecallEntryWhereUniqueInput
+  }
+
+  /**
+   * RecallEntry findUniqueOrThrow
+   */
+  export type RecallEntryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter, which RecallEntry to fetch.
+     */
+    where: RecallEntryWhereUniqueInput
+  }
+
+  /**
+   * RecallEntry findFirst
+   */
+  export type RecallEntryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter, which RecallEntry to fetch.
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecallEntries to fetch.
+     */
+    orderBy?: RecallEntryOrderByWithRelationInput | RecallEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecallEntries.
+     */
+    cursor?: RecallEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecallEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecallEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecallEntries.
+     */
+    distinct?: RecallEntryScalarFieldEnum | RecallEntryScalarFieldEnum[]
+  }
+
+  /**
+   * RecallEntry findFirstOrThrow
+   */
+  export type RecallEntryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter, which RecallEntry to fetch.
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecallEntries to fetch.
+     */
+    orderBy?: RecallEntryOrderByWithRelationInput | RecallEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecallEntries.
+     */
+    cursor?: RecallEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecallEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecallEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecallEntries.
+     */
+    distinct?: RecallEntryScalarFieldEnum | RecallEntryScalarFieldEnum[]
+  }
+
+  /**
+   * RecallEntry findMany
+   */
+  export type RecallEntryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter, which RecallEntries to fetch.
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecallEntries to fetch.
+     */
+    orderBy?: RecallEntryOrderByWithRelationInput | RecallEntryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RecallEntries.
+     */
+    cursor?: RecallEntryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecallEntries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecallEntries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecallEntries.
+     */
+    distinct?: RecallEntryScalarFieldEnum | RecallEntryScalarFieldEnum[]
+  }
+
+  /**
+   * RecallEntry create
+   */
+  export type RecallEntryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * The data needed to create a RecallEntry.
+     */
+    data: XOR<RecallEntryCreateInput, RecallEntryUncheckedCreateInput>
+  }
+
+  /**
+   * RecallEntry createMany
+   */
+  export type RecallEntryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RecallEntries.
+     */
+    data: RecallEntryCreateManyInput | RecallEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RecallEntry createManyAndReturn
+   */
+  export type RecallEntryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * The data used to create many RecallEntries.
+     */
+    data: RecallEntryCreateManyInput | RecallEntryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RecallEntry update
+   */
+  export type RecallEntryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * The data needed to update a RecallEntry.
+     */
+    data: XOR<RecallEntryUpdateInput, RecallEntryUncheckedUpdateInput>
+    /**
+     * Choose, which RecallEntry to update.
+     */
+    where: RecallEntryWhereUniqueInput
+  }
+
+  /**
+   * RecallEntry updateMany
+   */
+  export type RecallEntryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RecallEntries.
+     */
+    data: XOR<RecallEntryUpdateManyMutationInput, RecallEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which RecallEntries to update
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * Limit how many RecallEntries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RecallEntry updateManyAndReturn
+   */
+  export type RecallEntryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * The data used to update RecallEntries.
+     */
+    data: XOR<RecallEntryUpdateManyMutationInput, RecallEntryUncheckedUpdateManyInput>
+    /**
+     * Filter which RecallEntries to update
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * Limit how many RecallEntries to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RecallEntry upsert
+   */
+  export type RecallEntryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * The filter to search for the RecallEntry to update in case it exists.
+     */
+    where: RecallEntryWhereUniqueInput
+    /**
+     * In case the RecallEntry found by the `where` argument doesn't exist, create a new RecallEntry with this data.
+     */
+    create: XOR<RecallEntryCreateInput, RecallEntryUncheckedCreateInput>
+    /**
+     * In case the RecallEntry was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecallEntryUpdateInput, RecallEntryUncheckedUpdateInput>
+  }
+
+  /**
+   * RecallEntry delete
+   */
+  export type RecallEntryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+    /**
+     * Filter which RecallEntry to delete.
+     */
+    where: RecallEntryWhereUniqueInput
+  }
+
+  /**
+   * RecallEntry deleteMany
+   */
+  export type RecallEntryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecallEntries to delete
+     */
+    where?: RecallEntryWhereInput
+    /**
+     * Limit how many RecallEntries to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RecallEntry without action
+   */
+  export type RecallEntryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecallEntry
+     */
+    select?: RecallEntrySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecallEntry
+     */
+    omit?: RecallEntryOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -70077,6 +73937,7 @@ export namespace Prisma {
     role: 'role',
     content: 'content',
     toolCalls: 'toolCalls',
+    attachments: 'attachments',
     provider: 'provider',
     model: 'model',
     latencyMs: 'latencyMs',
@@ -70098,6 +73959,62 @@ export namespace Prisma {
   };
 
   export type AiMemoryScalarFieldEnum = (typeof AiMemoryScalarFieldEnum)[keyof typeof AiMemoryScalarFieldEnum]
+
+
+  export const MemoryFileScalarFieldEnum: {
+    id: 'id',
+    companyId: 'companyId',
+    path: 'path',
+    source: 'source',
+    hash: 'hash',
+    content: 'content',
+    size: 'size',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type MemoryFileScalarFieldEnum = (typeof MemoryFileScalarFieldEnum)[keyof typeof MemoryFileScalarFieldEnum]
+
+
+  export const MemoryChunkScalarFieldEnum: {
+    id: 'id',
+    companyId: 'companyId',
+    fileId: 'fileId',
+    path: 'path',
+    source: 'source',
+    startLine: 'startLine',
+    endLine: 'endLine',
+    hash: 'hash',
+    text: 'text',
+    model: 'model',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type MemoryChunkScalarFieldEnum = (typeof MemoryChunkScalarFieldEnum)[keyof typeof MemoryChunkScalarFieldEnum]
+
+
+  export const RecallEntryScalarFieldEnum: {
+    id: 'id',
+    companyId: 'companyId',
+    key: 'key',
+    path: 'path',
+    startLine: 'startLine',
+    endLine: 'endLine',
+    source: 'source',
+    snippet: 'snippet',
+    recallCount: 'recallCount',
+    totalScore: 'totalScore',
+    maxScore: 'maxScore',
+    firstRecalledAt: 'firstRecalledAt',
+    lastRecalledAt: 'lastRecalledAt',
+    queryHashes: 'queryHashes',
+    recallDays: 'recallDays',
+    conceptTags: 'conceptTags',
+    promotedAt: 'promotedAt'
+  };
+
+  export type RecallEntryScalarFieldEnum = (typeof RecallEntryScalarFieldEnum)[keyof typeof RecallEntryScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -74931,6 +78848,7 @@ export namespace Prisma {
     role?: StringFilter<"ChatMessage"> | string
     content?: StringFilter<"ChatMessage"> | string
     toolCalls?: JsonNullableFilter<"ChatMessage">
+    attachments?: JsonNullableFilter<"ChatMessage">
     provider?: StringNullableFilter<"ChatMessage"> | string | null
     model?: StringNullableFilter<"ChatMessage"> | string | null
     latencyMs?: IntNullableFilter<"ChatMessage"> | number | null
@@ -74944,6 +78862,7 @@ export namespace Prisma {
     role?: SortOrder
     content?: SortOrder
     toolCalls?: SortOrderInput | SortOrder
+    attachments?: SortOrderInput | SortOrder
     provider?: SortOrderInput | SortOrder
     model?: SortOrderInput | SortOrder
     latencyMs?: SortOrderInput | SortOrder
@@ -74960,6 +78879,7 @@ export namespace Prisma {
     role?: StringFilter<"ChatMessage"> | string
     content?: StringFilter<"ChatMessage"> | string
     toolCalls?: JsonNullableFilter<"ChatMessage">
+    attachments?: JsonNullableFilter<"ChatMessage">
     provider?: StringNullableFilter<"ChatMessage"> | string | null
     model?: StringNullableFilter<"ChatMessage"> | string | null
     latencyMs?: IntNullableFilter<"ChatMessage"> | number | null
@@ -74973,6 +78893,7 @@ export namespace Prisma {
     role?: SortOrder
     content?: SortOrder
     toolCalls?: SortOrderInput | SortOrder
+    attachments?: SortOrderInput | SortOrder
     provider?: SortOrderInput | SortOrder
     model?: SortOrderInput | SortOrder
     latencyMs?: SortOrderInput | SortOrder
@@ -74993,6 +78914,7 @@ export namespace Prisma {
     role?: StringWithAggregatesFilter<"ChatMessage"> | string
     content?: StringWithAggregatesFilter<"ChatMessage"> | string
     toolCalls?: JsonNullableWithAggregatesFilter<"ChatMessage">
+    attachments?: JsonNullableWithAggregatesFilter<"ChatMessage">
     provider?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
     model?: StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
     latencyMs?: IntNullableWithAggregatesFilter<"ChatMessage"> | number | null
@@ -75064,6 +78986,291 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"AiMemory"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"AiMemory"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"AiMemory"> | Date | string
+  }
+
+  export type MemoryFileWhereInput = {
+    AND?: MemoryFileWhereInput | MemoryFileWhereInput[]
+    OR?: MemoryFileWhereInput[]
+    NOT?: MemoryFileWhereInput | MemoryFileWhereInput[]
+    id?: StringFilter<"MemoryFile"> | string
+    companyId?: StringFilter<"MemoryFile"> | string
+    path?: StringFilter<"MemoryFile"> | string
+    source?: StringFilter<"MemoryFile"> | string
+    hash?: StringFilter<"MemoryFile"> | string
+    content?: StringFilter<"MemoryFile"> | string
+    size?: IntFilter<"MemoryFile"> | number
+    createdAt?: DateTimeFilter<"MemoryFile"> | Date | string
+    updatedAt?: DateTimeFilter<"MemoryFile"> | Date | string
+    chunks?: MemoryChunkListRelationFilter
+  }
+
+  export type MemoryFileOrderByWithRelationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    hash?: SortOrder
+    content?: SortOrder
+    size?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    chunks?: MemoryChunkOrderByRelationAggregateInput
+  }
+
+  export type MemoryFileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    companyId_path?: MemoryFileCompanyIdPathCompoundUniqueInput
+    AND?: MemoryFileWhereInput | MemoryFileWhereInput[]
+    OR?: MemoryFileWhereInput[]
+    NOT?: MemoryFileWhereInput | MemoryFileWhereInput[]
+    companyId?: StringFilter<"MemoryFile"> | string
+    path?: StringFilter<"MemoryFile"> | string
+    source?: StringFilter<"MemoryFile"> | string
+    hash?: StringFilter<"MemoryFile"> | string
+    content?: StringFilter<"MemoryFile"> | string
+    size?: IntFilter<"MemoryFile"> | number
+    createdAt?: DateTimeFilter<"MemoryFile"> | Date | string
+    updatedAt?: DateTimeFilter<"MemoryFile"> | Date | string
+    chunks?: MemoryChunkListRelationFilter
+  }, "id" | "companyId_path">
+
+  export type MemoryFileOrderByWithAggregationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    hash?: SortOrder
+    content?: SortOrder
+    size?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: MemoryFileCountOrderByAggregateInput
+    _avg?: MemoryFileAvgOrderByAggregateInput
+    _max?: MemoryFileMaxOrderByAggregateInput
+    _min?: MemoryFileMinOrderByAggregateInput
+    _sum?: MemoryFileSumOrderByAggregateInput
+  }
+
+  export type MemoryFileScalarWhereWithAggregatesInput = {
+    AND?: MemoryFileScalarWhereWithAggregatesInput | MemoryFileScalarWhereWithAggregatesInput[]
+    OR?: MemoryFileScalarWhereWithAggregatesInput[]
+    NOT?: MemoryFileScalarWhereWithAggregatesInput | MemoryFileScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MemoryFile"> | string
+    companyId?: StringWithAggregatesFilter<"MemoryFile"> | string
+    path?: StringWithAggregatesFilter<"MemoryFile"> | string
+    source?: StringWithAggregatesFilter<"MemoryFile"> | string
+    hash?: StringWithAggregatesFilter<"MemoryFile"> | string
+    content?: StringWithAggregatesFilter<"MemoryFile"> | string
+    size?: IntWithAggregatesFilter<"MemoryFile"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"MemoryFile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MemoryFile"> | Date | string
+  }
+
+  export type MemoryChunkWhereInput = {
+    AND?: MemoryChunkWhereInput | MemoryChunkWhereInput[]
+    OR?: MemoryChunkWhereInput[]
+    NOT?: MemoryChunkWhereInput | MemoryChunkWhereInput[]
+    id?: StringFilter<"MemoryChunk"> | string
+    companyId?: StringFilter<"MemoryChunk"> | string
+    fileId?: StringFilter<"MemoryChunk"> | string
+    path?: StringFilter<"MemoryChunk"> | string
+    source?: StringFilter<"MemoryChunk"> | string
+    startLine?: IntFilter<"MemoryChunk"> | number
+    endLine?: IntFilter<"MemoryChunk"> | number
+    hash?: StringFilter<"MemoryChunk"> | string
+    text?: StringFilter<"MemoryChunk"> | string
+    model?: StringFilter<"MemoryChunk"> | string
+    createdAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+    updatedAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+    file?: XOR<MemoryFileScalarRelationFilter, MemoryFileWhereInput>
+  }
+
+  export type MemoryChunkOrderByWithRelationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    fileId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    hash?: SortOrder
+    text?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    file?: MemoryFileOrderByWithRelationInput
+  }
+
+  export type MemoryChunkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: MemoryChunkWhereInput | MemoryChunkWhereInput[]
+    OR?: MemoryChunkWhereInput[]
+    NOT?: MemoryChunkWhereInput | MemoryChunkWhereInput[]
+    companyId?: StringFilter<"MemoryChunk"> | string
+    fileId?: StringFilter<"MemoryChunk"> | string
+    path?: StringFilter<"MemoryChunk"> | string
+    source?: StringFilter<"MemoryChunk"> | string
+    startLine?: IntFilter<"MemoryChunk"> | number
+    endLine?: IntFilter<"MemoryChunk"> | number
+    hash?: StringFilter<"MemoryChunk"> | string
+    text?: StringFilter<"MemoryChunk"> | string
+    model?: StringFilter<"MemoryChunk"> | string
+    createdAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+    updatedAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+    file?: XOR<MemoryFileScalarRelationFilter, MemoryFileWhereInput>
+  }, "id">
+
+  export type MemoryChunkOrderByWithAggregationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    fileId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    hash?: SortOrder
+    text?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: MemoryChunkCountOrderByAggregateInput
+    _avg?: MemoryChunkAvgOrderByAggregateInput
+    _max?: MemoryChunkMaxOrderByAggregateInput
+    _min?: MemoryChunkMinOrderByAggregateInput
+    _sum?: MemoryChunkSumOrderByAggregateInput
+  }
+
+  export type MemoryChunkScalarWhereWithAggregatesInput = {
+    AND?: MemoryChunkScalarWhereWithAggregatesInput | MemoryChunkScalarWhereWithAggregatesInput[]
+    OR?: MemoryChunkScalarWhereWithAggregatesInput[]
+    NOT?: MemoryChunkScalarWhereWithAggregatesInput | MemoryChunkScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    companyId?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    fileId?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    path?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    source?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    startLine?: IntWithAggregatesFilter<"MemoryChunk"> | number
+    endLine?: IntWithAggregatesFilter<"MemoryChunk"> | number
+    hash?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    text?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    model?: StringWithAggregatesFilter<"MemoryChunk"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"MemoryChunk"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MemoryChunk"> | Date | string
+  }
+
+  export type RecallEntryWhereInput = {
+    AND?: RecallEntryWhereInput | RecallEntryWhereInput[]
+    OR?: RecallEntryWhereInput[]
+    NOT?: RecallEntryWhereInput | RecallEntryWhereInput[]
+    id?: StringFilter<"RecallEntry"> | string
+    companyId?: StringFilter<"RecallEntry"> | string
+    key?: StringFilter<"RecallEntry"> | string
+    path?: StringFilter<"RecallEntry"> | string
+    startLine?: IntFilter<"RecallEntry"> | number
+    endLine?: IntFilter<"RecallEntry"> | number
+    source?: StringFilter<"RecallEntry"> | string
+    snippet?: StringFilter<"RecallEntry"> | string
+    recallCount?: IntFilter<"RecallEntry"> | number
+    totalScore?: FloatFilter<"RecallEntry"> | number
+    maxScore?: FloatFilter<"RecallEntry"> | number
+    firstRecalledAt?: DateTimeFilter<"RecallEntry"> | Date | string
+    lastRecalledAt?: DateTimeFilter<"RecallEntry"> | Date | string
+    queryHashes?: StringNullableListFilter<"RecallEntry">
+    recallDays?: StringNullableListFilter<"RecallEntry">
+    conceptTags?: StringNullableListFilter<"RecallEntry">
+    promotedAt?: DateTimeNullableFilter<"RecallEntry"> | Date | string | null
+  }
+
+  export type RecallEntryOrderByWithRelationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    key?: SortOrder
+    path?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    source?: SortOrder
+    snippet?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+    firstRecalledAt?: SortOrder
+    lastRecalledAt?: SortOrder
+    queryHashes?: SortOrder
+    recallDays?: SortOrder
+    conceptTags?: SortOrder
+    promotedAt?: SortOrderInput | SortOrder
+  }
+
+  export type RecallEntryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    companyId_key?: RecallEntryCompanyIdKeyCompoundUniqueInput
+    AND?: RecallEntryWhereInput | RecallEntryWhereInput[]
+    OR?: RecallEntryWhereInput[]
+    NOT?: RecallEntryWhereInput | RecallEntryWhereInput[]
+    companyId?: StringFilter<"RecallEntry"> | string
+    key?: StringFilter<"RecallEntry"> | string
+    path?: StringFilter<"RecallEntry"> | string
+    startLine?: IntFilter<"RecallEntry"> | number
+    endLine?: IntFilter<"RecallEntry"> | number
+    source?: StringFilter<"RecallEntry"> | string
+    snippet?: StringFilter<"RecallEntry"> | string
+    recallCount?: IntFilter<"RecallEntry"> | number
+    totalScore?: FloatFilter<"RecallEntry"> | number
+    maxScore?: FloatFilter<"RecallEntry"> | number
+    firstRecalledAt?: DateTimeFilter<"RecallEntry"> | Date | string
+    lastRecalledAt?: DateTimeFilter<"RecallEntry"> | Date | string
+    queryHashes?: StringNullableListFilter<"RecallEntry">
+    recallDays?: StringNullableListFilter<"RecallEntry">
+    conceptTags?: StringNullableListFilter<"RecallEntry">
+    promotedAt?: DateTimeNullableFilter<"RecallEntry"> | Date | string | null
+  }, "id" | "companyId_key">
+
+  export type RecallEntryOrderByWithAggregationInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    key?: SortOrder
+    path?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    source?: SortOrder
+    snippet?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+    firstRecalledAt?: SortOrder
+    lastRecalledAt?: SortOrder
+    queryHashes?: SortOrder
+    recallDays?: SortOrder
+    conceptTags?: SortOrder
+    promotedAt?: SortOrderInput | SortOrder
+    _count?: RecallEntryCountOrderByAggregateInput
+    _avg?: RecallEntryAvgOrderByAggregateInput
+    _max?: RecallEntryMaxOrderByAggregateInput
+    _min?: RecallEntryMinOrderByAggregateInput
+    _sum?: RecallEntrySumOrderByAggregateInput
+  }
+
+  export type RecallEntryScalarWhereWithAggregatesInput = {
+    AND?: RecallEntryScalarWhereWithAggregatesInput | RecallEntryScalarWhereWithAggregatesInput[]
+    OR?: RecallEntryScalarWhereWithAggregatesInput[]
+    NOT?: RecallEntryScalarWhereWithAggregatesInput | RecallEntryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RecallEntry"> | string
+    companyId?: StringWithAggregatesFilter<"RecallEntry"> | string
+    key?: StringWithAggregatesFilter<"RecallEntry"> | string
+    path?: StringWithAggregatesFilter<"RecallEntry"> | string
+    startLine?: IntWithAggregatesFilter<"RecallEntry"> | number
+    endLine?: IntWithAggregatesFilter<"RecallEntry"> | number
+    source?: StringWithAggregatesFilter<"RecallEntry"> | string
+    snippet?: StringWithAggregatesFilter<"RecallEntry"> | string
+    recallCount?: IntWithAggregatesFilter<"RecallEntry"> | number
+    totalScore?: FloatWithAggregatesFilter<"RecallEntry"> | number
+    maxScore?: FloatWithAggregatesFilter<"RecallEntry"> | number
+    firstRecalledAt?: DateTimeWithAggregatesFilter<"RecallEntry"> | Date | string
+    lastRecalledAt?: DateTimeWithAggregatesFilter<"RecallEntry"> | Date | string
+    queryHashes?: StringNullableListFilter<"RecallEntry">
+    recallDays?: StringNullableListFilter<"RecallEntry">
+    conceptTags?: StringNullableListFilter<"RecallEntry">
+    promotedAt?: DateTimeNullableWithAggregatesFilter<"RecallEntry"> | Date | string | null
   }
 
   export type CompanyCreateInput = {
@@ -80139,6 +84346,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -80152,6 +84360,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -80163,6 +84372,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -80176,6 +84386,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -80188,6 +84399,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -80199,6 +84411,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -80211,6 +84424,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -80292,6 +84506,338 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryFileCreateInput = {
+    id?: string
+    companyId: string
+    path: string
+    source?: string
+    hash: string
+    content: string
+    size: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    chunks?: MemoryChunkCreateNestedManyWithoutFileInput
+  }
+
+  export type MemoryFileUncheckedCreateInput = {
+    id?: string
+    companyId: string
+    path: string
+    source?: string
+    hash: string
+    content: string
+    size: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    chunks?: MemoryChunkUncheckedCreateNestedManyWithoutFileInput
+  }
+
+  export type MemoryFileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunks?: MemoryChunkUpdateManyWithoutFileNestedInput
+  }
+
+  export type MemoryFileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    chunks?: MemoryChunkUncheckedUpdateManyWithoutFileNestedInput
+  }
+
+  export type MemoryFileCreateManyInput = {
+    id?: string
+    companyId: string
+    path: string
+    source?: string
+    hash: string
+    content: string
+    size: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryFileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryFileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkCreateInput = {
+    id?: string
+    companyId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    file: MemoryFileCreateNestedOneWithoutChunksInput
+  }
+
+  export type MemoryChunkUncheckedCreateInput = {
+    id?: string
+    companyId: string
+    fileId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryChunkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    file?: MemoryFileUpdateOneRequiredWithoutChunksNestedInput
+  }
+
+  export type MemoryChunkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkCreateManyInput = {
+    id?: string
+    companyId: string
+    fileId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryChunkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    fileId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecallEntryCreateInput = {
+    id?: string
+    companyId: string
+    key: string
+    path: string
+    startLine: number
+    endLine: number
+    source: string
+    snippet: string
+    recallCount?: number
+    totalScore?: number
+    maxScore?: number
+    firstRecalledAt?: Date | string
+    lastRecalledAt?: Date | string
+    queryHashes?: RecallEntryCreatequeryHashesInput | string[]
+    recallDays?: RecallEntryCreaterecallDaysInput | string[]
+    conceptTags?: RecallEntryCreateconceptTagsInput | string[]
+    promotedAt?: Date | string | null
+  }
+
+  export type RecallEntryUncheckedCreateInput = {
+    id?: string
+    companyId: string
+    key: string
+    path: string
+    startLine: number
+    endLine: number
+    source: string
+    snippet: string
+    recallCount?: number
+    totalScore?: number
+    maxScore?: number
+    firstRecalledAt?: Date | string
+    lastRecalledAt?: Date | string
+    queryHashes?: RecallEntryCreatequeryHashesInput | string[]
+    recallDays?: RecallEntryCreaterecallDaysInput | string[]
+    conceptTags?: RecallEntryCreateconceptTagsInput | string[]
+    promotedAt?: Date | string | null
+  }
+
+  export type RecallEntryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    source?: StringFieldUpdateOperationsInput | string
+    snippet?: StringFieldUpdateOperationsInput | string
+    recallCount?: IntFieldUpdateOperationsInput | number
+    totalScore?: FloatFieldUpdateOperationsInput | number
+    maxScore?: FloatFieldUpdateOperationsInput | number
+    firstRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    queryHashes?: RecallEntryUpdatequeryHashesInput | string[]
+    recallDays?: RecallEntryUpdaterecallDaysInput | string[]
+    conceptTags?: RecallEntryUpdateconceptTagsInput | string[]
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RecallEntryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    source?: StringFieldUpdateOperationsInput | string
+    snippet?: StringFieldUpdateOperationsInput | string
+    recallCount?: IntFieldUpdateOperationsInput | number
+    totalScore?: FloatFieldUpdateOperationsInput | number
+    maxScore?: FloatFieldUpdateOperationsInput | number
+    firstRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    queryHashes?: RecallEntryUpdatequeryHashesInput | string[]
+    recallDays?: RecallEntryUpdaterecallDaysInput | string[]
+    conceptTags?: RecallEntryUpdateconceptTagsInput | string[]
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RecallEntryCreateManyInput = {
+    id?: string
+    companyId: string
+    key: string
+    path: string
+    startLine: number
+    endLine: number
+    source: string
+    snippet: string
+    recallCount?: number
+    totalScore?: number
+    maxScore?: number
+    firstRecalledAt?: Date | string
+    lastRecalledAt?: Date | string
+    queryHashes?: RecallEntryCreatequeryHashesInput | string[]
+    recallDays?: RecallEntryCreaterecallDaysInput | string[]
+    conceptTags?: RecallEntryCreateconceptTagsInput | string[]
+    promotedAt?: Date | string | null
+  }
+
+  export type RecallEntryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    source?: StringFieldUpdateOperationsInput | string
+    snippet?: StringFieldUpdateOperationsInput | string
+    recallCount?: IntFieldUpdateOperationsInput | number
+    totalScore?: FloatFieldUpdateOperationsInput | number
+    maxScore?: FloatFieldUpdateOperationsInput | number
+    firstRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    queryHashes?: RecallEntryUpdatequeryHashesInput | string[]
+    recallDays?: RecallEntryUpdaterecallDaysInput | string[]
+    conceptTags?: RecallEntryUpdateconceptTagsInput | string[]
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RecallEntryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    source?: StringFieldUpdateOperationsInput | string
+    snippet?: StringFieldUpdateOperationsInput | string
+    recallCount?: IntFieldUpdateOperationsInput | number
+    totalScore?: FloatFieldUpdateOperationsInput | number
+    maxScore?: FloatFieldUpdateOperationsInput | number
+    firstRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastRecalledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    queryHashes?: RecallEntryUpdatequeryHashesInput | string[]
+    recallDays?: RecallEntryUpdaterecallDaysInput | string[]
+    conceptTags?: RecallEntryUpdateconceptTagsInput | string[]
+    promotedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -83645,6 +88191,7 @@ export namespace Prisma {
     role?: SortOrder
     content?: SortOrder
     toolCalls?: SortOrder
+    attachments?: SortOrder
     provider?: SortOrder
     model?: SortOrder
     latencyMs?: SortOrder
@@ -83712,6 +88259,200 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type MemoryChunkListRelationFilter = {
+    every?: MemoryChunkWhereInput
+    some?: MemoryChunkWhereInput
+    none?: MemoryChunkWhereInput
+  }
+
+  export type MemoryChunkOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type MemoryFileCompanyIdPathCompoundUniqueInput = {
+    companyId: string
+    path: string
+  }
+
+  export type MemoryFileCountOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    hash?: SortOrder
+    content?: SortOrder
+    size?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryFileAvgOrderByAggregateInput = {
+    size?: SortOrder
+  }
+
+  export type MemoryFileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    hash?: SortOrder
+    content?: SortOrder
+    size?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryFileMinOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    hash?: SortOrder
+    content?: SortOrder
+    size?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryFileSumOrderByAggregateInput = {
+    size?: SortOrder
+  }
+
+  export type MemoryFileScalarRelationFilter = {
+    is?: MemoryFileWhereInput
+    isNot?: MemoryFileWhereInput
+  }
+
+  export type MemoryChunkCountOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    fileId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    hash?: SortOrder
+    text?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryChunkAvgOrderByAggregateInput = {
+    startLine?: SortOrder
+    endLine?: SortOrder
+  }
+
+  export type MemoryChunkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    fileId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    hash?: SortOrder
+    text?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryChunkMinOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    fileId?: SortOrder
+    path?: SortOrder
+    source?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    hash?: SortOrder
+    text?: SortOrder
+    model?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MemoryChunkSumOrderByAggregateInput = {
+    startLine?: SortOrder
+    endLine?: SortOrder
+  }
+
+  export type RecallEntryCompanyIdKeyCompoundUniqueInput = {
+    companyId: string
+    key: string
+  }
+
+  export type RecallEntryCountOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    key?: SortOrder
+    path?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    source?: SortOrder
+    snippet?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+    firstRecalledAt?: SortOrder
+    lastRecalledAt?: SortOrder
+    queryHashes?: SortOrder
+    recallDays?: SortOrder
+    conceptTags?: SortOrder
+    promotedAt?: SortOrder
+  }
+
+  export type RecallEntryAvgOrderByAggregateInput = {
+    startLine?: SortOrder
+    endLine?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+  }
+
+  export type RecallEntryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    key?: SortOrder
+    path?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    source?: SortOrder
+    snippet?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+    firstRecalledAt?: SortOrder
+    lastRecalledAt?: SortOrder
+    promotedAt?: SortOrder
+  }
+
+  export type RecallEntryMinOrderByAggregateInput = {
+    id?: SortOrder
+    companyId?: SortOrder
+    key?: SortOrder
+    path?: SortOrder
+    startLine?: SortOrder
+    endLine?: SortOrder
+    source?: SortOrder
+    snippet?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
+    firstRecalledAt?: SortOrder
+    lastRecalledAt?: SortOrder
+    promotedAt?: SortOrder
+  }
+
+  export type RecallEntrySumOrderByAggregateInput = {
+    startLine?: SortOrder
+    endLine?: SortOrder
+    recallCount?: SortOrder
+    totalScore?: SortOrder
+    maxScore?: SortOrder
   }
 
   export type UserCreateNestedManyWithoutCompanyInput = {
@@ -86374,6 +91115,89 @@ export namespace Prisma {
     upsert?: ChatConversationUpsertWithoutMessagesInput
     connect?: ChatConversationWhereUniqueInput
     update?: XOR<XOR<ChatConversationUpdateToOneWithWhereWithoutMessagesInput, ChatConversationUpdateWithoutMessagesInput>, ChatConversationUncheckedUpdateWithoutMessagesInput>
+  }
+
+  export type MemoryChunkCreateNestedManyWithoutFileInput = {
+    create?: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput> | MemoryChunkCreateWithoutFileInput[] | MemoryChunkUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: MemoryChunkCreateOrConnectWithoutFileInput | MemoryChunkCreateOrConnectWithoutFileInput[]
+    createMany?: MemoryChunkCreateManyFileInputEnvelope
+    connect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+  }
+
+  export type MemoryChunkUncheckedCreateNestedManyWithoutFileInput = {
+    create?: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput> | MemoryChunkCreateWithoutFileInput[] | MemoryChunkUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: MemoryChunkCreateOrConnectWithoutFileInput | MemoryChunkCreateOrConnectWithoutFileInput[]
+    createMany?: MemoryChunkCreateManyFileInputEnvelope
+    connect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+  }
+
+  export type MemoryChunkUpdateManyWithoutFileNestedInput = {
+    create?: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput> | MemoryChunkCreateWithoutFileInput[] | MemoryChunkUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: MemoryChunkCreateOrConnectWithoutFileInput | MemoryChunkCreateOrConnectWithoutFileInput[]
+    upsert?: MemoryChunkUpsertWithWhereUniqueWithoutFileInput | MemoryChunkUpsertWithWhereUniqueWithoutFileInput[]
+    createMany?: MemoryChunkCreateManyFileInputEnvelope
+    set?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    disconnect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    delete?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    connect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    update?: MemoryChunkUpdateWithWhereUniqueWithoutFileInput | MemoryChunkUpdateWithWhereUniqueWithoutFileInput[]
+    updateMany?: MemoryChunkUpdateManyWithWhereWithoutFileInput | MemoryChunkUpdateManyWithWhereWithoutFileInput[]
+    deleteMany?: MemoryChunkScalarWhereInput | MemoryChunkScalarWhereInput[]
+  }
+
+  export type MemoryChunkUncheckedUpdateManyWithoutFileNestedInput = {
+    create?: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput> | MemoryChunkCreateWithoutFileInput[] | MemoryChunkUncheckedCreateWithoutFileInput[]
+    connectOrCreate?: MemoryChunkCreateOrConnectWithoutFileInput | MemoryChunkCreateOrConnectWithoutFileInput[]
+    upsert?: MemoryChunkUpsertWithWhereUniqueWithoutFileInput | MemoryChunkUpsertWithWhereUniqueWithoutFileInput[]
+    createMany?: MemoryChunkCreateManyFileInputEnvelope
+    set?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    disconnect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    delete?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    connect?: MemoryChunkWhereUniqueInput | MemoryChunkWhereUniqueInput[]
+    update?: MemoryChunkUpdateWithWhereUniqueWithoutFileInput | MemoryChunkUpdateWithWhereUniqueWithoutFileInput[]
+    updateMany?: MemoryChunkUpdateManyWithWhereWithoutFileInput | MemoryChunkUpdateManyWithWhereWithoutFileInput[]
+    deleteMany?: MemoryChunkScalarWhereInput | MemoryChunkScalarWhereInput[]
+  }
+
+  export type MemoryFileCreateNestedOneWithoutChunksInput = {
+    create?: XOR<MemoryFileCreateWithoutChunksInput, MemoryFileUncheckedCreateWithoutChunksInput>
+    connectOrCreate?: MemoryFileCreateOrConnectWithoutChunksInput
+    connect?: MemoryFileWhereUniqueInput
+  }
+
+  export type MemoryFileUpdateOneRequiredWithoutChunksNestedInput = {
+    create?: XOR<MemoryFileCreateWithoutChunksInput, MemoryFileUncheckedCreateWithoutChunksInput>
+    connectOrCreate?: MemoryFileCreateOrConnectWithoutChunksInput
+    upsert?: MemoryFileUpsertWithoutChunksInput
+    connect?: MemoryFileWhereUniqueInput
+    update?: XOR<XOR<MemoryFileUpdateToOneWithWhereWithoutChunksInput, MemoryFileUpdateWithoutChunksInput>, MemoryFileUncheckedUpdateWithoutChunksInput>
+  }
+
+  export type RecallEntryCreatequeryHashesInput = {
+    set: string[]
+  }
+
+  export type RecallEntryCreaterecallDaysInput = {
+    set: string[]
+  }
+
+  export type RecallEntryCreateconceptTagsInput = {
+    set: string[]
+  }
+
+  export type RecallEntryUpdatequeryHashesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type RecallEntryUpdaterecallDaysInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type RecallEntryUpdateconceptTagsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -94733,6 +99557,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -94744,6 +99569,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -94785,6 +99611,7 @@ export namespace Prisma {
     role?: StringFilter<"ChatMessage"> | string
     content?: StringFilter<"ChatMessage"> | string
     toolCalls?: JsonNullableFilter<"ChatMessage">
+    attachments?: JsonNullableFilter<"ChatMessage">
     provider?: StringNullableFilter<"ChatMessage"> | string | null
     model?: StringNullableFilter<"ChatMessage"> | string | null
     latencyMs?: IntNullableFilter<"ChatMessage"> | number | null
@@ -94839,6 +99666,142 @@ export namespace Prisma {
     companyId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkCreateWithoutFileInput = {
+    id?: string
+    companyId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryChunkUncheckedCreateWithoutFileInput = {
+    id?: string
+    companyId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryChunkCreateOrConnectWithoutFileInput = {
+    where: MemoryChunkWhereUniqueInput
+    create: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput>
+  }
+
+  export type MemoryChunkCreateManyFileInputEnvelope = {
+    data: MemoryChunkCreateManyFileInput | MemoryChunkCreateManyFileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MemoryChunkUpsertWithWhereUniqueWithoutFileInput = {
+    where: MemoryChunkWhereUniqueInput
+    update: XOR<MemoryChunkUpdateWithoutFileInput, MemoryChunkUncheckedUpdateWithoutFileInput>
+    create: XOR<MemoryChunkCreateWithoutFileInput, MemoryChunkUncheckedCreateWithoutFileInput>
+  }
+
+  export type MemoryChunkUpdateWithWhereUniqueWithoutFileInput = {
+    where: MemoryChunkWhereUniqueInput
+    data: XOR<MemoryChunkUpdateWithoutFileInput, MemoryChunkUncheckedUpdateWithoutFileInput>
+  }
+
+  export type MemoryChunkUpdateManyWithWhereWithoutFileInput = {
+    where: MemoryChunkScalarWhereInput
+    data: XOR<MemoryChunkUpdateManyMutationInput, MemoryChunkUncheckedUpdateManyWithoutFileInput>
+  }
+
+  export type MemoryChunkScalarWhereInput = {
+    AND?: MemoryChunkScalarWhereInput | MemoryChunkScalarWhereInput[]
+    OR?: MemoryChunkScalarWhereInput[]
+    NOT?: MemoryChunkScalarWhereInput | MemoryChunkScalarWhereInput[]
+    id?: StringFilter<"MemoryChunk"> | string
+    companyId?: StringFilter<"MemoryChunk"> | string
+    fileId?: StringFilter<"MemoryChunk"> | string
+    path?: StringFilter<"MemoryChunk"> | string
+    source?: StringFilter<"MemoryChunk"> | string
+    startLine?: IntFilter<"MemoryChunk"> | number
+    endLine?: IntFilter<"MemoryChunk"> | number
+    hash?: StringFilter<"MemoryChunk"> | string
+    text?: StringFilter<"MemoryChunk"> | string
+    model?: StringFilter<"MemoryChunk"> | string
+    createdAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+    updatedAt?: DateTimeFilter<"MemoryChunk"> | Date | string
+  }
+
+  export type MemoryFileCreateWithoutChunksInput = {
+    id?: string
+    companyId: string
+    path: string
+    source?: string
+    hash: string
+    content: string
+    size: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryFileUncheckedCreateWithoutChunksInput = {
+    id?: string
+    companyId: string
+    path: string
+    source?: string
+    hash: string
+    content: string
+    size: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryFileCreateOrConnectWithoutChunksInput = {
+    where: MemoryFileWhereUniqueInput
+    create: XOR<MemoryFileCreateWithoutChunksInput, MemoryFileUncheckedCreateWithoutChunksInput>
+  }
+
+  export type MemoryFileUpsertWithoutChunksInput = {
+    update: XOR<MemoryFileUpdateWithoutChunksInput, MemoryFileUncheckedUpdateWithoutChunksInput>
+    create: XOR<MemoryFileCreateWithoutChunksInput, MemoryFileUncheckedCreateWithoutChunksInput>
+    where?: MemoryFileWhereInput
+  }
+
+  export type MemoryFileUpdateToOneWithWhereWithoutChunksInput = {
+    where?: MemoryFileWhereInput
+    data: XOR<MemoryFileUpdateWithoutChunksInput, MemoryFileUncheckedUpdateWithoutChunksInput>
+  }
+
+  export type MemoryFileUpdateWithoutChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryFileUncheckedUpdateWithoutChunksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    hash?: StringFieldUpdateOperationsInput | string
+    content?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -97632,6 +102595,7 @@ export namespace Prisma {
     role: string
     content: string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: string | null
     model?: string | null
     latencyMs?: number | null
@@ -97643,6 +102607,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -97654,6 +102619,7 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
@@ -97665,10 +102631,67 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     toolCalls?: NullableJsonNullValueInput | InputJsonValue
+    attachments?: NullableJsonNullValueInput | InputJsonValue
     provider?: NullableStringFieldUpdateOperationsInput | string | null
     model?: NullableStringFieldUpdateOperationsInput | string | null
     latencyMs?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkCreateManyFileInput = {
+    id?: string
+    companyId: string
+    path: string
+    source: string
+    startLine: number
+    endLine: number
+    hash: string
+    text: string
+    model: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MemoryChunkUpdateWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkUncheckedUpdateWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MemoryChunkUncheckedUpdateManyWithoutFileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    companyId?: StringFieldUpdateOperationsInput | string
+    path?: StringFieldUpdateOperationsInput | string
+    source?: StringFieldUpdateOperationsInput | string
+    startLine?: IntFieldUpdateOperationsInput | number
+    endLine?: IntFieldUpdateOperationsInput | number
+    hash?: StringFieldUpdateOperationsInput | string
+    text?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

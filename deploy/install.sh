@@ -205,8 +205,8 @@ REDIS_URL=redis://redis:6379
 # ── JWT ──────────────────────────────────────────────────────────────────────
 JWT_SECRET=${JWT_SECRET}
 REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_EXPIRES_IN=30d
 
 # ── Encryption (AES-256-GCM — encrypts AI + payment keys in DB) ──────────────
 ENCRYPTION_KEY=${ENCRYPTION_KEY}
@@ -258,6 +258,19 @@ if [[ -f "$INSTALL_DIR/.env" ]]; then
       sed -i 's/pgbouncer:6432/pgbouncer:5432/g' "$INSTALL_DIR/.env"
       info "Fixed DATABASE_URL port (6432 -> 5432) in .env"
     fi
+
+    # Bump short JWT lifetimes that caused frequent dashboard logouts.
+    # Old defaults (15m / 7d) → new (7d / 30d) so users stay logged in.
+    if grep -qE '^JWT_EXPIRES_IN=(15m|1h|24h|1d)$' "$INSTALL_DIR/.env" 2>/dev/null; then
+      sed -i 's/^JWT_EXPIRES_IN=.*/JWT_EXPIRES_IN=7d/' "$INSTALL_DIR/.env"
+      info "Bumped JWT_EXPIRES_IN to 7d (was too short, caused frequent logouts)"
+    fi
+    if grep -qE '^JWT_REFRESH_EXPIRES_IN=(7d|14d)$' "$INSTALL_DIR/.env" 2>/dev/null; then
+      sed -i 's/^JWT_REFRESH_EXPIRES_IN=.*/JWT_REFRESH_EXPIRES_IN=30d/' "$INSTALL_DIR/.env"
+      info "Bumped JWT_REFRESH_EXPIRES_IN to 30d"
+    fi
+    check_and_append "JWT_EXPIRES_IN" "7d"
+    check_and_append "JWT_REFRESH_EXPIRES_IN" "30d"
 
     check_and_append "JWT_SECRET" "$(openssl rand -hex 32)"
     check_and_append "REFRESH_TOKEN_SECRET" "$(openssl rand -hex 32)"
@@ -364,6 +377,17 @@ else
     "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
   ok "Database schema pushed"
 fi
+
+# pgvector extension + vector/tsvector columns + indexes for the OpenClaw-style
+# memory system. Prisma can't manage these via Unsupported types, so apply the
+# raw SQL migration here. Re-running is safe (everything is IF NOT EXISTS).
+info "Applying pgvector memory migration..."
+docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  exec -T postgres sh -c \
+  "psql -U \"\${POSTGRES_USER:-crm}\" -d \"\${POSTGRES_DB:-wacrm}\" -v ON_ERROR_STOP=1" \
+  < "$INSTALL_DIR/packages/database/prisma/migrations/manual_pgvector.sql" \
+  && ok "pgvector migration applied" \
+  || warn "pgvector migration failed — memory system may not work; check postgres logs"
 
 # Seed
 # Use raw pg queries for seeding — avoids Prisma client runtime resolution issues in Docker

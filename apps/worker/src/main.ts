@@ -21,6 +21,7 @@ import { startFollowUpProcessor } from './jobs/follow-up.processor';
 import { startCleanupProcessor } from './jobs/cleanup.processor';
 import { startPaymentCheckProcessor } from './jobs/payment-check.processor';
 import { startWarmupResetProcessor } from './jobs/warmup-reset.processor';
+import { startMemoryDreamingProcessor, memoryDreamingQueue } from './jobs/memory-dreaming.processor';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -50,6 +51,7 @@ async function main() {
   const cleanupWorker = startCleanupProcessor();
   const paymentCheckWorker = startPaymentCheckProcessor();
   const warmupResetWorker = startWarmupResetProcessor();
+  const memoryDreamingWorker = startMemoryDreamingProcessor();
   logger.info('All workers started');
 
   // Schedule recurring jobs via BullMQ repeatable jobs
@@ -69,6 +71,9 @@ async function main() {
   await paymentCheckQ.add('payment-check', {}, { repeat: { pattern: '*/15 * * * *' }, jobId: 'payment-check-recurring' });
   // Daily at midnight
   await warmupResetQueue.add('warmup-reset', {}, { repeat: { pattern: '0 0 * * *' }, jobId: 'warmup-reset-recurring' });
+  // Memory dreaming: every 6 hours — promotes high-recall snippets to MEMORY.md
+  const dreamingQueue = memoryDreamingQueue();
+  await dreamingQueue.add('memory-dreaming', {}, { repeat: { pattern: '0 */6 * * *' }, jobId: 'memory-dreaming-recurring' });
 
   logger.info('Worker service ready — all workers running');
 
@@ -83,6 +88,7 @@ async function main() {
       cleanupWorker.close(),
       paymentCheckWorker.close(),
       warmupResetWorker.close(),
+      memoryDreamingWorker.close(),
     ]);
     await redis.quit();
     process.exit(0);

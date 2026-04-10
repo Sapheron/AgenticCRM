@@ -831,6 +831,7 @@ exports.Prisma.ChatMessageScalarFieldEnum = {
   role: 'role',
   content: 'content',
   toolCalls: 'toolCalls',
+  attachments: 'attachments',
   provider: 'provider',
   model: 'model',
   latencyMs: 'latencyMs',
@@ -846,6 +847,53 @@ exports.Prisma.AiMemoryScalarFieldEnum = {
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MemoryFileScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  path: 'path',
+  source: 'source',
+  hash: 'hash',
+  content: 'content',
+  size: 'size',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MemoryChunkScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  fileId: 'fileId',
+  path: 'path',
+  source: 'source',
+  startLine: 'startLine',
+  endLine: 'endLine',
+  hash: 'hash',
+  text: 'text',
+  model: 'model',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RecallEntryScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  key: 'key',
+  path: 'path',
+  startLine: 'startLine',
+  endLine: 'endLine',
+  source: 'source',
+  snippet: 'snippet',
+  recallCount: 'recallCount',
+  totalScore: 'totalScore',
+  maxScore: 'maxScore',
+  firstRecalledAt: 'firstRecalledAt',
+  lastRecalledAt: 'lastRecalledAt',
+  queryHashes: 'queryHashes',
+  recallDays: 'recallDays',
+  conceptTags: 'conceptTags',
+  promotedAt: 'promotedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -1067,7 +1115,10 @@ exports.Prisma.ModelName = {
   ApiKey: 'ApiKey',
   ChatConversation: 'ChatConversation',
   ChatMessage: 'ChatMessage',
-  AiMemory: 'AiMemory'
+  AiMemory: 'AiMemory',
+  MemoryFile: 'MemoryFile',
+  MemoryChunk: 'MemoryChunk',
+  RecallEntry: 'RecallEntry'
 };
 
 /**

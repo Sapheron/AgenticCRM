@@ -6,6 +6,7 @@ export const QUEUES = {
   PAYMENT_CHECK: 'payment_check',
   WARMUP_RESET: 'warmup_reset',
   CLEANUP: 'cleanup',
+  MEMORY_DREAMING: 'memory_dreaming',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
