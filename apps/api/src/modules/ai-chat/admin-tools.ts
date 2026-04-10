@@ -9,6 +9,8 @@ import { LeadsService } from '../leads/leads.service';
 import type { LeadActor } from '../leads/leads.types';
 import { DealsService } from '../deals/deals.service';
 import type { DealActor } from '../deals/deals.types';
+import { TasksService } from '../tasks/tasks.service';
+import type { TaskActor } from '../tasks/tasks.types';
 import type { ChatAttachment } from './attachments';
 
 // Memory service is a plain class (no DI deps), so we can instantiate it once
@@ -17,8 +19,10 @@ import type { ChatAttachment } from './attachments';
 const memoryService = new MemoryService();
 const leadsService = new LeadsService();
 const dealsService = new DealsService();
+const tasksService = new TasksService();
 const AI_ACTOR: LeadActor = { type: 'ai' };
 const AI_DEAL_ACTOR: DealActor = { type: 'ai' };
+const AI_TASK_ACTOR: TaskActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -1319,84 +1323,636 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Tasks ─────────────────────────────────────────────────────────────────
-  {
-    definition: {
-      name: 'create_task',
-      description: 'Create a task or reminder.',
-      parameters: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', description: 'Task title' },
-          dueAt: { type: 'string', description: 'Due date in ISO format or natural language like "tomorrow"' },
-          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
-          contactId: { type: 'string' },
-          dealId: { type: 'string' },
-        },
-        required: ['title'],
-      },
-    },
-    execute: async (args, companyId) => {
-      const task = await prisma.task.create({
-        data: {
-          companyId,
-          title: args.title as string,
-          dueAt: args.dueAt ? new Date(args.dueAt as string) : undefined,
-          priority: ((args.priority as string) || 'MEDIUM') as any,
-          status: 'TODO' as any,
-          contactId: (args.contactId as string) || undefined,
-          dealId: (args.dealId as string) || undefined,
-        },
-      });
-      return `Created task: "${task.title}" | Priority: ${task.priority} | Due: ${task.dueAt?.toISOString() || 'no due date'} | ID: ${task.id}`;
-    },
-  },
-  {
-    definition: {
-      name: 'update_task',
-      description: 'Update task status or priority.',
-      parameters: {
-        type: 'object',
-        properties: {
-          taskId: { type: 'string' },
-          status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED'] },
-          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
-          title: { type: 'string' },
-        },
-        required: ['taskId'],
-      },
-    },
-    execute: async (args, _companyId) => {
-      const data: Record<string, unknown> = {};
-      if (args.status) data.status = args.status;
-      if (args.priority) data.priority = args.priority;
-      if (args.title) data.title = args.title;
-      if (args.status === 'DONE') data.completedAt = new Date();
-      const task = await prisma.task.update({ where: { id: args.taskId as string }, data });
-      return `Updated task "${task.title}" — status: ${task.status}`;
-    },
-  },
+  // ── Tasks (full lifecycle, all routed through TasksService) ───────────────
   {
     definition: {
       name: 'list_tasks',
-      description: 'List tasks with optional status/priority filter.',
+      description: 'List tasks with rich filters. Use this to find tasks by status, priority, source, assignee, contact/deal/lead, due date range, or text search. Pass `assignedToMe: true` for "my tasks". Pass `overdue: true` to get only overdue tasks.',
       parameters: {
         type: 'object',
         properties: {
-          status: { type: 'string' },
-          priority: { type: 'string' },
+          status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED'] },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          source: { type: 'string', enum: ['MANUAL', 'AI_CHAT', 'WHATSAPP', 'RECURRING', 'AUTO_FOLLOW_UP', 'IMPORT', 'OTHER'] },
+          assignedAgentId: { type: 'string', description: 'User ID, or "null" for unassigned' },
+          assignedToMe: { type: 'boolean', description: 'Resolve to the current user (NOTE: AI tools have no "current user" so prefer assignedAgentId)' },
+          contactId: { type: 'string' },
+          dealId: { type: 'string' },
+          leadId: { type: 'string' },
+          parentTaskId: { type: 'string' },
+          tag: { type: 'string' },
+          dueFrom: { type: 'string', description: 'ISO datetime' },
+          dueTo: { type: 'string', description: 'ISO datetime' },
+          overdue: { type: 'boolean' },
+          search: { type: 'string' },
+          sort: { type: 'string', enum: ['recent', 'due', 'priority', 'created'] },
           limit: { type: 'number' },
         },
         required: [],
       },
     },
     execute: async (args, companyId) => {
-      const where: Record<string, unknown> = { companyId };
-      if (args.status) where.status = args.status;
-      if (args.priority) where.priority = args.priority;
-      const tasks = await prisma.task.findMany({ where: where as any, take: (args.limit as number) || 10, orderBy: { createdAt: 'desc' } });
-      if (!tasks.length) return 'No tasks found';
-      return tasks.map((t) => `- "${t.title}" | ${t.status} | ${t.priority} | Due: ${t.dueAt?.toISOString().split('T')[0] || 'none'} | ID: ${t.id}`).join('\n');
+      const result = await tasksService.list(companyId, {
+        status: args.status as never,
+        priority: args.priority as never,
+        source: args.source as never,
+        assignedAgentId: args.assignedAgentId === 'null' ? null : (args.assignedAgentId as string | undefined),
+        contactId: args.contactId as string | undefined,
+        dealId: args.dealId as string | undefined,
+        leadId: args.leadId as string | undefined,
+        parentTaskId: args.parentTaskId as string | undefined,
+        tag: args.tag as string | undefined,
+        dueFrom: args.dueFrom as string | undefined,
+        dueTo: args.dueTo as string | undefined,
+        overdue: args.overdue as boolean | undefined,
+        search: args.search as string | undefined,
+        sort: args.sort as never,
+        limit: (args.limit as number) ?? 20,
+      });
+      if (!result.items.length) return 'No tasks match those filters.';
+      return [
+        `Found ${result.total} task(s) (showing ${result.items.length}):`,
+        ...result.items.map((t) => {
+          const due = t.dueAt ? t.dueAt.toISOString().slice(0, 16) : 'no due date';
+          const contact = t.contact?.displayName ?? t.contact?.phoneNumber ?? '';
+          return `- [${t.priority}] ${t.status} "${t.title}" · ${due}${contact ? ` · ${contact}` : ''} · ID: ${t.id}`;
+        }),
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_task',
+      description: 'Fetch a task with its subtasks, comments, watchers, and last 10 timeline activities.',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' } },
+        required: ['taskId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.get(companyId, args.taskId as string);
+      const activities = task.activities.slice(0, 10);
+      const lines = [
+        `Task "${task.title}" (ID: ${task.id})`,
+        `Status: ${task.status} · Priority: ${task.priority} · Source: ${task.source}`,
+        task.dueAt ? `Due: ${task.dueAt.toISOString().slice(0, 16)}` : 'No due date',
+        task.assignedAgent ? `Assigned to: ${task.assignedAgent.firstName} ${task.assignedAgent.lastName}` : 'Unassigned',
+        task.contact ? `Contact: ${task.contact.displayName ?? task.contact.phoneNumber}` : '',
+        task.deal ? `Deal: ${task.deal.title}` : '',
+        task.lead ? `Lead: ${task.lead.title}` : '',
+        task.tags.length ? `Tags: ${task.tags.join(', ')}` : '',
+        task.estimatedHours ? `Estimated: ${task.estimatedHours}h, Actual: ${task.actualHours ?? 0}h` : '',
+        task.subtasks.length ? `Subtasks: ${task.subtasks.filter((s) => s.status === 'DONE').length}/${task.subtasks.length} done` : '',
+        task.comments.length ? `Comments: ${task.comments.length}` : '',
+        '',
+        'Recent activity:',
+        ...activities.map((a) => `  • ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}`),
+      ].filter(Boolean);
+      return lines.join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_task',
+      description: 'Create a new task. Auto-creates a contact from `phoneNumber` if needed. For subtasks pass `parentTaskId`. Defaults: status=TODO, priority=MEDIUM, source=AI_CHAT, reminder 30 min before due.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          dueAt: { type: 'string', description: 'ISO datetime' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          assignedAgentId: { type: 'string' },
+          contactId: { type: 'string' },
+          phoneNumber: { type: 'string', description: 'Used if no contactId — upserts a contact' },
+          contactName: { type: 'string' },
+          dealId: { type: 'string' },
+          leadId: { type: 'string' },
+          parentTaskId: { type: 'string', description: 'Make this a subtask of another task' },
+          tags: { type: 'array', items: { type: 'string' } },
+          estimatedHours: { type: 'number' },
+          reminderOffsets: { type: 'array', items: { type: 'number' }, description: 'Minutes before dueAt to fire reminders, e.g. [60, 30, 5]' },
+        },
+        required: ['title'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.create(
+        companyId,
+        {
+          title: args.title as string,
+          description: args.description as string | undefined,
+          dueAt: args.dueAt as string | undefined,
+          priority: args.priority as never,
+          assignedAgentId: args.assignedAgentId as string | undefined,
+          contactId: args.contactId as string | undefined,
+          phoneNumber: args.phoneNumber as string | undefined,
+          contactName: args.contactName as string | undefined,
+          dealId: args.dealId as string | undefined,
+          leadId: args.leadId as string | undefined,
+          parentTaskId: args.parentTaskId as string | undefined,
+          tags: args.tags as string[] | undefined,
+          estimatedHours: args.estimatedHours as number | undefined,
+          reminderOffsets: args.reminderOffsets as number[] | undefined,
+        },
+        AI_TASK_ACTOR,
+      );
+      return `Created task "${task.title}" (ID: ${task.id}, status: ${task.status}, priority: ${task.priority}${task.dueAt ? `, due ${task.dueAt.toISOString().slice(0, 16)}` : ''})`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_task',
+      description: 'Update arbitrary task fields. Use `mark_task_done` for status changes — never use update_task to change status.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          dueAt: { type: 'string' },
+          assignedAgentId: { type: 'string' },
+          estimatedHours: { type: 'number' },
+        },
+        required: ['taskId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.update(
+        companyId,
+        args.taskId as string,
+        {
+          title: args.title as string | undefined,
+          description: args.description as string | undefined,
+          priority: args.priority as never,
+          tags: args.tags as string[] | undefined,
+          dueAt: args.dueAt as string | undefined,
+          assignedAgentId: args.assignedAgentId as string | undefined,
+          estimatedHours: args.estimatedHours as number | undefined,
+        },
+        AI_TASK_ACTOR,
+      );
+      return `Updated task "${task.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_task_done',
+      description: 'Mark a task as DONE. Cascades to all subtasks. If part of a recurring series, automatically spawns the next instance.',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' } },
+        required: ['taskId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.updateStatus(companyId, args.taskId as string, 'DONE', AI_TASK_ACTOR);
+      return `Marked "${task.title}" as DONE`;
+    },
+  },
+  {
+    definition: {
+      name: 'start_task',
+      description: 'Move a task to IN_PROGRESS (records startedAt for cycle-time analytics).',
+      parameters: { type: 'object', properties: { taskId: { type: 'string' } }, required: ['taskId'] },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.updateStatus(companyId, args.taskId as string, 'IN_PROGRESS', AI_TASK_ACTOR);
+      return `Started "${task.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'cancel_task',
+      description: 'Cancel a task with a reason. Use this instead of delete_task when there\'s a meaningful reason.',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' }, reason: { type: 'string' } },
+        required: ['taskId', 'reason'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.updateStatus(companyId, args.taskId as string, 'CANCELLED', AI_TASK_ACTOR, args.reason as string);
+      return `Cancelled "${task.title}": ${args.reason as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'reopen_task',
+      description: 'Move a DONE or CANCELLED task back to TODO.',
+      parameters: { type: 'object', properties: { taskId: { type: 'string' } }, required: ['taskId'] },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.updateStatus(companyId, args.taskId as string, 'TODO', AI_TASK_ACTOR);
+      return `Reopened "${task.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_task',
+      description: 'Soft-delete a task (sets status to CANCELLED).',
+      parameters: { type: 'object', properties: { taskId: { type: 'string' } }, required: ['taskId'] },
+    },
+    execute: async (args, companyId) => {
+      await tasksService.remove(companyId, args.taskId as string, AI_TASK_ACTOR);
+      return `Deleted task ${args.taskId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_task_comment',
+      description: 'Post a comment on a task. Comments are separate from the activity timeline — use this for discussion, use the timeline for system events.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          body: { type: 'string' },
+          mentions: { type: 'array', items: { type: 'string' }, description: 'User IDs to @mention' },
+        },
+        required: ['taskId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await tasksService.addComment(
+        companyId,
+        args.taskId as string,
+        { body: args.body as string, mentions: (args.mentions as string[]) ?? [] },
+        AI_TASK_ACTOR,
+      );
+      return `Comment added to task ${args.taskId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'assign_task',
+      description: 'Assign a task to a user. Pass userId="null" to unassign. The new assignee is auto-added as a watcher.',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' }, userId: { type: 'string' } },
+        required: ['taskId', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const task = await tasksService.assign(companyId, args.taskId as string, userId, AI_TASK_ACTOR);
+      return userId ? `Assigned task "${task.title}" to user ${userId}` : `Unassigned task "${task.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'reschedule_task',
+      description: 'Change a task\'s due date. Resets the reminder fire history so reminders for the new time fire fresh.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          newDueAt: { type: 'string', description: 'ISO datetime' },
+          reason: { type: 'string' },
+        },
+        required: ['taskId', 'newDueAt'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.reschedule(
+        companyId,
+        args.taskId as string,
+        args.newDueAt as string,
+        args.reason as string | undefined,
+        AI_TASK_ACTOR,
+      );
+      return `Rescheduled "${task.title}" to ${task.dueAt?.toISOString().slice(0, 16)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'snooze_task',
+      description: 'Bump a task\'s due time forward by N minutes from now (or from its current dueAt if it\'s in the future).',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' }, minutes: { type: 'number' } },
+        required: ['taskId', 'minutes'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.snooze(companyId, args.taskId as string, args.minutes as number, AI_TASK_ACTOR);
+      return `Snoozed "${task.title}" by ${args.minutes as number}m → due ${task.dueAt?.toISOString().slice(0, 16)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'log_task_time',
+      description: 'Log time spent on a task (in hours). Increments `actualHours`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          hours: { type: 'number' },
+          note: { type: 'string' },
+        },
+        required: ['taskId', 'hours'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.logTime(
+        companyId,
+        args.taskId as string,
+        args.hours as number,
+        args.note as string | undefined,
+        AI_TASK_ACTOR,
+      );
+      return `Logged ${args.hours as number}h on "${task.title}" (total ${task.actualHours}h)`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_task_priority',
+      description: 'Set a task\'s priority.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+        },
+        required: ['taskId', 'priority'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.update(companyId, args.taskId as string, { priority: args.priority as never }, AI_TASK_ACTOR);
+      return `Set priority of "${task.title}" to ${task.priority}`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_task_reminders',
+      description: 'Set the reminder offsets (minutes before dueAt) for a task. Replaces existing offsets. Default for new tasks is [30].',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          offsets: { type: 'array', items: { type: 'number' } },
+        },
+        required: ['taskId', 'offsets'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await tasksService.setReminderOffsets(companyId, args.taskId as string, args.offsets as number[], AI_TASK_ACTOR);
+      return `Reminder offsets updated to ${(args.offsets as number[]).join(', ')} min`;
+    },
+  },
+  {
+    definition: {
+      name: 'tag_task',
+      description: 'Add or remove tags from a task.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskId: { type: 'string' },
+          add: { type: 'array', items: { type: 'string' } },
+          remove: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['taskId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await tasksService.bulkTag(
+        companyId,
+        [args.taskId as string],
+        (args.add as string[]) ?? [],
+        (args.remove as string[]) ?? [],
+        AI_TASK_ACTOR,
+      );
+      return result.updated ? `Tagged task ${args.taskId as string}` : 'No changes';
+    },
+  },
+  {
+    definition: {
+      name: 'add_task_watcher',
+      description: 'Add a user as a watcher on a task — they will be notified of status changes.',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' }, userId: { type: 'string' } },
+        required: ['taskId', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await tasksService.addWatcher(companyId, args.taskId as string, args.userId as string, AI_TASK_ACTOR);
+      return `Added watcher ${args.userId as string} to task`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_subtask',
+      description: 'Add a subtask to an existing task. The subtask inherits the parent\'s contact / deal / lead context.',
+      parameters: {
+        type: 'object',
+        properties: {
+          parentTaskId: { type: 'string' },
+          title: { type: 'string' },
+          dueAt: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          assignedAgentId: { type: 'string' },
+        },
+        required: ['parentTaskId', 'title'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const task = await tasksService.create(
+        companyId,
+        {
+          parentTaskId: args.parentTaskId as string,
+          title: args.title as string,
+          dueAt: args.dueAt as string | undefined,
+          priority: args.priority as never,
+          assignedAgentId: args.assignedAgentId as string | undefined,
+        },
+        AI_TASK_ACTOR,
+      );
+      return `Added subtask "${task.title}" (ID: ${task.id})`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_task_timeline',
+      description: 'Fetch the activity timeline of a task (newest first).',
+      parameters: {
+        type: 'object',
+        properties: { taskId: { type: 'string' }, limit: { type: 'number' } },
+        required: ['taskId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const items = await tasksService.getTimeline(companyId, args.taskId as string, (args.limit as number) ?? 20);
+      if (!items.length) return 'No timeline activity yet.';
+      return items
+        .map((a) => `- ${a.createdAt.toISOString().slice(0, 16)} [${a.type}] ${a.title}${a.body ? `\n    ${a.body}` : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_task_stats',
+      description: 'Task health stats — counts per status, overdue count, completion rate, average cycle time.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window in days (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await tasksService.stats(companyId, (args.days as number) ?? 30);
+      return [
+        `Task stats — last ${s.rangeDays} days`,
+        `Total: ${s.total}`,
+        `Overdue: ${s.overdue}`,
+        `Completed recently: ${s.completedRecently}`,
+        `Completion rate: ${s.completionRate}%`,
+        `Avg cycle: ${s.avgCycleHours}h`,
+        `By status: ${Object.entries(s.byStatus).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_complete_tasks',
+      description: 'Mark many tasks as DONE at once.',
+      parameters: {
+        type: 'object',
+        properties: { taskIds: { type: 'array', items: { type: 'string' } } },
+        required: ['taskIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await tasksService.bulkUpdateStatus(companyId, args.taskIds as string[], 'DONE', AI_TASK_ACTOR);
+      return `Bulk complete: ${result.updated}/${result.requested} marked done`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_assign_tasks',
+      description: 'Assign many tasks to one user at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskIds: { type: 'array', items: { type: 'string' } },
+          userId: { type: 'string' },
+        },
+        required: ['taskIds', 'userId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const userId = (args.userId as string) === 'null' ? null : (args.userId as string);
+      const result = await tasksService.bulkAssign(companyId, args.taskIds as string[], userId, AI_TASK_ACTOR);
+      return `Bulk assign: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_snooze_tasks',
+      description: 'Snooze many tasks by the same amount of minutes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          taskIds: { type: 'array', items: { type: 'string' } },
+          minutes: { type: 'number' },
+        },
+        required: ['taskIds', 'minutes'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const result = await tasksService.bulkSnooze(companyId, args.taskIds as string[], args.minutes as number, AI_TASK_ACTOR);
+      return `Bulk snooze: ${result.updated}/${result.requested} updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'find_tasks_for_contact',
+      description: 'Find all tasks linked to a contact (by id or phone).',
+      parameters: {
+        type: 'object',
+        properties: { contactId: { type: 'string' }, phoneNumber: { type: 'string' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      let contactId = args.contactId as string | undefined;
+      if (!contactId && args.phoneNumber) {
+        const phone = (args.phoneNumber as string).replace(/[\s\-+()]/g, '');
+        const c = await prisma.contact.findFirst({ where: { companyId, phoneNumber: phone } });
+        contactId = c?.id;
+      }
+      if (!contactId) return 'No contact found';
+      const result = await tasksService.list(companyId, { contactId, limit: 50 });
+      if (!result.items.length) return 'No tasks for this contact.';
+      return result.items.map((t) => `- [${t.priority}] ${t.status} "${t.title}" · ${t.dueAt?.toISOString().slice(0, 16) ?? 'no due'} · ID: ${t.id}`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'create_recurring_task',
+      description: 'Set up a recurring task (daily standup, weekly review, monthly close, etc.). Generates a new Task instance on every cycle. Pass `daysOfWeek` (0=Sun..6=Sat) for WEEKLY, `dayOfMonth` for MONTHLY, `intervalDays` for CUSTOM_DAYS.',
+      parameters: {
+        type: 'object',
+        properties: {
+          templateTitle: { type: 'string' },
+          templateBody: { type: 'string' },
+          templatePriority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          templateAssignedAgentId: { type: 'string' },
+          frequency: { type: 'string', enum: ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'CUSTOM_DAYS'] },
+          intervalDays: { type: 'number' },
+          daysOfWeek: { type: 'array', items: { type: 'number' } },
+          dayOfMonth: { type: 'number' },
+          startsAt: { type: 'string', description: 'ISO datetime — first instance fires at this time' },
+          endsAt: { type: 'string', description: 'Optional — stop generating instances after this date' },
+        },
+        required: ['templateTitle', 'frequency', 'startsAt'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await tasksService.createRecurrence(companyId, {
+        templateTitle: args.templateTitle as string,
+        templateBody: args.templateBody as string | undefined,
+        templatePriority: args.templatePriority as never,
+        templateAssignedAgentId: args.templateAssignedAgentId as string | undefined,
+        frequency: args.frequency as never,
+        intervalDays: args.intervalDays as number | undefined,
+        daysOfWeek: args.daysOfWeek as number[] | undefined,
+        dayOfMonth: args.dayOfMonth as number | undefined,
+        startsAt: args.startsAt as string,
+        endsAt: args.endsAt as string | undefined,
+      });
+      return `Recurring task "${r.templateTitle}" set up — first instance ${r.nextRunAt.toISOString().slice(0, 16)} (${r.frequency})`;
+    },
+  },
+  {
+    definition: {
+      name: 'list_recurring_tasks',
+      description: 'List all recurring task series for this company.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+    execute: async (_args, companyId) => {
+      const items = await tasksService.listRecurrences(companyId);
+      if (!items.length) return 'No recurring tasks set up.';
+      return items
+        .map((r) => `- "${r.templateTitle}" · ${r.frequency} · next ${r.nextRunAt.toISOString().slice(0, 16)} · ${r.totalGenerated} generated · ${r.isActive ? 'active' : 'paused'} · ID: ${r.id}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'pause_recurring_task',
+      description: 'Pause a recurring task series — no further instances will be generated until you resume it.',
+      parameters: {
+        type: 'object',
+        properties: { recurrenceId: { type: 'string' } },
+        required: ['recurrenceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await tasksService.pauseRecurrence(companyId, args.recurrenceId as string, true);
+      return `Paused recurring task ${args.recurrenceId as string}`;
     },
   },
 
@@ -2166,8 +2722,9 @@ const CORE_TOOL_NAMES = new Set([
   // Deals (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
   'list_deals', 'get_deal', 'create_deal', 'update_deal',
   'move_deal_stage', 'add_deal_note', 'assign_deal', 'get_deal_forecast',
-  // Tasks
-  'create_task', 'update_task', 'list_tasks',
+  // Tasks (full lifecycle — see admin-tools.ts for the additional ~14 callable-by-name tools)
+  'list_tasks', 'get_task', 'create_task', 'update_task',
+  'mark_task_done', 'add_task_comment', 'assign_task', 'reschedule_task',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics

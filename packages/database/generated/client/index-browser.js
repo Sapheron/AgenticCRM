@@ -394,15 +394,82 @@ exports.Prisma.TaskScalarFieldEnum = {
   companyId: 'companyId',
   contactId: 'contactId',
   dealId: 'dealId',
+  leadId: 'leadId',
+  parentTaskId: 'parentTaskId',
+  recurrenceId: 'recurrenceId',
   assignedAgentId: 'assignedAgentId',
   createdById: 'createdById',
   title: 'title',
   description: 'description',
   status: 'status',
   priority: 'priority',
+  source: 'source',
+  tags: 'tags',
+  position: 'position',
+  estimatedHours: 'estimatedHours',
+  actualHours: 'actualHours',
   dueAt: 'dueAt',
+  startedAt: 'startedAt',
   completedAt: 'completedAt',
+  cancelledAt: 'cancelledAt',
+  cancelReason: 'cancelReason',
+  cleanupAfter: 'cleanupAfter',
+  reminderOffsets: 'reminderOffsets',
+  remindersSent: 'remindersSent',
   reminderSentAt: 'reminderSentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TaskActivityScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TaskCommentScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  companyId: 'companyId',
+  authorId: 'authorId',
+  body: 'body',
+  mentions: 'mentions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TaskWatcherScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  userId: 'userId',
+  companyId: 'companyId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TaskRecurrenceScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  templateTitle: 'templateTitle',
+  templateBody: 'templateBody',
+  templatePriority: 'templatePriority',
+  templateAssignedAgentId: 'templateAssignedAgentId',
+  frequency: 'frequency',
+  intervalDays: 'intervalDays',
+  daysOfWeek: 'daysOfWeek',
+  dayOfMonth: 'dayOfMonth',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  nextRunAt: 'nextRunAt',
+  lastRunAt: 'lastRunAt',
+  totalGenerated: 'totalGenerated',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1216,6 +1283,51 @@ exports.TaskPriority = exports.$Enums.TaskPriority = {
   URGENT: 'URGENT'
 };
 
+exports.TaskSource = exports.$Enums.TaskSource = {
+  MANUAL: 'MANUAL',
+  AI_CHAT: 'AI_CHAT',
+  WHATSAPP: 'WHATSAPP',
+  RECURRING: 'RECURRING',
+  AUTO_FOLLOW_UP: 'AUTO_FOLLOW_UP',
+  IMPORT: 'IMPORT',
+  OTHER: 'OTHER'
+};
+
+exports.TaskActivityType = exports.$Enums.TaskActivityType = {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+  ASSIGNED: 'ASSIGNED',
+  UNASSIGNED: 'UNASSIGNED',
+  PRIORITY_CHANGED: 'PRIORITY_CHANGED',
+  DUE_DATE_CHANGED: 'DUE_DATE_CHANGED',
+  TITLE_CHANGED: 'TITLE_CHANGED',
+  DESCRIPTION_CHANGED: 'DESCRIPTION_CHANGED',
+  COMMENT_ADDED: 'COMMENT_ADDED',
+  SUBTASK_ADDED: 'SUBTASK_ADDED',
+  SUBTASK_COMPLETED: 'SUBTASK_COMPLETED',
+  SUBTASK_REMOVED: 'SUBTASK_REMOVED',
+  WATCHER_ADDED: 'WATCHER_ADDED',
+  WATCHER_REMOVED: 'WATCHER_REMOVED',
+  TIME_LOGGED: 'TIME_LOGGED',
+  RESCHEDULED: 'RESCHEDULED',
+  REMINDER_SENT: 'REMINDER_SENT',
+  RECURRENCE_TRIGGERED: 'RECURRENCE_TRIGGERED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  REOPENED: 'REOPENED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  CUSTOM: 'CUSTOM'
+};
+
+exports.TaskRecurrenceFrequency = exports.$Enums.TaskRecurrenceFrequency = {
+  DAILY: 'DAILY',
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY',
+  YEARLY: 'YEARLY',
+  CUSTOM_DAYS: 'CUSTOM_DAYS'
+};
+
 exports.AiProvider = exports.$Enums.AiProvider = {
   GEMINI: 'GEMINI',
   OPENAI: 'OPENAI',
@@ -1281,6 +1393,10 @@ exports.Prisma.ModelName = {
   DealActivity: 'DealActivity',
   DealLineItem: 'DealLineItem',
   Task: 'Task',
+  TaskActivity: 'TaskActivity',
+  TaskComment: 'TaskComment',
+  TaskWatcher: 'TaskWatcher',
+  TaskRecurrence: 'TaskRecurrence',
   AiConfig: 'AiConfig',
   AiContextCache: 'AiContextCache',
   PaymentConfig: 'PaymentConfig',

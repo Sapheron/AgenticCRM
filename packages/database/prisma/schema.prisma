@@ -195,6 +195,51 @@ enum TaskPriority {
   URGENT
 }
 
+enum TaskSource {
+  MANUAL
+  AI_CHAT
+  WHATSAPP
+  RECURRING
+  AUTO_FOLLOW_UP
+  IMPORT
+  OTHER
+}
+
+enum TaskActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  PRIORITY_CHANGED
+  DUE_DATE_CHANGED
+  TITLE_CHANGED
+  DESCRIPTION_CHANGED
+  COMMENT_ADDED
+  SUBTASK_ADDED
+  SUBTASK_COMPLETED
+  SUBTASK_REMOVED
+  WATCHER_ADDED
+  WATCHER_REMOVED
+  TIME_LOGGED
+  RESCHEDULED
+  REMINDER_SENT
+  RECURRENCE_TRIGGERED
+  COMPLETED
+  CANCELLED
+  REOPENED
+  FIELD_UPDATED
+  CUSTOM
+}
+
+enum TaskRecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  CUSTOM_DAYS
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -511,6 +556,7 @@ model Lead {
   contact       Contact          @relation(fields: [contactId], references: [id])
   assignedAgent User?            @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
   deals         Deal[]
+  tasks         Task[]
   activities    LeadActivity[]
   scoreEvents   LeadScoreEvent[]
 
@@ -693,28 +739,126 @@ model Task {
   companyId       String
   contactId       String?
   dealId          String?
+  leadId          String?
+  parentTaskId    String?      // for subtasks (self-relation below)
+  recurrenceId    String?      // FK to TaskRecurrence if part of a recurring series
   assignedAgentId String?
   createdById     String?
   title           String
   description     String?
   status          TaskStatus   @default(TODO)
   priority        TaskPriority @default(MEDIUM)
+  source          TaskSource   @default(MANUAL)
+  tags            String[]     @default([])
+  position        Int          @default(0)
+  estimatedHours  Float?
+  actualHours     Float?       @default(0)
   dueAt           DateTime?
+  startedAt       DateTime?
   completedAt     DateTime?
-  reminderSentAt  DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  cleanupAfter    DateTime?    // OpenClaw-style TTL — set when task reaches DONE/CANCELLED
+  reminderOffsets Int[]        @default([30]) // minutes before dueAt to fire each reminder
+  remindersSent   DateTime[]   @default([])   // history of reminder fire times
+  reminderSentAt  DateTime?    // legacy column kept for backwards compat with reminder.processor.ts
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
-  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  contact       Contact? @relation(fields: [contactId], references: [id])
-  deal          Deal?    @relation(fields: [dealId], references: [id])
-  assignedAgent User?    @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
-  createdBy     User?    @relation("CreatedBy", fields: [createdById], references: [id])
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  contact       Contact?        @relation(fields: [contactId], references: [id])
+  deal          Deal?           @relation(fields: [dealId], references: [id])
+  lead          Lead?           @relation(fields: [leadId], references: [id])
+  recurrence    TaskRecurrence? @relation(fields: [recurrenceId], references: [id])
+  assignedAgent User?           @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  createdBy     User?           @relation("CreatedBy", fields: [createdById], references: [id])
+  parent        Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks      Task[]          @relation("TaskSubtasks")
+  activities    TaskActivity[]
+  comments      TaskComment[]
+  watchers      TaskWatcher[]
 
   @@index([companyId])
   @@index([assignedAgentId])
   @@index([dueAt])
   @@index([status])
+  @@index([companyId, source])
+  @@index([companyId, parentTaskId])
+  @@index([companyId, recurrenceId])
+  @@index([companyId, cleanupAfter])
+  @@index([leadId])
+}
+
+model TaskActivity {
+  id        String           @id @default(cuid())
+  taskId    String
+  companyId String
+  type      TaskActivityType
+  actorType String           // user | ai | system | whatsapp | recurrence
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json             @default("{}")
+  createdAt DateTime         @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+  @@index([companyId, type])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  companyId String
+  authorId  String?  // null = AI / system
+  body      String
+  mentions  String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, createdAt])
+}
+
+model TaskWatcher {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+}
+
+model TaskRecurrence {
+  id                      String                  @id @default(cuid())
+  companyId               String
+  templateTitle           String
+  templateBody            String?
+  templatePriority        TaskPriority            @default(MEDIUM)
+  templateAssignedAgentId String?
+  frequency               TaskRecurrenceFrequency
+  intervalDays            Int?    // for CUSTOM_DAYS
+  daysOfWeek              Int[]   @default([]) // for WEEKLY: 0=Sun..6=Sat
+  dayOfMonth              Int?    // for MONTHLY
+  startsAt                DateTime
+  endsAt                  DateTime?
+  nextRunAt               DateTime
+  lastRunAt               DateTime?
+  totalGenerated          Int     @default(0)
+  isActive                Boolean @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  tasks Task[]
+
+  @@index([companyId])
+  @@index([nextRunAt, isActive])
 }
 
 // ─── AI CONFIG ────────────────────────────────────────────────────────────────

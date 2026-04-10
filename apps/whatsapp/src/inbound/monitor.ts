@@ -184,13 +184,44 @@ export class InboundMonitor {
       logger.info({ messageId: storedMessage.id }, 'Message queued for AI processing');
     }
 
-    // ── Lead + deal hooks (best-effort, never block message ingestion) ───
+    // ── Lead + deal + task hooks (best-effort, never block ingestion) ────
     await this.maybeCreateLead(companyId, contact.id, normalized.body)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead auto-create failed'));
     await this.bumpLeadScore(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead score bump failed'));
     await this.touchOpenDeals(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'deal touch failed'));
+    await this.touchOpenTasks(companyId, contact.id)
+      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'task touch failed'));
+  }
+
+  /**
+   * For every open task linked to this contact, drop a `CUSTOM` activity
+   * row "Contact replied via WhatsApp". Doesn't change the task state —
+   * just gives the timeline visibility into inbound messages on related tasks.
+   */
+  private async touchOpenTasks(companyId: string, contactId: string): Promise<void> {
+    const open = await prisma.task.findMany({
+      where: {
+        companyId,
+        contactId,
+        status: { notIn: ['DONE', 'CANCELLED'] },
+      },
+      select: { id: true },
+    });
+    if (!open.length) return;
+
+    for (const t of open) {
+      await prisma.taskActivity.create({
+        data: {
+          taskId: t.id,
+          companyId,
+          type: 'CUSTOM',
+          actorType: 'whatsapp',
+          title: 'Contact replied via WhatsApp',
+        },
+      });
+    }
   }
 
   /**
