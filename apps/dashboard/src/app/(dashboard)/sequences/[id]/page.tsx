@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import {
   ArrowLeft,
@@ -97,8 +97,9 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export default function SequenceDetailPage() {
-  const { id } = useParams({ strict: false });
-  const navigate = useNavigate();
+  const params = useParams();
+  const id = params.id as string;
+  const router = useRouter();
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<'steps' | 'enrollments' | 'activity'>('steps');
   const [enrollMenuOpen, setEnrollMenuOpen] = useState<string | null>(null);
@@ -157,7 +158,7 @@ export default function SequenceDetailPage() {
   const duplicateMutation = useMutation({
     mutationFn: () => api.post(`/sequences/${id}/duplicate`),
     onSuccess: () => {
-      navigate({ to: '/sequences' });
+      router.push('/sequences');
       toast.success('Sequence duplicated');
     },
   });
@@ -165,7 +166,7 @@ export default function SequenceDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/sequences/${id}`),
     onSuccess: () => {
-      navigate({ to: '/sequences' });
+      router.push('/sequences');
       toast.success('Sequence deleted');
     },
   });
@@ -234,7 +235,7 @@ export default function SequenceDetailPage() {
       {/* Header */}
       <div className="h-14 border-b border-gray-200 px-4 flex items-center gap-3 shrink-0 bg-white">
         <button
-          onClick={() => navigate({ to: '/sequences' })}
+          onClick={() => router.push('/sequences')}
           className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft size={16} className="text-gray-400" />
@@ -523,7 +524,7 @@ export default function SequenceDetailPage() {
               )}
               {sequence.status === 'ACTIVE' && (
                 <button
-                  onClick={() => navigate({ to: `/contacts?enrollIn=${sequence.id}` })}
+                  onClick={() => router.push(`/contacts?enrollIn=${sequence.id}`)}
                   className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium transition-colors"
                 >
                   <Users size={14} /> Enroll Contacts
@@ -564,7 +565,7 @@ export default function SequenceDetailPage() {
           <div className="border-t border-gray-100 pt-3">
             <h3 className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-2">Analytics</h3>
             <button
-              onClick={() => navigate({ to: `/analytics?sequence=${sequence.id}` })}
+              onClick={() => router.push(`/analytics?sequence=${sequence.id}`)}
               className="w-full flex items-center gap-2 px-3 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-xs font-medium transition-colors"
             >
               <BarChart3 size={14} /> View Performance

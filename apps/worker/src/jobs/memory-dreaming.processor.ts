@@ -18,7 +18,7 @@ import pino from 'pino';
 import { createHash, randomUUID } from 'crypto';
 import { prisma } from '@wacrm/database';
 import { QUEUES } from '@wacrm/shared';
-import { SequenceMemoryService } from '@wacrm/sequences';
+import { SequenceMemoryService } from './sequence-memory.service';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const connection = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: null });

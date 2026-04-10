@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api-client';
 import {
   Plus,
@@ -48,7 +48,7 @@ const STATUS_COLORS = {
 };
 
 export default function SequencesPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -155,7 +155,7 @@ export default function SequencesPage() {
         }
         break;
       case 'enroll':
-        navigate({ to: `/sequences/${id}` });
+        router.push(`/sequences/${id}`);
         break;
     }
   };
@@ -291,7 +291,7 @@ export default function SequencesPage() {
                 <tr
                   key={s.id}
                   className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
-                  onClick={() => navigate({ to: `/sequences/${s.id}` })}
+                  onClick={() => router.push(`/sequences/${s.id}`)}
                 >
                   <td className="px-4 py-3">
                     <div className="text-xs font-medium text-gray-900">{s.name}</div>

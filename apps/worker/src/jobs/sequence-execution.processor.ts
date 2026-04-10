@@ -9,8 +9,8 @@ import Redis from 'ioredis';
 import pino from 'pino';
 import { prisma } from '@wacrm/database';
 import { QUEUES } from '@wacrm/shared';
-import { SequenceExecutionService } from '@wacrm/sequences';
-import { SequencesService } from '@wacrm/sequences';
+import { SequenceExecutionService } from './sequence-execution.service';
+import { SequencesService } from './sequences.service';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const connection = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: null });
