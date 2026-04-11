@@ -27,6 +27,16 @@ import type {
   UpdateCampaignDto,
   ListCampaignsFilters,
 } from '../campaigns/campaigns.types';
+import { FormsService } from '../forms/forms.service';
+import { LeadsService as FormsLeadsShim } from '../leads/leads.service';
+import type {
+  FormActor,
+  FormField,
+  CreateFormDto,
+  UpdateFormDto,
+  AutoActionsConfig,
+  ListFormsFilters,
+} from '../forms/forms.types';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -43,6 +53,10 @@ const templatesService = new TemplatesService();
 const sequencesService = new SequencesService();
 const sequenceMemoryService = new SequenceMemoryService();
 const campaignsService = new CampaignsService();
+// FormsService takes a LeadsService (Nest DI usually handles this), so we
+// instantiate a local LeadsService without DI hookup — all LeadsService
+// methods used by FormsService.submit are plain prisma reads/writes.
+const formsService = new FormsService(new FormsLeadsShim());
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -58,6 +72,7 @@ const AI_PRODUCT_ACTOR: ProductActor = { type: 'ai' };
 const AI_BROADCAST_ACTOR: BroadcastActor = { type: 'ai' };
 const AI_TEMPLATE_ACTOR: TemplateActor = { type: 'ai' };
 const AI_CAMPAIGN_ACTOR: CampaignActor = { type: 'ai' };
+const AI_FORM_ACTOR: FormActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -4826,12 +4841,529 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Forms ─────────────────────────────────────────────────────────────────
+  // ── Forms (full lifecycle — 22 tools) ─────────────────────────────────────
   {
-    definition: { name: 'create_form', description: 'Create a web form for lead capture.', parameters: { type: 'object', properties: { name: { type: 'string' }, fields: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, type: { type: 'string' }, label: { type: 'string' }, required: { type: 'boolean' } } } } }, required: ['name', 'fields'] } },
+    definition: {
+      name: 'list_forms',
+      description: 'List forms with rich filters. Use this before answering any "show me my forms" question.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', description: 'Comma-separated: DRAFT, ACTIVE, PAUSED, ARCHIVED' },
+          tag: { type: 'string' },
+          search: { type: 'string', description: 'Free-text over name, description, notes' },
+          sort: { type: 'string', enum: ['recent', 'name', 'submissions', 'conversion'] },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+        },
+      },
+    },
     execute: async (args, companyId) => {
-      const f = await prisma.form.create({ data: { companyId, name: args.name as string, fields: args.fields as any } });
-      return `Created form "${f.name}" with ${(args.fields as unknown[]).length} fields`;
+      const filters: ListFormsFilters = {
+        status: args.status ? (String(args.status).split(',') as never) : undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        sort: args.sort as ListFormsFilters['sort'],
+        page: typeof args.page === 'number' ? args.page : undefined,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      const { items, total } = await formsService.list(companyId, filters);
+      if (items.length === 0) return 'No forms match.';
+      return `${items.length}/${total} forms:\n` + items
+        .map((f) => `- [${f.status}] ${f.name} (slug: ${f.slug}) · ${f.submitCount} submits · ${f.convertedCount} converted · id: ${f.id}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_form',
+      description: 'Get full form details including fields, auto-actions, and recent activity.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.get(companyId, args.formId as string);
+      return JSON.stringify({
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        status: f.status,
+        description: f.description,
+        fields: f.fields,
+        isPublic: f.isPublic,
+        rateLimitPerHour: f.rateLimitPerHour,
+        autoActions: {
+          autoCreateLead: f.autoCreateLead,
+          autoLeadSource: f.autoLeadSource,
+          autoLeadTitle: f.autoLeadTitle,
+          autoEnrollSequenceId: f.autoEnrollSequenceId,
+          autoAssignUserId: f.autoAssignUserId,
+          autoTagContact: f.autoTagContact,
+        },
+        counters: {
+          submitCount: f.submitCount,
+          convertedCount: f.convertedCount,
+          spamCount: f.spamCount,
+        },
+        webhookForwardUrl: f.webhookForwardUrl,
+        recentActivity: f.activities.map((a) => `[${a.createdAt.toISOString()}] ${a.type} — ${a.title}`),
+      }, null, 2);
+    },
+  },
+  {
+    definition: {
+      name: 'create_form',
+      description: 'Create a form in DRAFT status. After creation you usually want to call add_form_field multiple times, then set_form_auto_actions, then publish_form.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+          initialFields: {
+            type: 'array',
+            description: 'Optional list of fields to create immediately with the form. Same shape as add_form_field.',
+            items: { type: 'object' },
+          },
+        },
+        required: ['name'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const dto: CreateFormDto = {
+        name: args.name as string,
+        description: args.description as string | undefined,
+        priority: args.priority as CreateFormDto['priority'],
+        tags: (args.tags as string[] | undefined) ?? undefined,
+        notes: args.notes as string | undefined,
+        fields: (args.initialFields as FormField[] | undefined) ?? [],
+      };
+      const f = await formsService.create(companyId, AI_FORM_ACTOR, dto);
+      return `Created form "${f.name}" (slug: ${f.slug}) in DRAFT. id: ${f.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_form',
+      description: 'Update form metadata (name, description, tags, public settings). Only works on DRAFT/ACTIVE/PAUSED forms.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+          isPublic: { type: 'boolean', description: 'Whether to expose the form on the /public/forms/:slug URL' },
+          rateLimitPerHour: { type: 'number' },
+          requireCaptcha: { type: 'boolean' },
+        },
+        required: ['formId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { formId, ...rest } = args;
+      const f = await formsService.update(
+        companyId,
+        formId as string,
+        AI_FORM_ACTOR,
+        rest as UpdateFormDto,
+      );
+      return `Updated form "${f.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_form_field',
+      description: 'Append a typed field to a form. Supported types: text, email, phone, number, textarea, select, radio, checkbox, date, url. For select/radio, pass `options` as an array of {value, label}.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          key: { type: 'string', description: 'Stable identifier used in submission payloads. Must match [a-zA-Z_][a-zA-Z0-9_-]*.' },
+          type: { type: 'string', enum: ['text', 'email', 'phone', 'number', 'textarea', 'select', 'radio', 'checkbox', 'date', 'url'] },
+          label: { type: 'string' },
+          placeholder: { type: 'string' },
+          description: { type: 'string' },
+          required: { type: 'boolean' },
+          options: {
+            type: 'array',
+            description: 'For select/radio types.',
+            items: {
+              type: 'object',
+              properties: { value: { type: 'string' }, label: { type: 'string' } },
+              required: ['value', 'label'],
+            },
+          },
+          minLength: { type: 'number' },
+          maxLength: { type: 'number' },
+        },
+        required: ['formId', 'key', 'type', 'label'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { formId, ...fieldArgs } = args;
+      const f = await formsService.addField(
+        companyId,
+        formId as string,
+        AI_FORM_ACTOR,
+        fieldArgs as unknown as FormField,
+      );
+      return `Added field "${(fieldArgs as { label: string }).label}" to "${f.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'remove_form_field',
+      description: 'Remove a field from a form by its key.',
+      parameters: {
+        type: 'object',
+        properties: { formId: { type: 'string' }, key: { type: 'string' } },
+        required: ['formId', 'key'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.removeField(
+        companyId,
+        args.formId as string,
+        AI_FORM_ACTOR,
+        args.key as string,
+      );
+      return `Removed field from "${f.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'reorder_form_fields',
+      description: 'Reorder the fields of a form. Pass the full array of field keys in the desired order.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          keys: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['formId', 'keys'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await formsService.reorderFields(
+        companyId,
+        args.formId as string,
+        AI_FORM_ACTOR,
+        args.keys as string[],
+      );
+      return `Fields reordered`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_form_auto_actions',
+      description: 'Configure what happens automatically when someone submits a form. Typically: auto-create a Lead with a source, tag the contact, assign to a user. All fields optional.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          autoCreateLead: { type: 'boolean' },
+          autoLeadSource: { type: 'string', description: 'Lead source enum: WHATSAPP, WEBSITE, REFERRAL, FORM, META_ADS, WEBHOOK, OTHER, etc.' },
+          autoLeadTitle: { type: 'string', description: 'Template string; supports {{fieldKey}} tokens from the submission' },
+          autoEnrollSequenceId: { type: 'string', description: 'Sequence to enrol the auto-created lead into' },
+          autoAssignUserId: { type: 'string' },
+          autoTagContact: { type: 'array', items: { type: 'string' } },
+          webhookForwardUrl: { type: 'string', description: 'POST every raw submission to this URL (best-effort)' },
+        },
+        required: ['formId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { formId, ...cfg } = args;
+      await formsService.setAutoActions(
+        companyId,
+        formId as string,
+        AI_FORM_ACTOR,
+        cfg as AutoActionsConfig,
+      );
+      return `Auto-actions updated`;
+    },
+  },
+  {
+    definition: {
+      name: 'publish_form',
+      description: 'Publish a DRAFT or PAUSED form so it starts accepting submissions. Requires at least one field.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.publish(companyId, args.formId as string, AI_FORM_ACTOR);
+      return `Published "${f.name}" at slug "${f.slug}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'unpublish_form',
+      description: 'Pause an ACTIVE form so it stops accepting new submissions.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.unpublish(companyId, args.formId as string, AI_FORM_ACTOR);
+      return `Unpublished "${f.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'archive_form',
+      description: 'Archive a form. Archived forms can be restored via restore_form.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.archive(companyId, args.formId as string, AI_FORM_ACTOR);
+      return `Archived "${f.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'duplicate_form',
+      description: 'Duplicate a form as a new DRAFT with the same fields and auto-actions.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.duplicate(companyId, args.formId as string, AI_FORM_ACTOR);
+      return `Duplicated — new form id: ${f.id} (DRAFT)`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_form',
+      description: 'Permanently delete a form. Only DRAFT or ARCHIVED forms can be deleted.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      await formsService.remove(companyId, args.formId as string);
+      return `Deleted`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_form_note',
+      description: 'Drop a note on the form timeline.',
+      parameters: {
+        type: 'object',
+        properties: { formId: { type: 'string' }, body: { type: 'string' } },
+        required: ['formId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await formsService.addNote(
+        companyId,
+        args.formId as string,
+        AI_FORM_ACTOR,
+        args.body as string,
+      );
+      return `Note added`;
+    },
+  },
+  {
+    definition: {
+      name: 'list_form_submissions',
+      description: 'List submissions for a form with optional status filter. Use status=RECEIVED,SPAM,CONVERTED to diagnose deliverability.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          status: { type: 'string', description: 'Comma-separated: RECEIVED, PROCESSED, CONVERTED, SPAM, ARCHIVED' },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+        },
+        required: ['formId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { items, total } = await formsService.listSubmissions(
+        companyId,
+        args.formId as string,
+        {
+          status: args.status ? (String(args.status).split(',') as never) : undefined,
+          page: typeof args.page === 'number' ? args.page : undefined,
+          limit: typeof args.limit === 'number' ? args.limit : undefined,
+        },
+      );
+      if (items.length === 0) return 'No submissions match.';
+      return `${items.length}/${total} submissions:\n` + items
+        .slice(0, 30)
+        .map((s) => `- [${s.status}] ${s.id} (${new Date(s.createdAt).toLocaleString()}${s.leadId ? ' → lead ' + s.leadId : ''})`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_form_submission',
+      description: 'Get full details of a single form submission, including the raw payload.',
+      parameters: {
+        type: 'object',
+        properties: { formId: { type: 'string' }, submissionId: { type: 'string' } },
+        required: ['formId', 'submissionId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await formsService.getSubmission(
+        companyId,
+        args.formId as string,
+        args.submissionId as string,
+      );
+      return JSON.stringify(s, null, 2);
+    },
+  },
+  {
+    definition: {
+      name: 'convert_submission_to_lead',
+      description: 'Manually convert a form submission to a Lead (if auto-create was off, or to create a second lead).',
+      parameters: {
+        type: 'object',
+        properties: {
+          submissionId: { type: 'string' },
+          title: { type: 'string', description: 'Optional lead title override' },
+          source: { type: 'string', description: 'Optional LeadSource override' },
+          tags: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['submissionId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { submissionId, ...overrides } = args;
+      const r = await formsService.convertSubmissionToLead(
+        companyId,
+        submissionId as string,
+        AI_FORM_ACTOR,
+        overrides as never,
+      );
+      return `Converted submission → lead ${r.leadId}${r.contactId ? ' (contact ' + r.contactId + ')' : ''}`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_submission_spam',
+      description: 'Mark a form submission as spam — bumps the form spam counter and excludes it from stats.',
+      parameters: {
+        type: 'object',
+        properties: { submissionId: { type: 'string' } },
+        required: ['submissionId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await formsService.markSubmissionSpam(
+        companyId,
+        args.submissionId as string,
+        AI_FORM_ACTOR,
+      );
+      return `Marked as spam`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_form_submission',
+      description: 'Permanently delete a form submission.',
+      parameters: {
+        type: 'object',
+        properties: { submissionId: { type: 'string' } },
+        required: ['submissionId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await formsService.deleteSubmission(companyId, args.submissionId as string);
+      return `Deleted`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_form_stats',
+      description: 'Get aggregate form stats across all forms created in the last N days.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Lookback window in days. Default 30.' } },
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await formsService.stats(
+        companyId,
+        typeof args.days === 'number' ? args.days : 30,
+      );
+      return `Forms (${s.rangeDays}d): ${s.totalForms} total, ${s.activeForms} active.\n` +
+        `Submissions: ${s.totalSubmissions} total, ${s.totalConverted} converted, ${s.totalSpam} spam.\n` +
+        `Conversion rate: ${s.conversionRate ?? 'n/a'}%  ·  Spam rate: ${s.spamRate ?? 'n/a'}%`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_form_timeline',
+      description: 'Fetch the activity timeline for a form (most recent first).',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string' },
+          limit: { type: 'number' },
+        },
+        required: ['formId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const events = await formsService.getTimeline(
+        companyId,
+        args.formId as string,
+        typeof args.limit === 'number' ? args.limit : 30,
+      );
+      if (events.length === 0) return 'No activity.';
+      return events
+        .map((e) => `[${e.createdAt.toISOString()}] ${e.type} (${e.actorType}) — ${e.title}${e.body ? '\n  ' + e.body : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_form_public_url',
+      description: 'Get the hosted public URL for a form. Returns the URL when the form is ACTIVE, isPublic, and the CRM has an API_PUBLIC_URL configured; otherwise returns an explanation of what is blocking it.',
+      parameters: { type: 'object', properties: { formId: { type: 'string' } }, required: ['formId'] },
+    },
+    execute: async (args, companyId) => {
+      const f = await formsService.get(companyId, args.formId as string);
+      const blockers: string[] = [];
+      if (f.status !== 'ACTIVE') blockers.push(`status is ${f.status}, must be ACTIVE`);
+      if (!f.isPublic) blockers.push('isPublic=false — flip it via update_form');
+      const publicUrl = process.env.API_PUBLIC_URL?.replace(/\/$/, '');
+      if (!publicUrl) blockers.push('API_PUBLIC_URL env var is not set — Meta/public hosting not configured');
+      if (blockers.length > 0) {
+        return `MEMORY_SEARCH_UNAVAILABLE: form is not publicly reachable.\nBlockers:\n${blockers.map((b) => '  - ' + b).join('\n')}`;
+      }
+      return `${publicUrl}/public/forms/${f.slug}`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_publish_forms',
+      description: 'Publish multiple DRAFT/PAUSED forms at once.',
+      parameters: { type: 'object', properties: { formIds: { type: 'array', items: { type: 'string' } } }, required: ['formIds'] },
+    },
+    execute: async (args, companyId) => {
+      const r = await formsService.bulkPublish(
+        companyId,
+        args.formIds as string[],
+        AI_FORM_ACTOR,
+      );
+      return `Published ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_archive_forms',
+      description: 'Archive multiple forms at once.',
+      parameters: { type: 'object', properties: { formIds: { type: 'array', items: { type: 'string' } } }, required: ['formIds'] },
+    },
+    execute: async (args, companyId) => {
+      const r = await formsService.bulkArchive(
+        companyId,
+        args.formIds as string[],
+        AI_FORM_ACTOR,
+      );
+      return `Archived ${r.updated}, failed ${r.failed}.`;
     },
   },
 
@@ -5102,6 +5634,9 @@ const CORE_TOOL_NAMES = new Set([
   // Campaigns (full lifecycle — 24 tools total, 7 exposed by default)
   'list_campaigns', 'get_campaign', 'create_campaign', 'set_campaign_audience',
   'schedule_campaign', 'launch_campaign', 'get_campaign_stats',
+  // Forms (full lifecycle — 24 tools total, 8 exposed by default)
+  'list_forms', 'get_form', 'create_form', 'add_form_field',
+  'set_form_auto_actions', 'publish_form', 'list_form_submissions', 'get_form_stats',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics

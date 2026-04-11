@@ -33,7 +33,13 @@ interface ApiKeyWithSecret extends ApiKey {
   key?: string;
 }
 
-const SCOPE_OPTIONS = ['leads:write', 'leads:read', 'webhooks:meta'];
+const SCOPE_OPTIONS = [
+  'leads:write',
+  'leads:read',
+  'webhooks:meta',
+  'forms:write',
+  'forms:read',
+];
 
 export default function LeadsApiKeysPage() {
   const router = useRouter();

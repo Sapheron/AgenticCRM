@@ -1866,38 +1866,138 @@ model CampaignActivity {
   @@index([companyId, type, createdAt])
 }
 
+enum FormStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum FormSubmissionStatus {
+  RECEIVED
+  PROCESSED
+  SPAM
+  CONVERTED
+  ARCHIVED
+}
+
+enum FormActivityType {
+  CREATED
+  RENAMED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+  RESTORED
+  FIELD_UPDATED
+  FIELD_ADDED
+  FIELD_REMOVED
+  FIELDS_REORDERED
+  AUTO_ACTIONS_UPDATED
+  NOTE_ADDED
+  SUBMISSION_RECEIVED
+  SUBMISSION_CONVERTED
+  SUBMISSION_MARKED_SPAM
+  WEBHOOK_ROTATED
+  DUPLICATED
+  ERROR
+}
+
 model Form {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   companyId   String
   name        String
-  fields      Json     @default("[]") // [{name, type, required, label}]
-  isActive    Boolean  @default(true)
-  submitCount Int      @default(0)
-  createdAt   DateTime @default(now())
+  slug        String // URL-safe identifier, unique per company
+  description String?
+  /// JSON array of FormField objects (see apps/api/src/modules/forms/forms.types.ts)
+  fields      Json       @default("[]")
+  status      FormStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  // Public rendering
+  isPublic         Boolean @default(false)
+  requireCaptcha   Boolean @default(false)
+  rateLimitPerHour Int     @default(30)
+
+  // Auto-actions fired on every submission (all opt-in)
+  autoCreateLead       Boolean  @default(false)
+  autoLeadSource       String?  @default("FORM")
+  autoLeadTitle        String? // may contain {{var}} tokens from field keys
+  autoEnrollSequenceId String?
+  autoAssignUserId     String?
+  autoTagContact       String[] @default([])
+
+  // Optional forward-to-external-URL (e.g. Zapier catch hook)
+  webhookForwardUrl    String?
+  /// Encrypted with AES-256-GCM via @wacrm/shared:encrypt
+  webhookForwardSecret String?
+
+  // Meta
+  priority String   @default("MEDIUM")
+  tags     String[] @default([])
+  notes    String?
+
+  // Analytics counters maintained by the service
+  submitCount    Int @default(0)
+  convertedCount Int @default(0)
+  spamCount      Int @default(0)
+
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   submissions FormSubmission[]
+  activities  FormActivity[]
 
   @@unique([companyId, name])
+  @@unique([companyId, slug])
   @@index([companyId])
+  @@index([companyId, status])
 }
 
 model FormSubmission {
-  id          String   @id @default(cuid())
-  formId      String
-  companyId   String
-  data        Json     @default("{}")
-  contactId   String?
-  leadId      String?
-  utmSource   String?
-  utmMedium   String?
-  utmCampaign String?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
+  id                   String               @id @default(cuid())
+  formId               String
+  companyId            String
+  /// The raw key→value map of what the user filled in.
+  data                 Json                 @default("{}")
+  status               FormSubmissionStatus @default(RECEIVED)
+  contactId            String?
+  leadId               String?
+  sequenceEnrollmentId String?
+  utmSource            String?
+  utmMedium            String?
+  utmCampaign          String?
+  referrer             String?
+  userAgent            String?
+  ipAddress            String?
+  errorReason          String?
+  processedAt          DateTime?
+  createdAt            DateTime             @default(now())
 
   form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
 
   @@index([formId])
+  @@index([formId, status])
   @@index([companyId])
+  @@index([companyId, status])
+}
+
+model FormActivity {
+  id        String           @id @default(cuid())
+  formId    String
+  companyId String
+  type      FormActivityType
+  actorType String // "user" | "ai" | "system" | "worker" | "public"
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json             @default("{}")
+  createdAt DateTime         @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId, createdAt])
+  @@index([companyId, type, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

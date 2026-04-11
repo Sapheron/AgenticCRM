@@ -990,10 +990,31 @@ exports.Prisma.FormScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
   name: 'name',
+  slug: 'slug',
+  description: 'description',
   fields: 'fields',
-  isActive: 'isActive',
+  status: 'status',
+  publishedAt: 'publishedAt',
+  isPublic: 'isPublic',
+  requireCaptcha: 'requireCaptcha',
+  rateLimitPerHour: 'rateLimitPerHour',
+  autoCreateLead: 'autoCreateLead',
+  autoLeadSource: 'autoLeadSource',
+  autoLeadTitle: 'autoLeadTitle',
+  autoEnrollSequenceId: 'autoEnrollSequenceId',
+  autoAssignUserId: 'autoAssignUserId',
+  autoTagContact: 'autoTagContact',
+  webhookForwardUrl: 'webhookForwardUrl',
+  webhookForwardSecret: 'webhookForwardSecret',
+  priority: 'priority',
+  tags: 'tags',
+  notes: 'notes',
   submitCount: 'submitCount',
-  createdAt: 'createdAt'
+  convertedCount: 'convertedCount',
+  spamCount: 'spamCount',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.FormSubmissionScalarFieldEnum = {
@@ -1001,12 +1022,31 @@ exports.Prisma.FormSubmissionScalarFieldEnum = {
   formId: 'formId',
   companyId: 'companyId',
   data: 'data',
+  status: 'status',
   contactId: 'contactId',
   leadId: 'leadId',
+  sequenceEnrollmentId: 'sequenceEnrollmentId',
   utmSource: 'utmSource',
   utmMedium: 'utmMedium',
   utmCampaign: 'utmCampaign',
+  referrer: 'referrer',
+  userAgent: 'userAgent',
   ipAddress: 'ipAddress',
+  errorReason: 'errorReason',
+  processedAt: 'processedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.FormActivityScalarFieldEnum = {
+  id: 'id',
+  formId: 'formId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
   createdAt: 'createdAt'
 };
 
@@ -1782,6 +1822,42 @@ exports.CampaignActivityType = exports.$Enums.CampaignActivityType = {
   ERROR: 'ERROR'
 };
 
+exports.FormStatus = exports.$Enums.FormStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  PAUSED: 'PAUSED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.FormSubmissionStatus = exports.$Enums.FormSubmissionStatus = {
+  RECEIVED: 'RECEIVED',
+  PROCESSED: 'PROCESSED',
+  SPAM: 'SPAM',
+  CONVERTED: 'CONVERTED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.FormActivityType = exports.$Enums.FormActivityType = {
+  CREATED: 'CREATED',
+  RENAMED: 'RENAMED',
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  ARCHIVED: 'ARCHIVED',
+  RESTORED: 'RESTORED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  FIELD_ADDED: 'FIELD_ADDED',
+  FIELD_REMOVED: 'FIELD_REMOVED',
+  FIELDS_REORDERED: 'FIELDS_REORDERED',
+  AUTO_ACTIONS_UPDATED: 'AUTO_ACTIONS_UPDATED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  SUBMISSION_RECEIVED: 'SUBMISSION_RECEIVED',
+  SUBMISSION_CONVERTED: 'SUBMISSION_CONVERTED',
+  SUBMISSION_MARKED_SPAM: 'SUBMISSION_MARKED_SPAM',
+  WEBHOOK_ROTATED: 'WEBHOOK_ROTATED',
+  DUPLICATED: 'DUPLICATED',
+  ERROR: 'ERROR'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   User: 'User',
@@ -1837,6 +1913,7 @@ exports.Prisma.ModelName = {
   CampaignActivity: 'CampaignActivity',
   Form: 'Form',
   FormSubmission: 'FormSubmission',
+  FormActivity: 'FormActivity',
   Workflow: 'Workflow',
   WorkflowExecution: 'WorkflowExecution',
   Ticket: 'Ticket',
