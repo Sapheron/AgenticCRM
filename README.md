@@ -2,9 +2,9 @@
 
 # ⚡ Open Agent CRM
 
-### The Open-Source WhatsApp AI CRM — Built for Real Businesses
+### The Self-Hosted WhatsApp CRM You Run Entirely by Chatting With an AI
 
-**Self-hosted · AI-powered · WhatsApp-native · Multi-agent**
+**Self-hosted · AI-powered · WhatsApp-native · Multi-tenant**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/Sapheron/Open-Agent-CRM?style=flat-square&color=yellow)](https://github.com/Sapheron/Open-Agent-CRM/stargazers)
@@ -30,9 +30,16 @@ Developed by **[ASHIK K I](https://github.com/ashik-k-i)**
 
 ## What is Open Agent CRM?
 
-Open Agent CRM is a **production-ready, self-hosted WhatsApp CRM** that puts an AI agent at the center of every customer conversation.
+Open Agent CRM is a **self-hosted WhatsApp CRM that you run by chatting with an AI**. Instead of clicking through forms to create leads, move deals, schedule tasks, or send broadcasts, you open the admin chat, describe what you want in plain English, and the AI calls the right CRM actions for you.
 
-Instead of manually replying to hundreds of WhatsApp messages, your AI agent handles inquiries, qualifies leads, creates deals, generates payment links, runs drip sequences, and escalates to a human agent when needed — all automatically, all from a single dashboard you control. Configure 15 AI providers, 5 payment gateways, and any number of WhatsApp accounts from the dashboard — no `.env` editing required for credentials.
+Under the hood it's a complete CRM — contacts, leads, deals, tasks, pipelines, products, quotes, invoices, payments, sequences, templates, broadcasts, campaigns, forms, workflows, tickets, knowledge base, documents, analytics, reports — with WhatsApp as the primary outbound channel and an AI agent layered on top of every module.
+
+**Two ways to talk to the AI:**
+
+1. **The `/chat` dashboard page** — the primary interface. Type naturally; the AI uses **~169 registered CRM tools** to do the work (~55 exposed by default, the rest callable on demand).
+2. **Optional auto-reply on inbound WhatsApp** — off by default. Flip `autoReplyEnabled` in Settings → AI and the same agent loop will respond to inbound customer WhatsApp messages using those tools.
+
+All credentials — AI provider keys, payment gateway keys, WhatsApp accounts — live in the database, encrypted with AES-256-GCM. The only things in `.env` are infrastructure URLs and a master encryption key.
 
 ---
 
@@ -58,87 +65,87 @@ The installer is **fully idempotent** — re-run it anytime to update or repair.
 
 ## Features
 
+### 🤖 Admin AI Chat (the primary surface)
+
+- A full conversational agent at `/chat` that drives the CRM through tool calls. Type "create a deal for Acme worth ₹50k and remind me to follow up on Friday" and the agent calls `create_deal` + `create_task` in sequence.
+- **~169 admin tools** across every module: contacts, leads, deals, tasks, pipelines, products, quotes, invoices, payments, broadcasts, campaigns, forms, workflows, sequences, templates, tickets, knowledge base, documents, analytics, memory, WhatsApp.
+- **~55 core tools** are always exposed to the model; the rest are callable by name on demand so the prompt stays short.
+- Tool catalog UI at [`/docs`](apps/dashboard/src/app/(dashboard)/docs) — browse every tool grouped by domain so you can see exactly what the AI can do.
+- File attachments — drop an image or PDF into the chat and say "send this to John"; the agent calls `send_whatsapp` with your attachment as the payload.
+- Circuit breaker (Opossum) — auto-fallback if the configured AI provider errors out.
+- Agent loop with a hard iteration cap so runaway tool loops can't burn tokens.
+
 ### 📲 WhatsApp Integration
-- Connect multiple WhatsApp numbers via QR scan — no phone needed 24/7
-- Baileys 6.17 (WhatsApp Web protocol) with auto-reconnect and session isolation
-- Real-time delivery, read receipts, and status tracking
-- Media support — images, video, audio, documents stored in MinIO
-- **Warmup scheduler** — 6-stage daily-limit progression to keep accounts alive
-- Outbound queue with rate limiting and retry
 
-### 🤖 AI Agent & Admin Chat
-- Fully autonomous agent loop with tool calling — handles WhatsApp replies AND a separate admin chat that drives the entire CRM
-- **~169 registered admin tools** across every module; **~55 always-exposed core tools** with the rest callable on demand to keep the prompt small
-- **15 AI providers** — all configured from the dashboard, keys encrypted with AES-256-GCM in the database
+- Connect multiple WhatsApp numbers via QR scan — no phone needs to stay online 24/7 after pairing.
+- Baileys 6.17 (WhatsApp Web protocol) with session isolation and auto-reconnect.
+- Real-time inbound + outbound with delivery / read receipts and status tracking.
+- Media — images, video, audio, documents — stored in MinIO.
+- **Warmup scheduler** — 6-stage daily-limit progression to protect fresh numbers from bans.
+- **Inbound hooks** — every inbound message auto-creates a contact if it's new, auto-creates a lead with `source: WHATSAPP` if the contact has no open lead in the last 30 days, bumps lead scores based on response velocity, and drops activity rows on any open deal or task tied to the contact.
+- **Optional AI auto-reply** — off by default. Enable in Settings → AI to have the admin agent loop run on inbound customer messages too.
+- **Cloud API fallback scaffold** at [`apps/whatsapp/src/cloud-api/`](apps/whatsapp/src/cloud-api/) (not wired to the UI yet — see Roadmap).
 
-  | Group | Providers |
-  |---|---|
-  | **Hosted** | Anthropic Claude · OpenAI · Google Gemini · Groq · DeepSeek · xAI · Mistral · Together · Moonshot · GLM · Qwen · StepFun |
-  | **Local** | Ollama (llama3, mistral, phi4, gemma3, deepseek-r1, qwen2.5, …) |
-  | **Aggregator** | OpenRouter (200+ models) · Custom OpenAI-compatible endpoint |
+### 🧠 File-Based AI Memory
 
-- Live **provider test** button in settings — swap models without restart
-- Circuit breaker (Opossum) — auto-fallback if a provider goes down
-- Token-aware context builder with smart pruning
-- Conversation FSM with 7 states:
-  ```
-  OPEN → AI_HANDLING → WAITING_HUMAN → HUMAN_HANDLING → RESOLVED → CLOSED
-                                                                  ↘ SPAM
-  ```
-- **Tool catalog page** at `/docs` in the dashboard — every tool grouped by domain so admins can see exactly what the AI can do
+- Markdown files (`MEMORY.md` + `memory/YYYY-MM-DD-*.md`) stored per company and chunked into **pgvector** embeddings + Postgres `tsvector` for hybrid search.
+- `memory_search` tool — vector + FTS hybrid with per-keyword broaden-recall fallback and an ILIKE substring safety net, so proper nouns and conversational queries don't get dropped by stemming.
+- `memory_write` tool — the agent proactively appends facts the user shares (names, roles, preferences, business policies) without asking.
+- `memory_get` tool — read any file verbatim when search isn't precise enough.
+- **Memory dreaming job** — every 6 hours a worker scores recall frequency, diversity, and recency across `RecallEntry`, and promotes the hottest snippets into the long-term `MEMORY.md`.
+- Separate categorical `ai-memory` module for key/value facts you want injected into every system prompt verbatim.
 
-### 🧠 Memory & RAG (OpenClaw-style)
-Two memory layers, both queryable from the AI agent:
+### 🔁 Sequences, Templates & Broadcasts
 
-| Layer | What it stores | How it's used |
-|---|---|---|
-| **Vector RAG** (`memory` module) | `MemoryFile` → `MemoryChunk` with **pgvector** embeddings + Postgres `tsvector` | Hybrid (vector + keyword) search; the AI calls `memory_search` to recall relevant snippets at runtime |
-| **Categorical** (`ai-memory` module) | `AiMemory` rows tagged by category | Injected verbatim into the system prompt for facts you want the AI to never forget |
+- **Sequences** — multi-step drip campaigns with full lifecycle `DRAFT → ACTIVE → PAUSED → ARCHIVED` plus per-enrollment `ACTIVE → PAUSED → COMPLETED / STOPPED / CANCELLED`. Step types: `send_message`, `send_email`, `wait`, `add_tag`, `remove_tag`, `webhook`, `ai_task`. Hour-level delays, bulk enroll/unenroll, pause/resume per enrollment. A worker processor advances enrollments every minute with exponential-backoff retries (1h → 2h → 4h → STOPPED).
+- **Templates** — WhatsApp message templates with `{{variable}}` substitution, default values, preview, `DRAFT / ACTIVE / ARCHIVED` status, and send/duplicate/archive actions.
+- **Broadcasts** — tag-based audience targeting, scheduled sends, warmup-aware delivery, per-recipient state tracking, pause/resume/cancel.
 
-A **memory dreaming** worker (`apps/worker/src/jobs/memory-dreaming.processor.ts`) runs every 6 hours, scores hot recall entries by frequency / relevance / diversity / recency, and promotes the top patterns into the long-term `MEMORY.md` file that ships with every system prompt.
+### 🧾 CRM Modules (shipped)
 
-### 🔁 Sequences & Templates
-- **Drip campaigns** with full lifecycle: `DRAFT → ACTIVE → PAUSED → ARCHIVED`, plus per-enrollment `ACTIVE → PAUSED → COMPLETED / STOPPED / CANCELLED`
-- Step types: `send_message`, `send_email`, `wait`, `add_tag`, `remove_tag`, `webhook`, `ai_task` — with hour-level delays and JSON conditions
-- **Bulk enroll / pause / stop** from the dashboard or via the AI agent
-- **Templates** module with `{{variable}}` substitution, default values, preview, draft / active / archived status, and a "send template" tool
-- Worker processor advances enrollments every minute; failures retry with exponential backoff (1 h → 2 h → 4 h, then `STOPPED`)
-
-### 🧾 CRM Modules
-| Module | Capabilities |
+| Module | What's in it |
 |---|---|
-| **Contacts** | Full-text search, tags, opt-out, phone normalization, custom fields, lifecycle stages, timeline |
-| **Leads** | Status pipeline (NEW → WON / LOST), source tracking, scoring with decay, estimated value, table + kanban views |
-| **Deals** | Multi-pipeline kanban, custom stages, line items, won/lost tracking, forecast |
-| **Tasks** | Priority, due dates, reminders, recurrence, watchers, comments, time logs |
-| **Pipelines** | Custom sales pipelines with reorderable stages |
-| **Products** | Catalog, variants, stock adjustments, low-stock alerts |
-| **Quotes & Invoices** | Line-item builder, status tracking |
-| **Payments** | AI-generated payment links, webhook reconciliation, auto deal-won |
-| **Broadcasts** | Tag-based targeting, scheduled sends, warmup-aware delivery, recipient tracking |
+| **Contacts** | Full-text search, tags, opt-out, phone normalization, custom fields, lifecycle stages, timeline, bulk actions |
+| **Leads** | Status pipeline (`NEW → CONTACTED → QUALIFIED → PROPOSAL_SENT → NEGOTIATING → WON / LOST / DISQUALIFIED`), source tracking, auto-scoring with decay, estimated value, table + kanban views |
+| **Deals** | Custom-pipeline kanban, configurable stages, line items, won/lost tracking, `get_deal_forecast` tool |
+| **Tasks** | Priority, due dates, reminders, recurrence, watchers, comments, time logs, kanban view |
+| **Products** | Catalog with variants, stock adjustments, low-stock alerts |
+| **Quotes & Invoices** | Line-item builders with status tracking |
+| **Payments** | Payment tracking, AI-generated payment links, webhook reconciliation, auto deal-won on paid |
 | **Campaigns** | Marketing campaigns tied to forms and workflows |
-| **Forms** | Lead-capture forms with submission storage |
+| **Forms** | Lead-capture form builder with submission storage |
 | **Workflows** | Trigger / condition / action automations with execution history |
 | **Tickets** | Support tickets with comments and SLA policies |
-| **Knowledge Base** | Internal articles searchable by the AI |
-| **Documents** | File storage with signature requests |
-| **Analytics & Reports** | KPI dashboard, deal funnel, lead sources, agent performance, custom + scheduled reports |
+| **Knowledge Base** | Internal articles (`/kb`) the AI can search via `search_knowledge_base` |
+| **Documents** | File storage with signature requests (`DocumentSignature` model) |
+| **Analytics** | KPI dashboard, deal funnel, lead sources, agent performance |
+| **Reports** | Custom report builder + scheduled reports |
 
 ### 📬 Lead Intake & API Keys
-- **Custom webhook endpoint** — `POST /api/webhooks/leads/custom` accepts JSON from Tally, Typeform, Webflow, your own forms, anything that can speak HTTP
-- **Meta Ads connector** (`lead-intake` module) auto-creates leads when someone fills your Facebook / Instagram lead form, gated by a public-URL eligibility check
-- **API Keys** module — SHA-256 hashed keys with scopes (`leads:write`, `leads:read`, `webhooks:meta`), shown once on creation, dedicated `/leads/api-keys` and `/leads/api-docs` dashboard pages
-- App secret + page access token are encrypted at rest with AES-256-GCM; Meta webhook payloads verified with HMAC-SHA256
 
-### 👥 Team Inbox
-- Multi-agent real-time inbox with WebSocket push
-- Conversation assignment, claim, and escalation
-- AI / Human toggle per conversation
-- Role-based access: Super Admin → Admin → Manager → Agent
-- Team invite with role assignment
+- **Custom webhook endpoint** — `POST /api/webhooks/leads/custom` accepts JSON from Tally, Typeform, Webflow, n8n, Zapier, your own forms, anything that can speak HTTP. Protected by Bearer API key.
+- **Meta Ads connector** ([`lead-intake` module](apps/api/src/modules/lead-intake/)) auto-creates leads when someone fills your Facebook / Instagram lead form. Gated by a public-URL eligibility check so Meta's callbacks can reach you.
+- **Dedicated UI pages** — [`/leads/api-keys`](apps/dashboard/src/app/(dashboard)/leads/api-keys/) for key management and [`/leads/api-docs`](apps/dashboard/src/app/(dashboard)/leads/api-docs/) for the full REST reference.
+- Keys are SHA-256 hashed at rest with scopes (`leads:write`, `leads:read`, `webhooks:meta`); raw value shown once on creation.
+- Meta app secret + page access token encrypted with AES-256-GCM; Meta webhook payloads verified with HMAC-SHA256.
+
+### 🧠 AI Providers
+
+All configured from Settings → AI — keys encrypted at rest with AES-256-GCM, never in `.env`:
+
+| Group | Providers |
+|---|---|
+| **Hosted** | Anthropic Claude · OpenAI · Google Gemini · Groq · DeepSeek · xAI · Mistral · Together · Moonshot · GLM · Qwen · StepFun |
+| **Local** | Ollama (llama3, mistral, phi4, gemma3, deepseek-r1, qwen2.5, …) |
+| **Aggregator** | OpenRouter (200+ models) · Custom OpenAI-compatible endpoint |
+
+- **15 provider adapters total** (14 named + `CUSTOM`).
+- Live "Test connection" button in settings — swap providers or models without restart.
+- Per-company token budget, temperature, and system-prompt overrides.
 
 ### 💳 Payment Gateways
-All configured from the dashboard — keys encrypted in the database, never in `.env`:
+
+All keys encrypted in the database. Payment links can be generated by the AI agent with `create_payment_link` and webhooks auto-mark deals as won when payment clears.
 
 | Gateway | Countries | Features |
 |---|---|---|
@@ -148,63 +155,75 @@ All configured from the dashboard — keys encrypted in the database, never in `
 | **PhonePe** | India | UPI payment pages |
 | **PayU** | India | Payment pages, webhooks |
 
+### 👥 Team Inbox & Multi-Tenancy
+
+- WebSocket-pushed real-time inbox (inbox/conversation views via the chat + contacts pages).
+- Conversation FSM with 7 states: `OPEN → AI_HANDLING → WAITING_HUMAN → HUMAN_HANDLING → RESOLVED → CLOSED` plus `SPAM`.
+- Per-conversation AI / Human toggle.
+- Role-based access: Super Admin → Admin → Manager → Agent.
+- Team invites via the [Team settings](apps/dashboard/src/app/(dashboard)/settings/team/) page.
+- `CompanyScopeGuard` on every request — cross-company data access is impossible.
+
 ### 📊 Observability
-- **Prometheus** — metrics scraping for API, Worker, Redis, Postgres
-- **Grafana** — pre-provisioned dashboards and datasources
-- **Loki** — centralized log aggregation
-- **Health endpoint** — `/api/health` for Docker and uptime monitoring
+
+- **Prometheus** — metrics scraping for API, Worker, Redis, Postgres.
+- **Grafana** — pre-provisioned dashboards and datasources.
+- **Loki** — centralized log aggregation.
+- **Health endpoint** — `/api/health` for Docker health checks and uptime monitoring.
 
 ### 🔒 Security
-- JWT auth with 15-minute access tokens + 7-day refresh-token rotation
-- SHA-256 refresh-token hashing — old token invalidated on use
-- **AES-256-GCM encryption** for every AI / payment / Meta credential in the database
-- **API keys** SHA-256 hashed at rest, raw value shown once
-- Company-scoped multi-tenancy — `CompanyScopeGuard` on every request
-- Rate limiting via Throttler
-- **Audit log** for all sensitive actions with before / after values
-- GDPR-friendly: soft delete, opt-out, hard purge via cleanup processor
+
+- JWT auth with 15-minute access tokens + 7-day refresh-token rotation.
+- SHA-256 refresh-token hashing — old token invalidated on use.
+- **AES-256-GCM encryption** for every AI / payment / Meta credential in the database.
+- **API keys** SHA-256 hashed at rest; raw value shown only once at creation.
+- Meta webhook HMAC-SHA256 verification.
+- Rate limiting via Throttler on every endpoint.
+- **Audit log** for sensitive actions (logins, key updates, permission changes) with before / after values.
+- GDPR-friendly: soft delete, opt-out, hard purge via the cleanup processor.
 
 ### 🐳 Self-Hosted & Open Source
-- Single `docker compose up -d` deploys everything
-- Optional Traefik reverse proxy with auto Let's Encrypt SSL
-- PgBouncer connection pooling
-- Nightly PostgreSQL backups with configurable retention
-- MIT licensed — fork it, customize it, run it yourself
+
+- Single `docker compose up -d` brings up the entire stack.
+- Optional Traefik reverse proxy with auto Let's Encrypt SSL.
+- PgBouncer connection pooling.
+- MIT licensed — fork it, customize it, run it yourself.
 
 ---
 
 ## Architecture
 
 ```
-                         ┌──────────────────────────────────┐
-                         │          Dashboard (Next.js)      │
-                         │   Inbox · CRM · Settings · Setup  │
-                         └────────────┬─────────────────────┘
+                         ┌──────────────────────────────────────┐
+                         │      Dashboard (Next.js 16)          │
+                         │  /chat · CRM pages · Settings · Setup│
+                         └────────────┬─────────────────────────┘
                                       │ HTTPS + WebSocket
-                         ┌────────────▼─────────────────────┐
-                         │           API (NestJS)            │
-                         │  REST · WS Gateway · Guards       │
-                         │  34 modules · 169 AI tools        │
-                         └──┬──────────────┬────────────────┘
+                         ┌────────────▼─────────────────────────┐
+                         │           API (NestJS 11)             │
+                         │  REST · WS Gateway · Guards · Auth    │
+                         │  34 modules · 72 Prisma models        │
+                         └──┬──────────────┬────────────────────┘
                             │              │
               ┌─────────────▼──┐    ┌──────▼──────────────┐
               │  WhatsApp Svc  │    │   Worker (BullMQ)    │
-              │  (Baileys)     │    │   AI Agent Loop      │
+              │  (Baileys 6.17)│    │   AI Agent Loop      │
               │  QR · Sessions │    │   12 job processors  │
-              │  Media Upload  │    │   Memory Dreaming    │
-              │  Outbound Sub  │    │   Sequences · Warmup │
+              │  Inbound +     │    │   Sequences · Warmup │
+              │  Outbound +    │    │   Memory dreaming    │
+              │  Lead hooks    │    │   Lead decay cycle   │
               └───────┬────────┘    └──────┬───────────────┘
-                      │                   │
-              ┌───────▼───────────────────▼───────┐
-              │           Redis (BullMQ + Pub/Sub) │
-              └───────────────────────────────────┘
-              ┌───────────────────────────────────┐
-              │  PostgreSQL 16 + pgvector         │
-              │  (72 Prisma models · PgBouncer)   │
-              └───────────────────────────────────┘
-              ┌───────────────────────────────────┐
-              │     MinIO (Media Storage)         │
-              └───────────────────────────────────┘
+                      │                    │
+              ┌───────▼────────────────────▼───────┐
+              │         Redis (BullMQ + Pub/Sub)    │
+              └────────────────────────────────────┘
+              ┌────────────────────────────────────┐
+              │   PostgreSQL 16 + pgvector         │
+              │    (72 Prisma models · PgBouncer)  │
+              └────────────────────────────────────┘
+              ┌────────────────────────────────────┐
+              │     MinIO (Media Storage)          │
+              └────────────────────────────────────┘
 ```
 
 ### Monorepo Structure
@@ -212,9 +231,9 @@ All configured from the dashboard — keys encrypted in the database, never in `
 ```
 Open-Agent-CRM/
 ├── apps/
-│   ├── api/             # NestJS — REST API + WebSocket gateway (34 modules)
-│   ├── dashboard/       # Next.js 16 — App Router dashboard (27 routes)
-│   ├── whatsapp/        # Baileys service — sessions, inbound, outbound
+│   ├── api/             # NestJS API — 34 modules
+│   ├── dashboard/       # Next.js 16 App Router — 25 shipped pages
+│   ├── whatsapp/        # Baileys service — sessions, inbound, outbound, lead hooks
 │   └── worker/          # BullMQ — AI agent loop + 12 background processors
 ├── packages/
 │   ├── database/        # Prisma schema (72 models), migrations, seed
@@ -232,6 +251,14 @@ Open-Agent-CRM/
 └── .github/workflows/
     └── ci.yml                    # Lint → Type-check → Test → Build → Docker push
 ```
+
+### Dashboard Pages (25 shipped)
+
+`/chat` (admin AI chat) · `/contacts` · `/leads` (+ `api-keys`, `api-docs`, `integrations`) · `/deals` · `/tasks` · `/sequences` · `/templates` · `/broadcasts` · `/campaigns` · `/products` · `/quotes` · `/invoices` · `/payments` · `/tickets` · `/kb` · `/documents` · `/forms` · `/workflows` · `/analytics` · `/reports` · `/memory` · `/docs` (AI tool catalog) · `/integrations` · `/settings` (ai, payments, whatsapp, webhooks, integrations, company, team) · `/setup` (6-step wizard)
+
+### Background Jobs (12 processors)
+
+`ai-message` (agent loop) · `broadcast` · `sequence-execution` · `memory-dreaming` · `follow-up` · `reminder` · `cleanup` · `payment-check` · `warmup-reset` · `lead-decay` · `deal-cycle` · `task-cycle`
 
 ---
 
@@ -342,7 +369,7 @@ pnpm dev
 
 ## Configuration
 
-Only **infrastructure** goes in `.env`. AI providers, payment gateways, and WhatsApp accounts are all configured from the dashboard and stored encrypted in the database.
+Only **infrastructure** goes in `.env`. AI providers, payment gateways, WhatsApp accounts, and company settings are all configured from the dashboard and stored encrypted in the database.
 
 ```env
 # Infrastructure only — see .env.example for the full list
@@ -370,9 +397,10 @@ The installer will:
 2. Clone the repo to `/opt/openagentcrm`
 3. Interactively generate your `.env` (admin email, password, auto-generated secrets)
 4. Pull and build Docker images
-5. Start infrastructure (postgres, redis, minio, pgbouncer)
-6. Run database migrations + seed admin user
-7. Start all services on localhost ports
+5. Start infrastructure (postgres + pgvector, redis, minio, pgbouncer)
+6. Apply the Prisma schema and the pgvector memory migration
+7. Seed the admin user
+8. Start all services on localhost ports
 
 Then **print nginx and Caddy config** so you can set up your own reverse proxy + SSL.
 
@@ -390,11 +418,12 @@ docker compose -f deploy/docker-compose.yml up -d
 ## Roadmap
 
 ### Shipped
-The full WhatsApp + AI CRM stack is production-ready: 34 NestJS modules covering contacts, leads, deals, tasks, sequences, templates, broadcasts, campaigns, forms, workflows, tickets, knowledge base, documents, payments, quotes, invoices, products, pipelines, analytics, and reports — backed by a 72-model Prisma schema, 12 worker processors, 15 configurable AI providers, an OpenClaw-style memory + RAG system with dreaming-based long-term promotion, an admin AI chat with ~169 callable tools, a Meta Ads + custom-webhook lead intake pipeline, multi-tenant team inbox with role-based access, AES-256-GCM credential encryption, full Prometheus / Grafana / Loki observability, and an idempotent one-command installer for Linux / macOS / Windows.
+The full stack is production-ready: **34 NestJS modules**, **72 Prisma models**, **25 shipped dashboard pages**, **12 background workers**, **15 AI providers**, **5 payment gateways**, the admin AI chat with ~169 tool integrations, pgvector-backed memory with a dreaming job, Meta Ads + custom webhook lead intake, multi-tenant team inbox with role-based access, AES-256-GCM credential encryption, full Prometheus / Grafana / Loki observability, and an idempotent one-command installer for Linux / macOS / Windows.
 
 ### Planned / Next
 - [ ] Email notifications for task reminders
-- [ ] WhatsApp Cloud API fallback (alongside Baileys)
+- [ ] Finish wiring the WhatsApp Cloud API fallback into Settings
+- [ ] Dedicated customer-support mode with its own system prompt (distinct from admin chat)
 - [ ] Mobile app (React Native)
 - [ ] Plugin / external webhook system
 - [ ] White-label theming
