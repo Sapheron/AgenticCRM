@@ -970,6 +970,10 @@ model Payment {
   companyId      String
   contactId      String?
   dealId         String?
+  /// Link to an Invoice for reconciliation. When a payment webhook fires
+  /// and this is set, InvoicesService.recordPayment is called to bump the
+  /// invoice's amountPaid and transition status when fully paid.
+  invoiceId      String?
   provider       PaymentProvider
   externalId     String?
   linkUrl        String?
@@ -992,6 +996,7 @@ model Payment {
   @@index([externalId])
   @@index([status])
   @@index([idempotencyKey])
+  @@index([invoiceId])
 }
 
 // ─── BROADCAST ────────────────────────────────────────────────────────────────
@@ -1745,39 +1750,128 @@ model QuoteActivity {
   @@index([companyId, type, createdAt])
 }
 
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  VOID
+}
+
+enum InvoiceActivityType {
+  CREATED
+  RENAMED
+  LINE_ITEM_ADDED
+  LINE_ITEM_REMOVED
+  LINE_ITEM_UPDATED
+  TOTALS_RECALCULATED
+  FIELD_UPDATED
+  SENT
+  VIEWED_BY_CUSTOMER
+  PAYMENT_RECORDED
+  MARKED_PAID
+  MARKED_OVERDUE
+  CANCELLED
+  VOIDED
+  NOTE_ADDED
+  DUPLICATED
+  CONVERTED_FROM_QUOTE
+  PAYMENT_WEBHOOK_RECEIVED
+  ERROR
+}
+
 model Invoice {
-  id            String   @id @default(cuid())
-  companyId     String
-  contactId     String?
-  dealId        String?
-  invoiceNumber String
-  status        String   @default("UNPAID") // UNPAID, PAID, OVERDUE, CANCELLED
-  subtotal      Int      @default(0)
-  tax           Int      @default(0)
-  total         Int      @default(0)
-  currency      String   @default("INR")
-  dueDate       DateTime?
-  paidAt        DateTime?
-  notes         String?
-  createdAt     DateTime @default(now())
+  id              String        @id @default(cuid())
+  companyId       String
+  contactId       String?
+  dealId          String?
+  /// Link to the source Quote when converted via createFromQuote.
+  fromQuoteId     String?
+  invoiceNumber   String
+  /// Public URL token for customer view. 32-char hex, unique, generated on create.
+  publicToken     String        @unique
+  status          InvoiceStatus @default(DRAFT)
+  title           String?
+  description     String?
 
-  lineItems InvoiceLineItem[]
+  /// All money is in minor units (paise/cents).
+  subtotal        Int           @default(0)
+  tax             Int           @default(0)
+  /// Tax percent in bps 0-10000 (e.g. 1800 = 18.00%).
+  taxBps          Int           @default(0)
+  discount        Int           @default(0)
+  total           Int           @default(0)
+  /// Running total of recorded payments. When amountPaid >= total, status
+  /// auto-transitions to PAID. When 0 < amountPaid < total, PARTIALLY_PAID.
+  amountPaid      Int           @default(0)
 
+  currency        String        @default("INR")
+  dueDate         DateTime?
+  sentAt          DateTime?
+  viewedAt        DateTime?
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  voidedAt        DateTime?
+  cancelReason    String?
+
+  notes           String?
+  terms           String?
+  tags            String[]      @default([])
+  createdByUserId String?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  lineItems  InvoiceLineItem[]
+  activities InvoiceActivity[]
+
+  @@unique([companyId, invoiceNumber])
   @@index([companyId])
   @@index([companyId, status])
+  @@index([companyId, contactId])
+  @@index([companyId, dealId])
+  @@index([companyId, dueDate])
 }
 
 model InvoiceLineItem {
-  id        String @id @default(cuid())
-  invoiceId String
-  name      String
-  quantity  Int    @default(1)
-  unitPrice Int    @default(0)
-  total     Int    @default(0)
+  id          String  @id @default(cuid())
+  invoiceId   String
+  productId   String?
+  /// Stable ordering key within an invoice (1-based, dense).
+  sortOrder   Int     @default(0)
+  name        String
+  description String?
+  quantity    Int     @default(1)
+  unitPrice   Int     @default(0)
+  /// Per-line discount bps 0-10000.
+  discountBps Int     @default(0)
+  total       Int     @default(0)
 
   invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
+  @@index([invoiceId, sortOrder])
+}
+
+model InvoiceActivity {
+  id        String              @id @default(cuid())
+  invoiceId String
+  companyId String
+  type      InvoiceActivityType
+  actorType String              // "user" | "ai" | "system" | "worker" | "public"
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json                @default("{}")
+  createdAt DateTime            @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, createdAt])
+  @@index([companyId, type, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

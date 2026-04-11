@@ -519,6 +519,7 @@ exports.Prisma.PaymentScalarFieldEnum = {
   companyId: 'companyId',
   contactId: 'contactId',
   dealId: 'dealId',
+  invoiceId: 'invoiceId',
   provider: 'provider',
   externalId: 'externalId',
   linkUrl: 'linkUrl',
@@ -928,25 +929,58 @@ exports.Prisma.InvoiceScalarFieldEnum = {
   companyId: 'companyId',
   contactId: 'contactId',
   dealId: 'dealId',
+  fromQuoteId: 'fromQuoteId',
   invoiceNumber: 'invoiceNumber',
+  publicToken: 'publicToken',
   status: 'status',
+  title: 'title',
+  description: 'description',
   subtotal: 'subtotal',
   tax: 'tax',
+  taxBps: 'taxBps',
+  discount: 'discount',
   total: 'total',
+  amountPaid: 'amountPaid',
   currency: 'currency',
   dueDate: 'dueDate',
+  sentAt: 'sentAt',
+  viewedAt: 'viewedAt',
   paidAt: 'paidAt',
+  cancelledAt: 'cancelledAt',
+  voidedAt: 'voidedAt',
+  cancelReason: 'cancelReason',
   notes: 'notes',
-  createdAt: 'createdAt'
+  terms: 'terms',
+  tags: 'tags',
+  createdByUserId: 'createdByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.InvoiceLineItemScalarFieldEnum = {
   id: 'id',
   invoiceId: 'invoiceId',
+  productId: 'productId',
+  sortOrder: 'sortOrder',
   name: 'name',
+  description: 'description',
   quantity: 'quantity',
   unitPrice: 'unitPrice',
+  discountBps: 'discountBps',
   total: 'total'
+};
+
+exports.Prisma.InvoiceActivityScalarFieldEnum = {
+  id: 'id',
+  invoiceId: 'invoiceId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.CampaignScalarFieldEnum = {
@@ -1826,6 +1860,39 @@ exports.QuoteActivityType = exports.$Enums.QuoteActivityType = {
   ERROR: 'ERROR'
 };
 
+exports.InvoiceStatus = exports.$Enums.InvoiceStatus = {
+  DRAFT: 'DRAFT',
+  SENT: 'SENT',
+  VIEWED: 'VIEWED',
+  PARTIALLY_PAID: 'PARTIALLY_PAID',
+  PAID: 'PAID',
+  OVERDUE: 'OVERDUE',
+  CANCELLED: 'CANCELLED',
+  VOID: 'VOID'
+};
+
+exports.InvoiceActivityType = exports.$Enums.InvoiceActivityType = {
+  CREATED: 'CREATED',
+  RENAMED: 'RENAMED',
+  LINE_ITEM_ADDED: 'LINE_ITEM_ADDED',
+  LINE_ITEM_REMOVED: 'LINE_ITEM_REMOVED',
+  LINE_ITEM_UPDATED: 'LINE_ITEM_UPDATED',
+  TOTALS_RECALCULATED: 'TOTALS_RECALCULATED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  SENT: 'SENT',
+  VIEWED_BY_CUSTOMER: 'VIEWED_BY_CUSTOMER',
+  PAYMENT_RECORDED: 'PAYMENT_RECORDED',
+  MARKED_PAID: 'MARKED_PAID',
+  MARKED_OVERDUE: 'MARKED_OVERDUE',
+  CANCELLED: 'CANCELLED',
+  VOIDED: 'VOIDED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  DUPLICATED: 'DUPLICATED',
+  CONVERTED_FROM_QUOTE: 'CONVERTED_FROM_QUOTE',
+  PAYMENT_WEBHOOK_RECEIVED: 'PAYMENT_WEBHOOK_RECEIVED',
+  ERROR: 'ERROR'
+};
+
 exports.CampaignChannel = exports.$Enums.CampaignChannel = {
   WHATSAPP: 'WHATSAPP',
   EMAIL: 'EMAIL',
@@ -1971,6 +2038,7 @@ exports.Prisma.ModelName = {
   QuoteActivity: 'QuoteActivity',
   Invoice: 'Invoice',
   InvoiceLineItem: 'InvoiceLineItem',
+  InvoiceActivity: 'InvoiceActivity',
   Campaign: 'Campaign',
   CampaignRecipient: 'CampaignRecipient',
   CampaignActivity: 'CampaignActivity',

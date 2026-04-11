@@ -46,6 +46,14 @@ import type {
   ListQuotesFilters,
 } from '../quotes/quotes.types';
 import { formatMinor } from '../quotes/quotes.calc';
+import { InvoicesService } from '../invoices/invoices.service';
+import type {
+  InvoiceActor,
+  CreateInvoiceDto,
+  UpdateInvoiceDto,
+  ListInvoicesFilters,
+  LineItemInput as InvoiceLineItemInput,
+} from '../invoices/invoices.types';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -67,6 +75,7 @@ const campaignsService = new CampaignsService();
 // methods used by FormsService.submit are plain prisma reads/writes.
 const formsService = new FormsService(new FormsLeadsShim());
 const quotesService = new QuotesService();
+const invoicesService = new InvoicesService();
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -84,6 +93,7 @@ const AI_TEMPLATE_ACTOR: TemplateActor = { type: 'ai' };
 const AI_CAMPAIGN_ACTOR: CampaignActor = { type: 'ai' };
 const AI_FORM_ACTOR: FormActor = { type: 'ai' };
 const AI_QUOTE_ACTOR: QuoteActor = { type: 'ai' };
+const AI_INVOICE_ACTOR: InvoiceActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -4762,21 +4772,529 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Invoices ──────────────────────────────────────────────────────────────
+  // ── Invoices (full lifecycle — 22 tools) ─────────────────────────────────
   {
-    definition: { name: 'create_invoice', description: 'Create an invoice.', parameters: { type: 'object', properties: { contactId: { type: 'string' }, items: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, quantity: { type: 'number' }, unitPrice: { type: 'number' } } } }, dueDate: { type: 'string' } }, required: ['items'] } },
-    execute: async (args, companyId) => {
-      const items = (args.items as Array<{ name: string; quantity?: number; unitPrice: number }>) || [];
-      const total = items.reduce((s, i) => s + (i.quantity || 1) * i.unitPrice, 0);
-      const inv = await prisma.invoice.create({
-        data: {
-          companyId, contactId: (args.contactId as string) || undefined,
-          invoiceNumber: `INV-${Date.now().toString(36).toUpperCase()}`,
-          subtotal: total, total, dueDate: args.dueDate ? new Date(args.dueDate as string) : undefined,
-          lineItems: { create: items.map((i) => ({ name: i.name, quantity: i.quantity || 1, unitPrice: i.unitPrice, total: (i.quantity || 1) * i.unitPrice })) },
+    definition: {
+      name: 'list_invoices',
+      description: 'List invoices with filters. Money in minor units (paise/cents). Use get_invoice for detail.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', description: 'Comma-separated: DRAFT, SENT, VIEWED, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED, VOID' },
+          contactId: { type: 'string' },
+          dealId: { type: 'string' },
+          tag: { type: 'string' },
+          search: { type: 'string' },
+          dueBefore: { type: 'string', description: 'ISO date — invoices with dueDate <= this (use now() for overdue)' },
+          sort: { type: 'string', enum: ['recent', 'total', 'number', 'due_date', 'amount_due'] },
+          page: { type: 'number' },
+          limit: { type: 'number' },
         },
-      });
-      return `Created invoice ${inv.invoiceNumber} — ₹${total / 100}`;
+      },
+    },
+    execute: async (args, companyId) => {
+      const filters: ListInvoicesFilters = {
+        status: args.status ? (String(args.status).split(',') as never) : undefined,
+        contactId: args.contactId as string | undefined,
+        dealId: args.dealId as string | undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        dueBefore: args.dueBefore as string | undefined,
+        sort: args.sort as ListInvoicesFilters['sort'],
+        page: typeof args.page === 'number' ? args.page : undefined,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      const { items, total } = await invoicesService.list(companyId, filters);
+      if (items.length === 0) return 'No invoices match.';
+      return `${items.length}/${total} invoices:\n` + items
+        .map((inv) => {
+          const due = inv.total - inv.amountPaid;
+          return `- [${inv.status}] ${inv.invoiceNumber} · ${formatMinor(inv.total, inv.currency)}${due > 0 ? ` (due ${formatMinor(due, inv.currency)})` : ''}${inv.dueDate ? ' · due ' + new Date(inv.dueDate).toLocaleDateString() : ''} (id: ${inv.id})`;
+        })
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_invoice',
+      description: 'Get full invoice details including line items, totals, payment state, and recent activity.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.get(companyId, args.invoiceId as string);
+      return JSON.stringify({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        title: inv.title,
+        status: inv.status,
+        contactId: inv.contactId,
+        dealId: inv.dealId,
+        fromQuoteId: inv.fromQuoteId,
+        currency: inv.currency,
+        subtotal: inv.subtotal,
+        tax: inv.tax,
+        taxBps: inv.taxBps,
+        discount: inv.discount,
+        total: inv.total,
+        amountPaid: inv.amountPaid,
+        amountDue: inv.total - inv.amountPaid,
+        totalFormatted: formatMinor(inv.total, inv.currency),
+        amountPaidFormatted: formatMinor(inv.amountPaid, inv.currency),
+        amountDueFormatted: formatMinor(inv.total - inv.amountPaid, inv.currency),
+        dueDate: inv.dueDate,
+        sentAt: inv.sentAt,
+        viewedAt: inv.viewedAt,
+        paidAt: inv.paidAt,
+        lineItems: inv.lineItems.map((li) => ({
+          id: li.id,
+          name: li.name,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+          discountBps: li.discountBps,
+          total: li.total,
+          totalFormatted: formatMinor(li.total, inv.currency),
+        })),
+        publicUrl: `/public/invoices/${inv.publicToken}`,
+        recentActivity: inv.activities.map((a) => `[${a.createdAt.toISOString()}] ${a.type} — ${a.title}`),
+      }, null, 2);
+    },
+  },
+  {
+    definition: {
+      name: 'create_invoice',
+      description: 'Create an invoice in DRAFT status. Money in minor units (50000 = ₹500.00). Pass initial lineItems OR call add_invoice_line_item afterwards. Number is auto-generated.',
+      parameters: {
+        type: 'object',
+        properties: {
+          contactId: { type: 'string' },
+          dealId: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          currency: { type: 'string', description: 'ISO code, default INR' },
+          taxBps: { type: 'number', description: 'Tax percent in bps 0-10000 (1800 = 18%)' },
+          discount: { type: 'number', description: 'Flat invoice-level discount in minor units' },
+          dueDate: { type: 'string', description: 'ISO date' },
+          notes: { type: 'string' },
+          terms: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          lineItems: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                quantity: { type: 'number' },
+                unitPrice: { type: 'number' },
+                discountBps: { type: 'number' },
+              },
+              required: ['name'],
+            },
+          },
+        },
+      },
+    },
+    execute: async (args, companyId) => {
+      const dto: CreateInvoiceDto = {
+        contactId: args.contactId as string | undefined,
+        dealId: args.dealId as string | undefined,
+        title: args.title as string | undefined,
+        description: args.description as string | undefined,
+        currency: args.currency as string | undefined,
+        taxBps: typeof args.taxBps === 'number' ? args.taxBps : undefined,
+        discount: typeof args.discount === 'number' ? args.discount : undefined,
+        dueDate: args.dueDate as string | undefined,
+        notes: args.notes as string | undefined,
+        terms: args.terms as string | undefined,
+        tags: (args.tags as string[] | undefined) ?? undefined,
+        lineItems: (args.lineItems as InvoiceLineItemInput[] | undefined) ?? [],
+      };
+      const inv = await invoicesService.create(companyId, AI_INVOICE_ACTOR, dto);
+      return `Created invoice ${inv.invoiceNumber} (DRAFT) — total ${formatMinor(inv.total, inv.currency)}. id: ${inv.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_invoice',
+      description: 'Update invoice metadata (title, tax, discount, dueDate, etc.). Only works on DRAFT or SENT invoices.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          contactId: { type: 'string' },
+          dealId: { type: 'string' },
+          taxBps: { type: 'number' },
+          discount: { type: 'number' },
+          currency: { type: 'string' },
+          dueDate: { type: 'string' },
+          notes: { type: 'string' },
+          terms: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['invoiceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { invoiceId, ...rest } = args;
+      const inv = await invoicesService.update(
+        companyId,
+        invoiceId as string,
+        AI_INVOICE_ACTOR,
+        rest as UpdateInvoiceDto,
+      );
+      return `Updated invoice ${inv.invoiceNumber} — total ${formatMinor(inv.total, inv.currency)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_invoice_line_item',
+      description: 'Append a line item to a DRAFT or SENT invoice. Auto-recomputes totals.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          quantity: { type: 'number' },
+          unitPrice: { type: 'number', description: 'Minor units' },
+          discountBps: { type: 'number', description: 'Per-line discount bps 0-10000' },
+          productId: { type: 'string' },
+        },
+        required: ['invoiceId', 'name'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { invoiceId, ...item } = args;
+      const inv = await invoicesService.addLineItem(
+        companyId,
+        invoiceId as string,
+        AI_INVOICE_ACTOR,
+        item as unknown as InvoiceLineItemInput,
+      );
+      return `Added "${item.name as string}" — new total ${formatMinor(inv.total, inv.currency)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_invoice_line_item',
+      description: 'Update a line item on an invoice. Pass only changed fields.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          lineItemId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          quantity: { type: 'number' },
+          unitPrice: { type: 'number' },
+          discountBps: { type: 'number' },
+        },
+        required: ['invoiceId', 'lineItemId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { invoiceId, lineItemId, ...patch } = args;
+      const inv = await invoicesService.updateLineItem(
+        companyId,
+        invoiceId as string,
+        AI_INVOICE_ACTOR,
+        lineItemId as string,
+        patch as Partial<InvoiceLineItemInput>,
+      );
+      return `Updated line item — new total ${formatMinor(inv.total, inv.currency)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'remove_invoice_line_item',
+      description: 'Remove a line item from an invoice.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          lineItemId: { type: 'string' },
+        },
+        required: ['invoiceId', 'lineItemId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.removeLineItem(
+        companyId,
+        args.invoiceId as string,
+        AI_INVOICE_ACTOR,
+        args.lineItemId as string,
+      );
+      return `Removed line item — new total ${formatMinor(inv.total, inv.currency)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'send_invoice',
+      description: 'Transition a DRAFT invoice to SENT. Share the public URL returned by get_invoice_public_url so the customer can view it.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.send(companyId, args.invoiceId as string, AI_INVOICE_ACTOR);
+      return `Sent ${inv.invoiceNumber}. Public URL path: /public/invoices/${inv.publicToken}`;
+    },
+  },
+  {
+    definition: {
+      name: 'record_invoice_payment',
+      description: 'Record a payment against an invoice. Amount is in minor units. Supports partial payments — the status auto-transitions to PARTIALLY_PAID or PAID based on the running total.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          amount: { type: 'number', description: 'Payment amount in minor units (e.g. 30000 = ₹300.00)' },
+          note: { type: 'string' },
+          paymentId: { type: 'string', description: 'Optional — link to a Payment row' },
+        },
+        required: ['invoiceId', 'amount'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.recordPayment(
+        companyId,
+        args.invoiceId as string,
+        AI_INVOICE_ACTOR,
+        args.amount as number,
+        {
+          paymentId: args.paymentId as string | undefined,
+          note: args.note as string | undefined,
+        },
+      );
+      const due = inv.total - inv.amountPaid;
+      return `Recorded payment. Status: ${inv.status}. Paid ${formatMinor(inv.amountPaid, inv.currency)} of ${formatMinor(inv.total, inv.currency)}${due > 0 ? ` (${formatMinor(due, inv.currency)} outstanding)` : ' — fully paid!'}`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_invoice_paid',
+      description: 'Admin shortcut: mark a whole invoice as fully paid. Use when the payment came through a channel the CRM is not tracking automatically.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.markPaid(companyId, args.invoiceId as string, AI_INVOICE_ACTOR);
+      return `${inv.invoiceNumber} → PAID`;
+    },
+  },
+  {
+    definition: {
+      name: 'mark_invoice_overdue',
+      description: 'Flag a SENT/VIEWED/PARTIALLY_PAID invoice as OVERDUE (usually because the due date has passed).',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.markOverdue(companyId, args.invoiceId as string, AI_INVOICE_ACTOR);
+      return `${inv.invoiceNumber} → OVERDUE`;
+    },
+  },
+  {
+    definition: {
+      name: 'cancel_invoice',
+      description: 'Cancel an invoice (cannot cancel a PAID or VOID one). Always pass a reason.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['invoiceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.cancel(
+        companyId,
+        args.invoiceId as string,
+        AI_INVOICE_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Cancelled ${inv.invoiceNumber}`;
+    },
+  },
+  {
+    definition: {
+      name: 'void_invoice',
+      description: 'Void an invoice — terminal, stronger than cancel. Use for billing errors / legal corrections. Always pass a reason.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['invoiceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.voidInvoice(
+        companyId,
+        args.invoiceId as string,
+        AI_INVOICE_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Voided ${inv.invoiceNumber}`;
+    },
+  },
+  {
+    definition: {
+      name: 'duplicate_invoice',
+      description: 'Clone an invoice as a new DRAFT with the same line items and terms. Useful for recurring billing.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.duplicate(companyId, args.invoiceId as string, AI_INVOICE_ACTOR);
+      return `Duplicated — new invoice ${inv.invoiceNumber} (DRAFT). id: ${inv.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_invoice_note',
+      description: 'Drop a note on the invoice timeline.',
+      parameters: {
+        type: 'object',
+        properties: { invoiceId: { type: 'string' }, body: { type: 'string' } },
+        required: ['invoiceId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await invoicesService.addNote(
+        companyId,
+        args.invoiceId as string,
+        AI_INVOICE_ACTOR,
+        args.body as string,
+      );
+      return `Note added`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_invoice',
+      description: 'Permanently delete an invoice. Only DRAFT, CANCELLED, or VOID can be deleted.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      await invoicesService.remove(companyId, args.invoiceId as string);
+      return `Deleted`;
+    },
+  },
+  {
+    definition: {
+      name: 'create_invoice_from_quote',
+      description: 'Convert an ACCEPTED quote into a DRAFT invoice. Copies line items, totals, contact, deal, and terms. Sets fromQuoteId so the detail page deep-links back to the source.',
+      parameters: { type: 'object', properties: { quoteId: { type: 'string' } }, required: ['quoteId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.createFromQuote(
+        companyId,
+        args.quoteId as string,
+        AI_INVOICE_ACTOR,
+      );
+      return `Created invoice ${inv.invoiceNumber} from quote — total ${formatMinor(inv.total, inv.currency)}. id: ${inv.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_invoice_stats',
+      description: 'Aggregate invoice stats for the last N days — outstanding, overdue, collected, collection rate.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Lookback window. Default 30.' } },
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await invoicesService.stats(
+        companyId,
+        typeof args.days === 'number' ? args.days : 30,
+      );
+      return `Invoices (${s.rangeDays}d): ${s.totalInvoices} total\n` +
+        `Outstanding: ${formatMinor(s.outstanding)} · Overdue: ${formatMinor(s.overdue)}\n` +
+        `Collected: ${formatMinor(s.collected)} · Collection rate: ${s.collectionRate ?? 'n/a'}%\n` +
+        `Average: ${s.averageTotal !== null ? formatMinor(s.averageTotal) : 'n/a'}\n` +
+        `By status: ${Object.entries(s.byStatus).map(([k, v]) => `${k}=${v}`).join(' · ') || '(none)'}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_invoice_timeline',
+      description: 'Activity timeline for an invoice (most recent first).',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceId: { type: 'string' },
+          limit: { type: 'number' },
+        },
+        required: ['invoiceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const events = await invoicesService.getTimeline(
+        companyId,
+        args.invoiceId as string,
+        typeof args.limit === 'number' ? args.limit : 30,
+      );
+      if (events.length === 0) return 'No activity.';
+      return events
+        .map((e) => `[${e.createdAt.toISOString()}] ${e.type} (${e.actorType}) — ${e.title}${e.body ? '\n  ' + e.body : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_invoice_public_url',
+      description: 'Get the hosted public URL for an invoice — the link to share with the customer so they can view it.',
+      parameters: { type: 'object', properties: { invoiceId: { type: 'string' } }, required: ['invoiceId'] },
+    },
+    execute: async (args, companyId) => {
+      const inv = await invoicesService.get(companyId, args.invoiceId as string);
+      if (inv.status === 'DRAFT') {
+        return `MEMORY_SEARCH_UNAVAILABLE: invoice is still in DRAFT. Call send_invoice first.`;
+      }
+      const publicUrl = process.env.API_PUBLIC_URL?.replace(/\/$/, '');
+      if (!publicUrl) {
+        return `/public/invoices/${inv.publicToken} (API_PUBLIC_URL env var is not set — absolute URL not available; share the relative path)`;
+      }
+      return `${publicUrl}/public/invoices/${inv.publicToken}`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_send_invoices',
+      description: 'Send multiple DRAFT invoices at once.',
+      parameters: { type: 'object', properties: { invoiceIds: { type: 'array', items: { type: 'string' } } }, required: ['invoiceIds'] },
+    },
+    execute: async (args, companyId) => {
+      const r = await invoicesService.bulkSend(
+        companyId,
+        args.invoiceIds as string[],
+        AI_INVOICE_ACTOR,
+      );
+      return `Sent ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_cancel_invoices',
+      description: 'Cancel multiple invoices at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          invoiceIds: { type: 'array', items: { type: 'string' } },
+          reason: { type: 'string' },
+        },
+        required: ['invoiceIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await invoicesService.bulkCancel(
+        companyId,
+        args.invoiceIds as string[],
+        AI_INVOICE_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Cancelled ${r.updated}, failed ${r.failed}.`;
     },
   },
 
@@ -6120,6 +6638,9 @@ const CORE_TOOL_NAMES = new Set([
   // Quotes (full lifecycle — 22 tools total, 7 exposed by default)
   'list_quotes', 'get_quote', 'create_quote', 'add_quote_line_item',
   'send_quote', 'accept_quote', 'get_quote_stats',
+  // Invoices (full lifecycle — 22 tools total, 8 exposed by default)
+  'list_invoices', 'get_invoice', 'create_invoice', 'add_invoice_line_item',
+  'send_invoice', 'record_invoice_payment', 'create_invoice_from_quote', 'get_invoice_stats',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics
