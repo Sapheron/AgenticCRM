@@ -19,6 +19,14 @@ import { TemplatesService } from '../templates/templates.service';
 import type { TemplateActor } from '../templates/templates.types';
 import { SequencesService } from '../sequences/sequences.service';
 import { SequenceMemoryService } from '../sequences/sequence-memory.service';
+import { CampaignsService } from '../campaigns/campaigns.service';
+import type {
+  CampaignActor,
+  CampaignAudienceFilter,
+  CreateCampaignDto,
+  UpdateCampaignDto,
+  ListCampaignsFilters,
+} from '../campaigns/campaigns.types';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -34,6 +42,7 @@ const productsService = new ProductsService();
 const templatesService = new TemplatesService();
 const sequencesService = new SequencesService();
 const sequenceMemoryService = new SequenceMemoryService();
+const campaignsService = new CampaignsService();
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -48,6 +57,7 @@ const AI_TASK_ACTOR: TaskActor = { type: 'ai' };
 const AI_PRODUCT_ACTOR: ProductActor = { type: 'ai' };
 const AI_BROADCAST_ACTOR: BroadcastActor = { type: 'ai' };
 const AI_TEMPLATE_ACTOR: TemplateActor = { type: 'ai' };
+const AI_CAMPAIGN_ACTOR: CampaignActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -4275,20 +4285,544 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Campaigns ─────────────────────────────────────────────────────────────
+  // ── Campaigns (full lifecycle — 24 tools) ─────────────────────────────────
   {
-    definition: { name: 'create_campaign', description: 'Create a marketing campaign.', parameters: { type: 'object', properties: { name: { type: 'string' }, channel: { type: 'string', enum: ['whatsapp', 'email', 'sms'] }, segmentId: { type: 'string' }, budget: { type: 'number' } }, required: ['name'] } },
+    definition: {
+      name: 'list_campaigns',
+      description: 'List campaigns with rich filters. Use this before answering any "show me my campaigns" question.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', description: 'Filter by status (comma-separated for multiple): DRAFT, SCHEDULED, SENDING, PAUSED, COMPLETED, CANCELLED, FAILED' },
+          channel: { type: 'string', description: 'WHATSAPP | EMAIL | SMS' },
+          sendMode: { type: 'string', description: 'DIRECT | BROADCAST | SEQUENCE' },
+          priority: { type: 'string', description: 'LOW | MEDIUM | HIGH | URGENT' },
+          tag: { type: 'string', description: 'Filter by a specific tag' },
+          search: { type: 'string', description: 'Free-text search over name/description/notes' },
+          sort: { type: 'string', enum: ['recent', 'scheduled', 'name', 'progress'] },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+        },
+      },
+    },
     execute: async (args, companyId) => {
-      const c = await prisma.campaign.create({ data: { companyId, name: args.name as string, channel: (args.channel as string) || 'whatsapp', segmentId: (args.segmentId as string) || undefined, budget: (args.budget as number) || undefined } });
-      return `Created campaign "${c.name}" on ${c.channel}`;
+      const filters: ListCampaignsFilters = {
+        status: args.status ? (String(args.status).split(',') as never) : undefined,
+        channel: args.channel ? (String(args.channel).split(',') as never) : undefined,
+        sendMode: args.sendMode ? (String(args.sendMode).split(',') as never) : undefined,
+        priority: args.priority ? String(args.priority).split(',') : undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        sort: args.sort as ListCampaignsFilters['sort'],
+        page: typeof args.page === 'number' ? args.page : undefined,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      const { items, total } = await campaignsService.list(companyId, filters);
+      if (items.length === 0) return 'No campaigns match.';
+      return `${items.length}/${total} campaigns:\n` + items
+        .map((c) => `- [${c.status}] ${c.name} · ${c.channel}/${c.sendMode} · sent ${c.sentCount}/${c.totalRecipients}${c.startAt ? ' · starts ' + c.startAt.toISOString() : ''} (id: ${c.id})`)
+        .join('\n');
     },
   },
   {
-    definition: { name: 'get_campaign_stats', description: 'Get stats for a campaign.', parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] } },
-    execute: async (args, _companyId) => {
-      const c = await prisma.campaign.findUnique({ where: { id: args.campaignId as string } });
-      if (!c) return 'Campaign not found';
-      return `Campaign "${c.name}" — Status: ${c.status}, Sent: ${c.sentCount}, Replies: ${c.replyCount}, Conversions: ${c.convertedCount}`;
+    definition: {
+      name: 'get_campaign',
+      description: 'Get full campaign details including the last 20 activity rows.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.get(companyId, args.campaignId as string);
+      return JSON.stringify({
+        id: c.id,
+        name: c.name,
+        status: c.status,
+        channel: c.channel,
+        sendMode: c.sendMode,
+        templateId: c.templateId,
+        sequenceId: c.sequenceId,
+        startAt: c.startAt,
+        startedAt: c.startedAt,
+        completedAt: c.completedAt,
+        audience: {
+          tags: c.audienceTags,
+          contactIds: c.audienceContactIds,
+          optOutBehavior: c.audienceOptOutBehavior,
+        },
+        counters: {
+          totalRecipients: c.totalRecipients,
+          sent: c.sentCount,
+          delivered: c.deliveredCount,
+          read: c.readCount,
+          replied: c.repliedCount,
+          failed: c.failedCount,
+          optedOut: c.optedOutCount,
+        },
+        recentActivity: c.activities.map((a) => `[${a.createdAt.toISOString()}] ${a.type} — ${a.title}`),
+      }, null, 2);
+    },
+  },
+  {
+    definition: {
+      name: 'create_campaign',
+      description: 'Create a campaign in DRAFT status. After creation you usually want to call set_campaign_audience, set_campaign_template (for DIRECT mode), then schedule_campaign or launch_campaign.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          description: { type: 'string' },
+          channel: { type: 'string', enum: ['WHATSAPP', 'EMAIL', 'SMS'], description: 'Default WHATSAPP — only WHATSAPP is fully wired in Phase 1.' },
+          sendMode: { type: 'string', enum: ['DIRECT', 'BROADCAST', 'SEQUENCE'], description: 'DIRECT = rate-limited own sender. BROADCAST = dispatch via broadcast on launch. SEQUENCE = enrol audience into a sequence.' },
+          templateId: { type: 'string', description: 'Template id — required for DIRECT sendMode. Use list_templates to find one.' },
+          sequenceId: { type: 'string', description: 'Sequence id — required for SEQUENCE sendMode. Use list_sequences to find one.' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          budget: { type: 'number' },
+          throttleMs: { type: 'number', description: 'ms between DIRECT sends. Default 2000.' },
+          notes: { type: 'string' },
+          audienceTags: { type: 'array', items: { type: 'string' }, description: 'Contact tag filter — AND semantics.' },
+          audienceContactIds: { type: 'array', items: { type: 'string' }, description: 'Explicit contact ids, merged with tag filter.' },
+        },
+        required: ['name'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const dto: CreateCampaignDto = {
+        name: args.name as string,
+        description: args.description as string | undefined,
+        channel: args.channel as CreateCampaignDto['channel'],
+        sendMode: args.sendMode as CreateCampaignDto['sendMode'],
+        templateId: args.templateId as string | undefined,
+        sequenceId: args.sequenceId as string | undefined,
+        priority: args.priority as CreateCampaignDto['priority'],
+        tags: (args.tags as string[] | undefined) ?? undefined,
+        budget: typeof args.budget === 'number' ? args.budget : undefined,
+        throttleMs: typeof args.throttleMs === 'number' ? args.throttleMs : undefined,
+        notes: args.notes as string | undefined,
+        audience: {
+          tags: (args.audienceTags as string[] | undefined) ?? [],
+          contactIds: (args.audienceContactIds as string[] | undefined) ?? [],
+          optOutBehavior: 'skip',
+        },
+      };
+      const c = await campaignsService.create(companyId, AI_CAMPAIGN_ACTOR, dto);
+      return `Created campaign "${c.name}" (${c.channel}/${c.sendMode}) in DRAFT status. id: ${c.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_campaign',
+      description: 'Update campaign fields. Only works on DRAFT or SCHEDULED campaigns — pause/cancel a SENDING one first.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          templateId: { type: 'string' },
+          sequenceId: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'] },
+          tags: { type: 'array', items: { type: 'string' } },
+          throttleMs: { type: 'number' },
+          notes: { type: 'string' },
+        },
+        required: ['campaignId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { campaignId, ...rest } = args;
+      const c = await campaignsService.update(
+        companyId,
+        campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        rest as UpdateCampaignDto,
+      );
+      return `Updated campaign "${c.name}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_campaign_audience',
+      description: 'Set or replace the audience filter on a campaign. Call this before launching. Pass tags (AND-joined) OR explicit contactIds OR both.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' }, description: 'Contact tag filter, AND semantics.' },
+          contactIds: { type: 'array', items: { type: 'string' }, description: 'Explicit contact ids.' },
+          optOutBehavior: { type: 'string', enum: ['skip', 'fail'], description: 'skip = silently drop opted-out contacts, fail = mark them OPTED_OUT in recipients.' },
+        },
+        required: ['campaignId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const filter: CampaignAudienceFilter = {
+        tags: (args.tags as string[] | undefined) ?? [],
+        contactIds: (args.contactIds as string[] | undefined) ?? [],
+        optOutBehavior: (args.optOutBehavior as 'skip' | 'fail' | undefined) ?? 'skip',
+      };
+      const c = await campaignsService.setAudience(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        filter,
+      );
+      return `Audience set: ${filter.tags?.length ?? 0} tags, ${filter.contactIds?.length ?? 0} explicit contacts. Campaign "${c.name}" is still in status ${c.status}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'preview_campaign_audience',
+      description: 'Dry-run the audience filter and report how many contacts would receive this campaign, including opt-out counts. Use this before launching to validate targeting.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const preview = await campaignsService.previewAudience(companyId, args.campaignId as string);
+      const sample = preview.sampleContacts
+        .map((c) => `  - ${c.displayName ?? c.phoneNumber} (${c.phoneNumber})`)
+        .join('\n');
+      return `${preview.netDeliverable} deliverable contacts (${preview.totalMatch} matched, ${preview.optedOut} opted out).\nFirst matches:\n${sample || '  (none)'}`;
+    },
+  },
+  {
+    definition: {
+      name: 'schedule_campaign',
+      description: 'Schedule a DRAFT campaign to start at a specific time. The minute-resolution worker tick will launch it automatically.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          startAt: { type: 'string', description: 'ISO-8601 timestamp.' },
+        },
+        required: ['campaignId', 'startAt'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.schedule(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        args.startAt as string,
+      );
+      return `Campaign "${c.name}" scheduled for ${c.startAt?.toISOString()}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'launch_campaign',
+      description: 'Launch a DRAFT or SCHEDULED campaign immediately. Resolves the audience, snapshots recipients, and flips the status to SENDING. Returns the resolved audience size.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const { campaign, resolved } = await campaignsService.launch(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+      );
+      return `Launched "${campaign.name}" — ${resolved.contactIds.length} recipients queued (${resolved.optedOutContactIds.length} opted out, ${resolved.totalMatch} total match). Status: ${campaign.status}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'pause_campaign',
+      description: 'Pause a SENDING campaign. The send processor will stop draining recipients until resume_campaign is called.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.pause(companyId, args.campaignId as string, AI_CAMPAIGN_ACTOR);
+      return `Paused "${c.name}".`;
+    },
+  },
+  {
+    definition: {
+      name: 'resume_campaign',
+      description: 'Resume a PAUSED campaign.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.resume(companyId, args.campaignId as string, AI_CAMPAIGN_ACTOR);
+      return `Resumed "${c.name}".`;
+    },
+  },
+  {
+    definition: {
+      name: 'cancel_campaign',
+      description: 'Cancel a campaign (any non-terminal status). Pending recipients are marked SKIPPED. Always pass a reason.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['campaignId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.cancel(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Cancelled "${c.name}".`;
+    },
+  },
+  {
+    definition: {
+      name: 'duplicate_campaign',
+      description: 'Clone a campaign as a new DRAFT with the same audience and template.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.duplicate(companyId, args.campaignId as string, AI_CAMPAIGN_ACTOR);
+      return `Duplicated — new campaign id: ${c.id} (DRAFT status).`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_campaign',
+      description: 'Permanently delete a campaign. Only works on DRAFT, CANCELLED, or COMPLETED campaigns.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      await campaignsService.remove(companyId, args.campaignId as string);
+      return `Deleted.`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_campaign_note',
+      description: 'Drop a note on the campaign timeline. Use this after any manual status change or when the user tells you something worth preserving.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          body: { type: 'string' },
+        },
+        required: ['campaignId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await campaignsService.addNote(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        args.body as string,
+      );
+      return `Note added.`;
+    },
+  },
+  {
+    definition: {
+      name: 'list_campaign_recipients',
+      description: 'List recipients of a campaign with status filter. Useful for diagnosing why a campaign under-delivered.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          status: { type: 'string', description: 'Comma-separated: PENDING, QUEUED, SENT, DELIVERED, READ, REPLIED, FAILED, SKIPPED, OPTED_OUT' },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+        },
+        required: ['campaignId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { items, total } = await campaignsService.listRecipients(
+        companyId,
+        args.campaignId as string,
+        {
+          status: args.status ? (String(args.status).split(',') as never) : undefined,
+          page: typeof args.page === 'number' ? args.page : undefined,
+          limit: typeof args.limit === 'number' ? args.limit : undefined,
+        },
+      );
+      if (items.length === 0) return 'No recipients match.';
+      return `${items.length}/${total} recipients:\n` + items
+        .map((r) => `- [${r.status}] contact ${r.contactId}${r.errorReason ? ' (error: ' + r.errorReason + ')' : ''}`)
+        .slice(0, 30)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_campaign_stats',
+      description: 'Get aggregate campaign stats across all campaigns created in the last N days.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Lookback window in days. Default 30.' } },
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await campaignsService.stats(
+        companyId,
+        typeof args.days === 'number' ? args.days : 30,
+      );
+      return `Campaigns (${s.rangeDays}d): ${s.totalCampaigns} total, ${s.activeCampaigns} active, ${s.scheduledCampaigns} scheduled, ${s.completedCampaigns} completed.\n` +
+        `Sends: ${s.totalSent} sent, ${s.totalDelivered} delivered, ${s.totalReplied} replied, ${s.totalFailed} failed.\n` +
+        `Reply rate: ${s.replyRate ?? 'n/a'}%  ·  Delivery rate: ${s.deliveryRate ?? 'n/a'}%`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_campaign_timeline',
+      description: 'Fetch the activity timeline for a campaign (most recent first).',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          limit: { type: 'number' },
+        },
+        required: ['campaignId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const events = await campaignsService.getTimeline(
+        companyId,
+        args.campaignId as string,
+        typeof args.limit === 'number' ? args.limit : 30,
+      );
+      if (events.length === 0) return 'No activity.';
+      return events
+        .map((e) => `[${e.createdAt.toISOString()}] ${e.type} (${e.actorType}) — ${e.title}${e.body ? '\n  ' + e.body : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_pause_campaigns',
+      description: 'Pause multiple SENDING campaigns at once.',
+      parameters: {
+        type: 'object',
+        properties: { campaignIds: { type: 'array', items: { type: 'string' } } },
+        required: ['campaignIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await campaignsService.bulkPause(
+        companyId,
+        args.campaignIds as string[],
+        AI_CAMPAIGN_ACTOR,
+      );
+      return `Paused ${r.updated}, failed ${r.failed}.${r.failed > 0 ? ' Errors: ' + r.errors.map((e) => `${e.id}: ${e.reason}`).join('; ') : ''}`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_resume_campaigns',
+      description: 'Resume multiple PAUSED campaigns at once.',
+      parameters: {
+        type: 'object',
+        properties: { campaignIds: { type: 'array', items: { type: 'string' } } },
+        required: ['campaignIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await campaignsService.bulkResume(
+        companyId,
+        args.campaignIds as string[],
+        AI_CAMPAIGN_ACTOR,
+      );
+      return `Resumed ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_cancel_campaigns',
+      description: 'Cancel multiple campaigns at once.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignIds: { type: 'array', items: { type: 'string' } },
+          reason: { type: 'string' },
+        },
+        required: ['campaignIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await campaignsService.bulkCancel(
+        companyId,
+        args.campaignIds as string[],
+        AI_CAMPAIGN_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Cancelled ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_delete_campaigns',
+      description: 'Permanently delete multiple campaigns. Only DRAFT/CANCELLED/COMPLETED ones will actually be deleted.',
+      parameters: {
+        type: 'object',
+        properties: { campaignIds: { type: 'array', items: { type: 'string' } } },
+        required: ['campaignIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await campaignsService.bulkDelete(companyId, args.campaignIds as string[]);
+      return `Deleted ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'set_campaign_template',
+      description: 'Swap the template used by a DIRECT-mode campaign for rendering recipient bodies.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          templateId: { type: 'string' },
+        },
+        required: ['campaignId', 'templateId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.update(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        { templateId: args.templateId as string },
+      );
+      return `Template set on "${c.name}".`;
+    },
+  },
+  {
+    definition: {
+      name: 'attach_campaign_to_sequence',
+      description: 'Switch a campaign to SEQUENCE send mode and link it to an existing sequence.',
+      parameters: {
+        type: 'object',
+        properties: {
+          campaignId: { type: 'string' },
+          sequenceId: { type: 'string' },
+        },
+        required: ['campaignId', 'sequenceId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.update(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        { sendMode: 'SEQUENCE', sequenceId: args.sequenceId as string },
+      );
+      return `Campaign "${c.name}" will enrol its audience into sequence ${args.sequenceId as string} on launch.`;
+    },
+  },
+  {
+    definition: {
+      name: 'attach_campaign_to_broadcast',
+      description: 'Switch a campaign to BROADCAST send mode. On launch, the campaign dispatches a Broadcast for one-shot bulk delivery.',
+      parameters: { type: 'object', properties: { campaignId: { type: 'string' } }, required: ['campaignId'] },
+    },
+    execute: async (args, companyId) => {
+      const c = await campaignsService.update(
+        companyId,
+        args.campaignId as string,
+        AI_CAMPAIGN_ACTOR,
+        { sendMode: 'BROADCAST' },
+      );
+      return `Campaign "${c.name}" switched to BROADCAST send mode.`;
     },
   },
 
@@ -4565,6 +5099,9 @@ const CORE_TOOL_NAMES = new Set([
   // Sequences (full lifecycle — see admin-tools.ts for the additional ~26 callable-by-name tools)
   'list_sequences', 'get_sequence', 'create_sequence', 'update_sequence',
   'activate_sequence', 'pause_sequence', 'add_sequence_step', 'enroll_contact_in_sequence',
+  // Campaigns (full lifecycle — 24 tools total, 7 exposed by default)
+  'list_campaigns', 'get_campaign', 'create_campaign', 'set_campaign_audience',
+  'schedule_campaign', 'launch_campaign', 'get_campaign_stats',
   // Communication
   'send_whatsapp', 'list_conversations',
   // Analytics

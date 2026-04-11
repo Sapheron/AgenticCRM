@@ -1697,24 +1697,173 @@ model InvoiceLineItem {
 // PHASE 4: MARKETING
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  PAUSED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum CampaignChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+}
+
+/// How the campaign actually delivers messages.
+/// DIRECT    — campaign owns its own rate-limited sender
+/// BROADCAST — dispatches via an existing Broadcast on launch
+/// SEQUENCE  — enrolls the resolved audience into a Sequence
+enum CampaignSendMode {
+  DIRECT
+  BROADCAST
+  SEQUENCE
+}
+
+enum CampaignRecipientStatus {
+  PENDING
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  REPLIED
+  FAILED
+  SKIPPED
+  OPTED_OUT
+}
+
+enum CampaignActivityType {
+  CREATED
+  STATUS_CHANGED
+  SCHEDULED
+  LAUNCHED
+  PAUSED
+  RESUMED
+  CANCELLED
+  COMPLETED
+  AUDIENCE_UPDATED
+  RECIPIENTS_ADDED
+  RECIPIENTS_REMOVED
+  NOTE_ADDED
+  FIELD_UPDATED
+  BROADCAST_DISPATCHED
+  SEQUENCE_ENROLLED
+  RECIPIENT_SENT
+  RECIPIENT_FAILED
+  RECIPIENT_DELIVERED
+  RECIPIENT_READ
+  RECIPIENT_REPLIED
+  ERROR
+}
+
 model Campaign {
-  id             String    @id @default(cuid())
-  companyId      String
-  name           String
-  channel        String    @default("whatsapp") // whatsapp, email, sms
-  status         String    @default("DRAFT") // DRAFT, ACTIVE, PAUSED, COMPLETED
-  segmentId      String?
-  budget         Int?
-  startDate      DateTime?
-  endDate        DateTime?
-  sentCount      Int       @default(0)
-  replyCount     Int       @default(0)
-  convertedCount Int       @default(0)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id          String           @id @default(cuid())
+  companyId   String
+  name        String
+  description String?
+  channel     CampaignChannel  @default(WHATSAPP)
+  sendMode    CampaignSendMode @default(DIRECT)
+  status      CampaignStatus   @default(DRAFT)
+
+  /// Template used to render per-recipient bodies (DIRECT mode only).
+  templateId  String?
+  /// Populated on launch when sendMode = BROADCAST.
+  broadcastId String?
+  /// Populated on launch when sendMode = SEQUENCE.
+  sequenceId  String?
+
+  startAt     DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  pausedAt    DateTime?
+  cancelledAt DateTime?
+
+  /// Audience filter — tags are AND-joined against contact.tags.
+  audienceTags           String[] @default([])
+  /// Explicit adds, merged with tag filter.
+  audienceContactIds     String[] @default([])
+  /// "skip" (default) or "fail" — what to do for opted-out contacts that match.
+  audienceOptOutBehavior String   @default("skip")
+
+  /// Rate limit applied by the DIRECT-mode send processor (ms between sends).
+  throttleMs Int @default(2000)
+
+  /// Analytics snapshots — maintained by the worker.
+  totalRecipients Int @default(0)
+  sentCount       Int @default(0)
+  deliveredCount  Int @default(0)
+  readCount       Int @default(0)
+  repliedCount    Int @default(0)
+  failedCount     Int @default(0)
+  optedOutCount   Int @default(0)
+
+  /// Meta
+  tags            String[] @default([])
+  priority        String   @default("MEDIUM") // LOW|MEDIUM|HIGH|URGENT
+  budget          Int?
+  notes           String?
+  errorMessage    String?
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients CampaignRecipient[]
+  activities CampaignActivity[]
 
   @@index([companyId])
   @@index([companyId, status])
+  @@index([companyId, startAt])
+  @@index([startAt, status])
+}
+
+model CampaignRecipient {
+  id           String                  @id @default(cuid())
+  campaignId   String
+  companyId    String
+  contactId    String
+  status       CampaignRecipientStatus @default(PENDING)
+  queuedAt     DateTime?
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
+  repliedAt    DateTime?
+  failedAt     DateTime?
+  errorReason  String?
+  /// Linked Message id once the outbound message is created.
+  messageId    String?
+  /// Rendered, personalized body for DIRECT sends. Stored so retries do not
+  /// re-render and the audit shows the exact text sent.
+  renderedText String?
+  metadata     Json                    @default("{}")
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId, status])
+  @@index([companyId, status])
+  @@index([contactId])
+}
+
+model CampaignActivity {
+  id         String               @id @default(cuid())
+  campaignId String
+  companyId  String
+  type       CampaignActivityType
+  actorType  String // "user" | "ai" | "system" | "worker"
+  actorId    String?
+  title      String
+  body       String?
+  metadata   Json                 @default("{}")
+  createdAt  DateTime             @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, createdAt])
+  @@index([companyId, type, createdAt])
 }
 
 model Form {

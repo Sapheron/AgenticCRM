@@ -26,6 +26,8 @@ import { startLeadDecayProcessor, leadDecayQueue } from './jobs/lead-decay.proce
 import { startDealCycleProcessor, dealCycleQueue } from './jobs/deal-cycle.processor';
 import { startTaskCycleProcessor, taskCycleQueue } from './jobs/task-cycle.processor';
 import { startSequenceExecutionProcessor } from './jobs/sequence-execution.processor';
+import { startCampaignSchedulerProcessor, campaignSchedulerQueue } from './jobs/campaign-scheduler.processor';
+import { startCampaignSendProcessor, campaignSendQueue } from './jobs/campaign-send.processor';
 
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
@@ -65,6 +67,8 @@ async function main() {
   const dealCycleWorker = startDealCycleProcessor();
   const taskCycleWorker = startTaskCycleProcessor();
   const sequenceExecutionWorker = startSequenceExecutionProcessor();
+  const campaignSchedulerWorker = startCampaignSchedulerProcessor();
+  const campaignSendWorker = startCampaignSendProcessor();
   logger.info('All workers started');
 
   // Schedule recurring jobs via BullMQ repeatable jobs
@@ -108,6 +112,24 @@ async function main() {
     backoff: { type: 'exponential', delay: 5000 },
   });
 
+  // Campaign scheduler: every minute — launch SCHEDULED campaigns whose startAt has elapsed.
+  const campaignSchedQ = campaignSchedulerQueue();
+  await campaignSchedQ.add('campaign-scheduler', {}, {
+    repeat: { pattern: '* * * * *' },
+    jobId: 'campaign-scheduler-recurring',
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 5000 },
+  });
+
+  // Campaign send: every minute — drain PENDING recipients for SENDING DIRECT campaigns.
+  const campaignSendQ = campaignSendQueue();
+  await campaignSendQ.add('campaign-send', {}, {
+    repeat: { pattern: '* * * * *' },
+    jobId: 'campaign-send-recurring',
+    attempts: 3,
+    backoff: { type: 'exponential', delay: 5000 },
+  });
+
   logger.info('Worker service ready — all workers running');
 
   // Graceful shutdown
@@ -126,6 +148,8 @@ async function main() {
       dealCycleWorker.close(),
       taskCycleWorker.close(),
       sequenceExecutionWorker.close(),
+      campaignSchedulerWorker.close(),
+      campaignSendWorker.close(),
     ]);
     await redis.quit();
     process.exit(0);

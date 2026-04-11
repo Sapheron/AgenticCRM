@@ -184,7 +184,7 @@ export class InboundMonitor {
       logger.info({ messageId: storedMessage.id }, 'Message queued for AI processing');
     }
 
-    // ── Lead + deal + task hooks (best-effort, never block ingestion) ────
+    // ── Lead + deal + task + campaign hooks (best-effort, never block ingestion) ────
     await this.maybeCreateLead(companyId, contact.id, normalized.body)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead auto-create failed'));
     await this.bumpLeadScore(companyId, contact.id)
@@ -193,6 +193,56 @@ export class InboundMonitor {
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'deal touch failed'));
     await this.touchOpenTasks(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'task touch failed'));
+    await this.markCampaignRecipientsReplied(companyId, contact.id)
+      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'campaign reply hook failed'));
+  }
+
+  /**
+   * For every active campaign where this contact is a SENT/DELIVERED/READ
+   * recipient, advance their status to REPLIED and bump the campaign's
+   * repliedCount. Idempotent per recipient — the DB rank check in
+   * CampaignsService ensures we never downgrade a later state.
+   *
+   * Inlined here to avoid a cross-app import — mirrors the pattern used by
+   * `touchOpenDeals` / `maybeCreateLead` above.
+   */
+  private async markCampaignRecipientsReplied(
+    companyId: string,
+    contactId: string,
+  ): Promise<void> {
+    const rows = await prisma.campaignRecipient.findMany({
+      where: {
+        companyId,
+        contactId,
+        status: { in: ['SENT', 'DELIVERED', 'READ'] },
+        campaign: { status: { in: ['SENDING', 'COMPLETED'] } },
+      },
+      select: { id: true, campaignId: true },
+    });
+    if (!rows.length) return;
+
+    const now = new Date();
+    for (const r of rows) {
+      await prisma.campaignRecipient.update({
+        where: { id: r.id },
+        data: { status: 'REPLIED', repliedAt: now },
+      });
+      await prisma.campaign.update({
+        where: { id: r.campaignId },
+        data: { repliedCount: { increment: 1 } },
+      });
+      await prisma.campaignActivity.create({
+        data: {
+          campaignId: r.campaignId,
+          companyId,
+          type: 'RECIPIENT_REPLIED',
+          actorType: 'whatsapp',
+          title: 'Recipient replied',
+          metadata: { recipientId: r.id, contactId },
+        },
+      });
+    }
+    logger.info({ contactId, count: rows.length }, 'Marked campaign recipients as REPLIED');
   }
 
   /**

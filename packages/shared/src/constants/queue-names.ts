@@ -11,6 +11,8 @@ export const QUEUES = {
   DEAL_CYCLE: 'deal_cycle',
   TASK_CYCLE: 'task_cycle',
   SEQUENCE_EXECUTION: 'sequence_execution',
+  CAMPAIGN_SCHEDULER: 'campaign_scheduler',
+  CAMPAIGN_SEND: 'campaign_send',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

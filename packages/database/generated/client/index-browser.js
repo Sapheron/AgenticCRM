@@ -922,17 +922,68 @@ exports.Prisma.CampaignScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
   name: 'name',
+  description: 'description',
   channel: 'channel',
+  sendMode: 'sendMode',
   status: 'status',
-  segmentId: 'segmentId',
-  budget: 'budget',
-  startDate: 'startDate',
-  endDate: 'endDate',
+  templateId: 'templateId',
+  broadcastId: 'broadcastId',
+  sequenceId: 'sequenceId',
+  startAt: 'startAt',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  pausedAt: 'pausedAt',
+  cancelledAt: 'cancelledAt',
+  audienceTags: 'audienceTags',
+  audienceContactIds: 'audienceContactIds',
+  audienceOptOutBehavior: 'audienceOptOutBehavior',
+  throttleMs: 'throttleMs',
+  totalRecipients: 'totalRecipients',
   sentCount: 'sentCount',
-  replyCount: 'replyCount',
-  convertedCount: 'convertedCount',
+  deliveredCount: 'deliveredCount',
+  readCount: 'readCount',
+  repliedCount: 'repliedCount',
+  failedCount: 'failedCount',
+  optedOutCount: 'optedOutCount',
+  tags: 'tags',
+  priority: 'priority',
+  budget: 'budget',
+  notes: 'notes',
+  errorMessage: 'errorMessage',
+  createdByUserId: 'createdByUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CampaignRecipientScalarFieldEnum = {
+  id: 'id',
+  campaignId: 'campaignId',
+  companyId: 'companyId',
+  contactId: 'contactId',
+  status: 'status',
+  queuedAt: 'queuedAt',
+  sentAt: 'sentAt',
+  deliveredAt: 'deliveredAt',
+  readAt: 'readAt',
+  repliedAt: 'repliedAt',
+  failedAt: 'failedAt',
+  errorReason: 'errorReason',
+  messageId: 'messageId',
+  renderedText: 'renderedText',
+  metadata: 'metadata'
+};
+
+exports.Prisma.CampaignActivityScalarFieldEnum = {
+  id: 'id',
+  campaignId: 'campaignId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.FormScalarFieldEnum = {
@@ -1673,6 +1724,64 @@ exports.ProductActivityType = exports.$Enums.ProductActivityType = {
   CUSTOM: 'CUSTOM'
 };
 
+exports.CampaignChannel = exports.$Enums.CampaignChannel = {
+  WHATSAPP: 'WHATSAPP',
+  EMAIL: 'EMAIL',
+  SMS: 'SMS'
+};
+
+exports.CampaignSendMode = exports.$Enums.CampaignSendMode = {
+  DIRECT: 'DIRECT',
+  BROADCAST: 'BROADCAST',
+  SEQUENCE: 'SEQUENCE'
+};
+
+exports.CampaignStatus = exports.$Enums.CampaignStatus = {
+  DRAFT: 'DRAFT',
+  SCHEDULED: 'SCHEDULED',
+  SENDING: 'SENDING',
+  PAUSED: 'PAUSED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  FAILED: 'FAILED'
+};
+
+exports.CampaignRecipientStatus = exports.$Enums.CampaignRecipientStatus = {
+  PENDING: 'PENDING',
+  QUEUED: 'QUEUED',
+  SENT: 'SENT',
+  DELIVERED: 'DELIVERED',
+  READ: 'READ',
+  REPLIED: 'REPLIED',
+  FAILED: 'FAILED',
+  SKIPPED: 'SKIPPED',
+  OPTED_OUT: 'OPTED_OUT'
+};
+
+exports.CampaignActivityType = exports.$Enums.CampaignActivityType = {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+  SCHEDULED: 'SCHEDULED',
+  LAUNCHED: 'LAUNCHED',
+  PAUSED: 'PAUSED',
+  RESUMED: 'RESUMED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED',
+  AUDIENCE_UPDATED: 'AUDIENCE_UPDATED',
+  RECIPIENTS_ADDED: 'RECIPIENTS_ADDED',
+  RECIPIENTS_REMOVED: 'RECIPIENTS_REMOVED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  BROADCAST_DISPATCHED: 'BROADCAST_DISPATCHED',
+  SEQUENCE_ENROLLED: 'SEQUENCE_ENROLLED',
+  RECIPIENT_SENT: 'RECIPIENT_SENT',
+  RECIPIENT_FAILED: 'RECIPIENT_FAILED',
+  RECIPIENT_DELIVERED: 'RECIPIENT_DELIVERED',
+  RECIPIENT_READ: 'RECIPIENT_READ',
+  RECIPIENT_REPLIED: 'RECIPIENT_REPLIED',
+  ERROR: 'ERROR'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   User: 'User',
@@ -1724,6 +1833,8 @@ exports.Prisma.ModelName = {
   Invoice: 'Invoice',
   InvoiceLineItem: 'InvoiceLineItem',
   Campaign: 'Campaign',
+  CampaignRecipient: 'CampaignRecipient',
+  CampaignActivity: 'CampaignActivity',
   Form: 'Form',
   FormSubmission: 'FormSubmission',
   Workflow: 'Workflow',
