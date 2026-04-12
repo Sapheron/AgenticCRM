@@ -10,6 +10,7 @@ build/
 !.next/static
 !.next/server
 out/
+*.tsbuildinfo
 
 # Environment
 .env
