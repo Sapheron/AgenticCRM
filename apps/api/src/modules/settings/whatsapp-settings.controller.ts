@@ -22,26 +22,26 @@ export class WhatsAppSettingsController {
   constructor(private readonly svc: WhatsAppSettingsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List connected WhatsApp accounts' })
+  @ApiOperation({ summary: 'List connected WhatsApp accounts (filtered by user)' })
   list(@CurrentUser() user: User) {
-    return this.svc.listAccounts(user.companyId);
+    return this.svc.listAccounts(user.companyId, user);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Add a new WhatsApp account (triggers QR flow via WebSocket)' })
+  @ApiOperation({ summary: 'Add a new WhatsApp account (linked to your user)' })
   create(@CurrentUser() user: User, @Body() body: CreateAccountBody) {
-    return this.svc.createAccount(user.companyId, body.phoneNumber);
+    return this.svc.createAccount(user.companyId, user.id, body.phoneNumber);
   }
 
   @Post(':id/reconnect')
   @ApiOperation({ summary: 'Reconnect a WhatsApp account (re-triggers QR flow)' })
   reconnect(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.svc.reconnectAccount(user.companyId, id);
+    return this.svc.reconnectAccount(user.companyId, id, user.id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Remove a WhatsApp account' })
   remove(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.svc.deleteAccount(user.companyId, id);
+    return this.svc.deleteAccount(user.companyId, id, user.id, user.role);
   }
 }

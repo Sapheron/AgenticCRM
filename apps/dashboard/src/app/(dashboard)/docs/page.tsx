@@ -14,7 +14,8 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api-client';
-import { Terminal, Search, Star, Copy, Check } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
+import { Terminal, Search, Star, Copy, Check, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -45,6 +46,9 @@ export default function AiDocsPage() {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [coreOnly, setCoreOnly] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
 
   const { data: tools, isLoading } = useQuery({
     queryKey: ['ai-tools-catalog'],
@@ -109,6 +113,12 @@ export default function AiDocsPage() {
           <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
             {totalTools} tools · {coreCount} core
           </span>
+          {!isAdmin && (
+            <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded flex items-center gap-1">
+              <Lock size={9} />
+              Filtered by your permissions
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 border border-gray-200 rounded px-2">

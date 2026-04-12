@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '@/lib/api-client';
 import { useWhatsAppQr } from '@/hooks/use-whatsapp-qr';
+import { useAuthStore } from '@/stores/auth.store';
 import { toast } from 'sonner';
-import { Smartphone, Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Smartphone, Plus, Trash2, RefreshCw, CheckCircle, XCircle, Loader2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WaAccount {
@@ -17,6 +18,8 @@ interface WaAccount {
   messagesSentToday: number;
   dailyMessageLimit: number;
   lastConnectedAt?: string;
+  userId?: string;
+  user?: { id: string; firstName: string; lastName: string; email: string };
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,11 +36,13 @@ function AccountCard({
   onDelete,
   onReconnect,
   isReconnecting,
+  showOwner,
 }: {
   account: WaAccount;
   onDelete: (id: string) => void;
   onReconnect: (id: string) => void;
   isReconnecting: boolean;
+  showOwner: boolean;
 }) {
   const needsQr = account.status === 'QR_PENDING' || account.status === 'CONNECTING';
   const qrState = useWhatsAppQr(needsQr ? account.id : null);
@@ -59,6 +64,12 @@ function AccountCard({
             <p className="text-sm text-gray-500">
               {qrState.phoneNumber ?? account.phoneNumber}
             </p>
+            {showOwner && account.user && (
+              <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                <User size={10} />
+                {account.user.firstName} {account.user.lastName}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -144,6 +155,8 @@ function AccountCard({
 
 export default function WhatsAppSettingsPage() {
   const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['wa-accounts'],
@@ -180,7 +193,9 @@ export default function WhatsAppSettingsPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">WhatsApp Accounts</h1>
-            <p className="text-sm text-gray-500">Connect and manage WhatsApp numbers</p>
+            <p className="text-sm text-gray-500">
+              {isAdmin ? 'All connected WhatsApp numbers across your team' : 'Your connected WhatsApp number'}
+            </p>
           </div>
         </div>
         <button
@@ -210,6 +225,7 @@ export default function WhatsAppSettingsPage() {
               onDelete={(id) => deleteMutation.mutate(id)}
               onReconnect={(id) => reconnectMutation.mutate(id)}
               isReconnecting={reconnectMutation.isPending}
+              showOwner={isAdmin}
             />
           ))}
         </div>

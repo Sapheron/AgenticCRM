@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { prisma } from '@wacrm/database';
-import type { WaAccountStatus } from '@wacrm/database';
+import type { WaAccountStatus, User, UserRole } from '@wacrm/database';
 import Redis from 'ioredis';
 
 const WA_COMMAND_CHANNEL = 'wa:command';
@@ -14,9 +14,17 @@ export class WhatsAppSettingsService {
     this.redis = new Redis((process.env.REDIS_URL || '').trim());
   }
 
-  async listAccounts(companyId: string) {
+  async listAccounts(companyId: string, user: User) {
+    const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
+    const where: { companyId: string; userId?: string } = { companyId };
+
+    // Non-admin users only see their own WhatsApp accounts
+    if (!isAdmin) {
+      where.userId = user.id;
+    }
+
     return prisma.whatsAppAccount.findMany({
-      where: { companyId },
+      where,
       select: {
         id: true,
         phoneNumber: true,
@@ -28,17 +36,23 @@ export class WhatsAppSettingsService {
         messagesSentToday: true,
         lastConnectedAt: true,
         lastErrorAt: true,
+        userId: true,
+        user: isAdmin
+          ? { select: { id: true, firstName: true, lastName: true, email: true } }
+          : false,
         // Never return sessionDataEnc or accessTokenEnc
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async createAccount(companyId: string, phoneNumber?: string) {
+  async createAccount(companyId: string, userId: string, phoneNumber?: string) {
     const id = `wa_${Math.random().toString(36).substring(2, 11)}`;
     const account = await prisma.whatsAppAccount.create({
       data: {
         id,
         companyId,
+        userId,
         phoneNumber: phoneNumber || `PENDING-${id}`,
         status: 'QR_PENDING',
       },
@@ -49,11 +63,16 @@ export class WhatsAppSettingsService {
     return account;
   }
 
-  async reconnectAccount(companyId: string, accountId: string) {
+  async reconnectAccount(companyId: string, accountId: string, userId: string) {
     const account = await prisma.whatsAppAccount.findFirst({
       where: { id: accountId, companyId },
     });
     if (!account) throw new NotFoundException('Account not found');
+
+    // Non-admin users can only reconnect their own accounts
+    if (account.userId && account.userId !== userId) {
+      throw new NotFoundException('Account not found');
+    }
 
     await prisma.whatsAppAccount.update({
       where: { id: accountId },
@@ -76,11 +95,17 @@ export class WhatsAppSettingsService {
     });
   }
 
-  async deleteAccount(companyId: string, accountId: string) {
+  async deleteAccount(companyId: string, accountId: string, userId: string, userRole: UserRole) {
     const account = await prisma.whatsAppAccount.findFirst({
       where: { id: accountId, companyId },
     });
     if (!account) throw new NotFoundException('Account not found');
+
+    // Non-admin users can only delete their own accounts
+    const isAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN';
+    if (!isAdmin && account.userId !== userId) {
+      throw new NotFoundException('Account not found');
+    }
 
     // Tell WhatsApp service to stop this session before deleting
     await this.publishCommand('stop', accountId);
