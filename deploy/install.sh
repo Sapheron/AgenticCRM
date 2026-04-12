@@ -511,6 +511,20 @@ const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
 EOF
 )
 
+# Fix admin permissions (always runs, even if user skips seed)
+info "Ensuring admin user has all permissions..."
+docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  run --rm api sh -c 'NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e "
+const { Client } = require(\"pg\");
+const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
+(async () => {
+  await db.connect();
+  const res = await db.query(\\`UPDATE \"User\" SET permissions = ARRAY[\\\"ai_chat\\\",\\\"memory\\\",\\\"contacts\\\",\\\"leads\\\",\\\"deals\\\",\\\"tasks\\\",\\\"products\\\",\\\"broadcasts\\\",\\\"templates\\\",\\\"sequences\\\",\\\"campaigns\\\",\\\"forms\\\",\\\"quotes\\\",\\\"invoices\\\",\\\"payments\\\",\\\"tickets\\\",\\\"kb\\\",\\\"workflows\\\",\\\"analytics\\\",\\\"reports\\\",\\\"documents\\\",\\\"integrations\\\",\\\"settings\\\",\\\"team\\\",\\\"whatsapp\\\"] WHERE role IN (\\\"ADMIN\\\", \\\"SUPER_ADMIN\\\") AND (permissions IS NULL OR array_length(permissions, 1) = 0)\\\`);
+  console.log(\\\"✅ Admin permissions fixed: \\\", res.rowCount, \\\"users updated\\\");
+  await db.end();
+})();
+"' && ok "Admin permissions ensured" || warn "Permissions fix had issues (may already be set)"
+
 if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
   if ask_skip "Admin user already seeded ($USER_COUNT users found)"; then
     ok "Skipping seed"
