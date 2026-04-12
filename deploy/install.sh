@@ -389,6 +389,17 @@ docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
 # ════════════════════════════════════════════════════════════════════════════
 step 7 "Database migrations, seed & start"
 
+# Pre-push SQL: backfill any non-nullable columns added to existing tables
+# (prisma db push cannot add NOT NULL columns to tables that already have rows).
+# Safe to re-run — all statements are guarded with IF NOT EXISTS.
+info "Applying pre-push SQL migrations..."
+docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  exec -T postgres sh -c \
+  "psql -U \"\${POSTGRES_USER:-crm}\" -d \"\${POSTGRES_DB:-wacrm}\" -v ON_ERROR_STOP=1" \
+  < "$INSTALL_DIR/packages/database/prisma/migrations/pre_push.sql" \
+  && ok "Pre-push migrations applied" \
+  || warn "Pre-push migration had warnings (may be safe — check output above)"
+
 # Migrations
 MIGRATION_RES=\"0\"
 # Wait for postgres to be fully ready before pushing schema
