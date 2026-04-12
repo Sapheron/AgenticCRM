@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum, MinLength } from 'class-validator';
-import { TeamService, InviteMemberDto } from './team.service';
+import { TeamService, CreateMemberDto } from './team.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompanyScopeGuard } from '../../common/guards/company-scope.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -60,12 +60,12 @@ export class TeamController {
     return this.svc.get(user.companyId, id);
   }
 
-  @Post('invite')
+  @Post('members')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Invite a new team member' })
-  invite(@CurrentUser() user: User, @Body() body: InviteMemberDto) {
-    return this.svc.invite(user.companyId, body);
+  @ApiOperation({ summary: 'Create a new team member (admin sets the password)' })
+  createMember(@CurrentUser() user: User, @Body() body: CreateMemberDto) {
+    return this.svc.createMember(user.companyId, body);
   }
 
   @Patch(':id/role')

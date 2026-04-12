@@ -2,12 +2,13 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { prisma } from '@wacrm/database';
 import type { UserRole } from '@wacrm/database';
 import * as bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
 
-export interface InviteMemberDto {
+export interface CreateMemberDto {
   email: string;
   firstName: string;
   lastName: string;
+  /** Admin sets the password directly — no invite flow. */
+  password: string;
   role?: UserRole;
 }
 
@@ -54,23 +55,30 @@ export class TeamService {
     return user;
   }
 
-  /** Invite: creates user with temp password + sends email (email sending TBD) */
-  async invite(companyId: string, dto: InviteMemberDto) {
+  /**
+   * Create a team member directly. The admin sets the email + password.
+   * No invite email, no temp password — the admin communicates the
+   * credentials to the team member out-of-band.
+   */
+  async createMember(companyId: string, dto: CreateMemberDto) {
+    if (!dto.email?.trim()) throw new ConflictException('Email is required');
+    if (!dto.password || dto.password.length < 6) {
+      throw new ConflictException('Password must be at least 6 characters');
+    }
+
     const existing = await prisma.user.findUnique({
-      where: { companyId_email: { companyId, email: dto.email } },
+      where: { companyId_email: { companyId, email: dto.email.trim().toLowerCase() } },
     });
     if (existing) throw new ConflictException('User already exists in this company');
 
-    // Generate temp password — user must change on first login
-    const tempPassword = randomBytes(8).toString('hex');
-    const passwordHash = await bcrypt.hash(tempPassword, 12);
+    const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const user = await prisma.user.create({
+    return prisma.user.create({
       data: {
         companyId,
-        email: dto.email,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
+        email: dto.email.trim().toLowerCase(),
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
         passwordHash,
         role: dto.role ?? 'AGENT',
       },
@@ -83,10 +91,6 @@ export class TeamService {
         createdAt: true,
       },
     });
-
-    // TODO: send invite email with tempPassword
-    // For now return it in response (dev only — remove before prod)
-    return { ...user, tempPassword };
   }
 
   async updateRole(companyId: string, targetUserId: string, role: UserRole, requestingUserId: string) {
