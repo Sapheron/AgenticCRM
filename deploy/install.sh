@@ -45,7 +45,7 @@ ask_skip() {
 echo ""
 echo -e "${CYAN}${BOLD}"
 echo "  ╔═══════════════════════════════════════════════════╗"
-echo "  ║       Open Agent CRM — Installer v1.1            ║"
+echo "  ║       Open Agent CRM — Installer v1.2            ║"
 echo "  ║    WhatsApp AI CRM • Self-hosted • Open Source    ║"
 echo "  ║         A Sapheron Project                        ║"
 echo "  ╚═══════════════════════════════════════════════════╝"
@@ -153,6 +153,9 @@ write_env() {
   echo -e "  ${BOLD}Configure your installation:${NC}"
   echo ""
 
+  read -rp "  $(echo -e "${CYAN}Company name${NC}") (default: My Company): " COMPANY_NAME < /dev/tty
+  COMPANY_NAME="${COMPANY_NAME:-My Company}"
+
   read -rp "  $(echo -e "${CYAN}Admin email${NC}"): " ADMIN_EMAIL < /dev/tty
   [[ -z "$ADMIN_EMAIL" ]] && fail "Admin email is required"
 
@@ -185,6 +188,7 @@ write_env() {
 # ── App ──────────────────────────────────────────────────────────────────────
 NODE_ENV=production
 DOMAIN=localhost
+COMPANY_NAME=${COMPANY_NAME}
 ADMIN_EMAIL=${ADMIN_EMAIL}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
 
@@ -199,7 +203,7 @@ DB_USER=crm
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=wacrm
 
-# ── Redis ─────────────────────────────────────────────────────────────────────
+# ── Redis ────────────────────────────────────────────────────────────────────
 REDIS_URL=redis://redis:6379
 
 # ── JWT ──────────────────────────────────────────────────────────────────────
@@ -231,6 +235,7 @@ ENVEOF
   ok ".env written to $INSTALL_DIR/.env"
   echo ""
   echo -e "  ${YELLOW}${BOLD}Save these — you will need them:${NC}"
+  echo -e "  Company        : ${CYAN}${COMPANY_NAME}${NC}"
   echo -e "  Admin email    : ${CYAN}${ADMIN_EMAIL}${NC}"
   echo -e "  Admin password : ${CYAN}${ADMIN_PASSWORD}${NC}"
   echo -e "  Grafana        : ${CYAN}${GRAFANA_PASSWORD}${NC}"
@@ -238,7 +243,7 @@ ENVEOF
 
 if [[ -f "$INSTALL_DIR/.env" ]]; then
   if ask_skip ".env already configured"; then
-    # Auto-migration: Check for and append missing keys to existing .env
+    # Auto-migration: append any keys that are missing from an older install
     check_and_append() {
       local key=$1
       local value=$2
@@ -248,19 +253,21 @@ if [[ -f "$INSTALL_DIR/.env" ]]; then
       fi
     }
 
-    # Ensure all required keys exist
-    check_and_append "DATABASE_URL" "postgresql://${DB_USER:-crm}:${DB_PASSWORD:-crm_pass}@pgbouncer:5432/${DB_NAME:-wacrm}?schema=public"
-    check_and_append "DIRECT_DATABASE_URL" "postgresql://${DB_USER:-crm}:${DB_PASSWORD:-crm_pass}@postgres:5432/${DB_NAME:-wacrm}?schema=public"
+    check_and_append "DATABASE_URL" "postgresql://crm:changeme@pgbouncer:5432/wacrm"
+    check_and_append "DIRECT_DATABASE_URL" "postgresql://crm:changeme@postgres:5432/wacrm"
     check_and_append "REDIS_URL" "redis://redis:6379"
+    check_and_append "JWT_SECRET" "$(rand_hex 32)"
+    check_and_append "REFRESH_TOKEN_SECRET" "$(rand_hex 32)"
+    check_and_append "ENCRYPTION_KEY" "$(rand_hex 32)"
+    check_and_append "JWT_EXPIRES_IN" "7d"
+    check_and_append "JWT_REFRESH_EXPIRES_IN" "30d"
+    check_and_append "MINIO_ACCESS_KEY" "minioadmin"
+    check_and_append "MINIO_SECRET_KEY" "$(rand_hex 16)"
+    check_and_append "API_PUBLIC_URL" "http://localhost:3000"
+    check_and_append "LOG_LEVEL" "info"
+    check_and_append "COMPANY_NAME" "My Company"
 
-    # Enforce native port 5432 for pgbouncer connections in existing .env (Doctor mode)
-    if grep -q "pgbouncer:6432" "$INSTALL_DIR/.env" 2>/dev/null; then
-      sed -i 's/pgbouncer:6432/pgbouncer:5432/g' "$INSTALL_DIR/.env"
-      info "Fixed DATABASE_URL port (6432 -> 5432) in .env"
-    fi
-
-    # Bump short JWT lifetimes that caused frequent dashboard logouts.
-    # Old defaults (15m / 7d) → new (7d / 30d) so users stay logged in.
+    # Fix short JWT lifetimes that caused frequent dashboard logouts
     if grep -qE '^JWT_EXPIRES_IN=(15m|1h|24h|1d)$' "$INSTALL_DIR/.env" 2>/dev/null; then
       sed -i 's/^JWT_EXPIRES_IN=.*/JWT_EXPIRES_IN=7d/' "$INSTALL_DIR/.env"
       info "Bumped JWT_EXPIRES_IN to 7d (was too short, caused frequent logouts)"
@@ -269,23 +276,12 @@ if [[ -f "$INSTALL_DIR/.env" ]]; then
       sed -i 's/^JWT_REFRESH_EXPIRES_IN=.*/JWT_REFRESH_EXPIRES_IN=30d/' "$INSTALL_DIR/.env"
       info "Bumped JWT_REFRESH_EXPIRES_IN to 30d"
     fi
-    check_and_append "JWT_EXPIRES_IN" "7d"
-    check_and_append "JWT_REFRESH_EXPIRES_IN" "30d"
 
-    check_and_append "JWT_SECRET" "$(openssl rand -hex 32)"
-    check_and_append "REFRESH_TOKEN_SECRET" "$(openssl rand -hex 32)"
-    check_and_append "ENCRYPTION_KEY" "$(openssl rand -hex 32)"
-    check_and_append "MINIO_ACCESS_KEY" "minioadmin"
-    check_and_append "MINIO_SECRET_KEY" "$(openssl rand -hex 32)"
-    check_and_append "API_PUBLIC_URL" "http://localhost:3000"
-    check_and_append "LOG_LEVEL" "info"
-    check_and_append "JWT_SECRET" "$(openssl rand -hex 32)"
-    check_and_append "REFRESH_TOKEN_SECRET" "$(openssl rand -hex 32)"
-    check_and_append "ENCRYPTION_KEY" "$(openssl rand -hex 32)"
-    check_and_append "MINIO_ACCESS_KEY" "minioadmin"
-    check_and_append "MINIO_SECRET_KEY" "$(openssl rand -hex 32)"
-    check_and_append "API_PUBLIC_URL" "http://localhost:3000"
-    check_and_append "LOG_LEVEL" "info"
+    # Fix old pgbouncer port (6432 → 5432)
+    if grep -q "pgbouncer:6432" "$INSTALL_DIR/.env" 2>/dev/null; then
+      sed -i 's/pgbouncer:6432/pgbouncer:5432/g' "$INSTALL_DIR/.env"
+      info "Fixed DATABASE_URL port (6432 → 5432)"
+    fi
   else
     write_env
   fi
@@ -323,7 +319,7 @@ INFRA_RUNNING=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env"
   ps -q postgres redis minio pgbouncer 2>/dev/null | wc -l | tr -d ' ')
 
 # Detect whether the running postgres container has pgvector. If not, we MUST
-# recreate it with the new pgvector/pgvector:pg16 image — otherwise the memory
+# recreate it with the pgvector/pgvector:pg16 image — otherwise the memory
 # schema migration fails with "type vector does not exist".
 PG_HAS_VECTOR=0
 if [[ "$INFRA_RUNNING" -ge 1 ]]; then
@@ -369,14 +365,13 @@ else
     done
   done
 
-  # Bring up the rest of the infra (in case we only force-recreated postgres)
+  # Bring up any remaining infra services
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
     up -d redis minio pgbouncer
 fi
 
-# CREATE EXTENSION vector — must run BEFORE prisma db push, because the
-# MemoryChunk model declares an Unsupported("vector(1536)") column. Without
-# the extension, `prisma db push` fails with "type vector does not exist".
+# Enable pgvector extension — must run BEFORE prisma db push, because the
+# MemoryChunk model declares an Unsupported("vector(1536)") column.
 info "Ensuring pgvector extension is installed..."
 docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   exec -T postgres sh -c \
@@ -389,9 +384,8 @@ docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
 # ════════════════════════════════════════════════════════════════════════════
 step 7 "Database migrations, seed & start"
 
-# Pre-push SQL: backfill any non-nullable columns added to existing tables
-# (prisma db push cannot add NOT NULL columns to tables that already have rows).
-# Safe to re-run — all statements are guarded with IF NOT EXISTS.
+# Pre-push SQL: backfill any non-nullable columns added to existing tables.
+# Safe to re-run — all statements are guarded with IF NOT EXISTS / DO NOTHING.
 info "Applying pre-push SQL migrations..."
 docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   exec -T postgres sh -c \
@@ -400,31 +394,16 @@ docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   && ok "Pre-push migrations applied" \
   || warn "Pre-push migration had warnings (may be safe — check output above)"
 
-# Migrations
-MIGRATION_RES=\"0\"
-# Wait for postgres to be fully ready before pushing schema
-MIGRATION_DONE=0
+# Schema push
+info "Running database schema push..."
+docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+  run --rm api sh -c \
+  "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
+ok "Database schema pushed"
 
-if [[ "$MIGRATION_DONE" -gt 0 ]]; then
-  if ask_skip "Migrations already up to date"; then
-    ok "Migrations current"
-  else
-    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-      run --rm api sh -c \
-      "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
-    ok "Database schema pushed"
-  fi
-else
-  info "Running database schema push..."
-  docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-    run --rm api sh -c \
-    "prisma db push --accept-data-loss --schema=packages/database/prisma/schema.prisma --url=\$DIRECT_DATABASE_URL"
-  ok "Database schema pushed"
-fi
-
-# pgvector extension + vector/tsvector columns + indexes for the OpenClaw-style
-# memory system. Prisma can't manage these via Unsupported types, so apply the
-# raw SQL migration here. Re-running is safe (everything is IF NOT EXISTS).
+# pgvector memory migration: creates vector/tsvector columns + GIN indexes.
+# Prisma can't manage Unsupported() columns, so we apply this raw SQL.
+# Re-running is safe (everything is IF NOT EXISTS).
 info "Applying pgvector memory migration..."
 docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   exec -T postgres sh -c \
@@ -433,24 +412,34 @@ docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   && ok "pgvector migration applied" \
   || warn "pgvector migration failed — memory system may not work; check postgres logs"
 
-# Seed
-# Use raw pg queries for seeding — avoids Prisma client runtime resolution issues in Docker
+# ── Seed admin user ──────────────────────────────────────────────────────────
+# Load env vars so the seed script can read ADMIN_EMAIL, ADMIN_PASSWORD, COMPANY_NAME
+source "$INSTALL_DIR/.env" 2>/dev/null || true
+
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
+  "NODE_PATH=/app/node_modules node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
 
-SEED_SCRIPT_JS=$(cat << 'EOF'
+# Write seed script to a temp file to avoid shell quoting issues with embedded single quotes
+SEED_TMP=$(mktemp /tmp/oacrm-seed-XXXXXX.js)
+cat > "$SEED_TMP" << 'SEEDEOF'
 const { Client } = require("pg");
 const bcrypt = require("bcryptjs");
 const { randomUUID } = require("crypto");
 const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
 const email = process.env.ADMIN_EMAIL || "admin@example.com";
 const pwd = process.env.ADMIN_PASSWORD || "changeme123";
-const rawName = process.env.COMPANY_NAME || "My Company";
-const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+const companyName = process.env.COMPANY_NAME || "My Company";
+const slug = companyName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+const ALL_PERMISSIONS = [
+  "ai_chat","memory","contacts","leads","deals","tasks","products",
+  "broadcasts","templates","sequences","campaigns","forms",
+  "quotes","invoices","payments","tickets","kb","workflows",
+  "analytics","reports","documents","integrations","settings","team","whatsapp"
+];
 (async () => {
   await db.connect();
   // Company
@@ -458,12 +447,14 @@ const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
   let companyId;
   if (res.rows.length > 0) {
     companyId = res.rows[0].id;
+    console.log("Using existing company:", companyId);
   } else {
     companyId = randomUUID();
     await db.query(
       'INSERT INTO "Company" (id,name,slug,email,timezone,"isActive","setupDone","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,NOW(),NOW())',
-      [companyId, rawName, slug, email, "UTC", true, false]
+      [companyId, companyName, slug, email, "UTC", true, false]
     );
+    console.log("Created company:", companyId);
   }
   // Admin user
   res = await db.query('SELECT id FROM "User" WHERE "companyId"=$1 AND email=$2', [companyId, email]);
@@ -471,24 +462,11 @@ const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
     const hash = await bcrypt.hash(pwd, 12);
     await db.query(
       'INSERT INTO "User" (id,"companyId",email,"passwordHash","firstName","lastName",role,permissions,"isActive","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW())',
-      [
-        randomUUID(),
-        companyId,
-        email,
-        hash,
-        "Admin",
-        "User",
-        "ADMIN",
-        ARRAY['ai_chat','memory','contacts','leads','deals','tasks','products','broadcasts','templates','sequences','campaigns','forms','quotes','invoices','payments','tickets','kb','workflows','analytics','reports','documents','integrations','settings','team','whatsapp'],
-        true,
-      ]
+      [randomUUID(), companyId, email, hash, "Admin", "User", "ADMIN", ALL_PERMISSIONS, true]
     );
+    console.log("Admin user created:", email);
   } else {
-    // Fix existing admin users who don't have permissions
-    await db.query(
-      'UPDATE "User" SET permissions = ARRAY['ai_chat','memory','contacts','leads','deals','tasks','products','broadcasts','templates','sequences','campaigns','forms','quotes','invoices','payments','tickets','kb','workflows','analytics','reports','documents','integrations','settings','team','whatsapp'] WHERE "companyId"=$1 AND email=$2 AND (permissions IS NULL OR array_length(permissions, 1) = 0)',
-      [companyId, email]
-    );
+    console.log("Admin user already exists:", email);
   }
   // AI config
   res = await db.query('SELECT id FROM "AiConfig" WHERE "companyId"=$1', [companyId]);
@@ -508,40 +486,60 @@ const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
   }
   console.log("Seed complete");
 })().finally(() => db.end());
-EOF
-)
+SEEDEOF
 
-# Fix admin permissions (always runs, even if user skips seed)
-info "Ensuring admin user has all permissions..."
-PERM_FIX_JS=$(cat << 'PERMEOF'
+# Write permissions-fix script to a temp file
+PERM_TMP=$(mktemp /tmp/oacrm-perm-XXXXXX.js)
+cat > "$PERM_TMP" << 'PERMEOF'
 const { Client } = require("pg");
 const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
+const ALL_PERMISSIONS = [
+  "ai_chat","memory","contacts","leads","deals","tasks","products",
+  "broadcasts","templates","sequences","campaigns","forms",
+  "quotes","invoices","payments","tickets","kb","workflows",
+  "analytics","reports","documents","integrations","settings","team","whatsapp"
+];
 (async () => {
   await db.connect();
-  const res = await db.query(`UPDATE "User" SET permissions = ARRAY['ai_chat','memory','contacts','leads','deals','tasks','products','broadcasts','templates','sequences','campaigns','forms','quotes','invoices','payments','tickets','kb','workflows','analytics','reports','documents','integrations','settings','team','whatsapp'] WHERE role IN ('ADMIN', 'SUPER_ADMIN') AND (permissions IS NULL OR array_length(permissions, 1) = 0)`);
-  console.log("✅ Admin permissions fixed:", res.rowCount, "users updated");
+  const res = await db.query(
+    `UPDATE "User" SET permissions = $1 WHERE role IN ('ADMIN', 'SUPER_ADMIN') AND (permissions IS NULL OR array_length(permissions, 1) = 0 OR array_length(permissions, 1) < 25)`,
+    [ALL_PERMISSIONS]
+  );
+  console.log("Admin permissions fixed:", res.rowCount, "users updated");
   await db.end();
 })();
 PERMEOF
-)
+
+# Always fix admin permissions (ensures upgrades don't leave admins locked out)
+info "Ensuring admin user has all permissions..."
 docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-  run --rm -e PERM_FIX_JS="$PERM_FIX_JS" api sh -c 'NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e "$PERM_FIX_JS"' \
-  && ok "Admin permissions ensured" || warn "Permissions fix had issues (may already be set)"
+  run --rm \
+  -v "$PERM_TMP:/tmp/perm-fix.js:ro" \
+  api sh -c "NODE_PATH=/app/node_modules node /tmp/perm-fix.js" \
+  && ok "Admin permissions ensured" \
+  || warn "Permissions fix had issues (may already be set)"
 
 if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
   if ask_skip "Admin user already seeded ($USER_COUNT users found)"; then
     ok "Skipping seed"
   else
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-      run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e "$SEED_SCRIPT_JS"'
+      run --rm \
+      -v "$SEED_TMP:/tmp/seed.js:ro" \
+      api sh -c "NODE_PATH=/app/node_modules node /tmp/seed.js"
     ok "Database re-seeded"
   fi
 else
   info "Seeding admin user..."
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
-    run --rm -e SEED_SCRIPT_JS="$SEED_SCRIPT_JS" api sh -c 'NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e "$SEED_SCRIPT_JS"'
+    run --rm \
+    -v "$SEED_TMP:/tmp/seed.js:ro" \
+    api sh -c "NODE_PATH=/app/node_modules node /tmp/seed.js"
   ok "Admin user created"
 fi
+
+# Clean up temp files
+rm -f "$SEED_TMP" "$PERM_TMP"
 
 # Start all services
 info "Starting all services..."
@@ -670,6 +668,7 @@ cat << 'CADDY_BLOCK'
   ─────────────────────────────────────────────────────────────
   YOUR_DOMAIN {
       reverse_proxy /api* localhost:3000
+      reverse_proxy /socket.io* localhost:3000
       reverse_proxy /grafana* localhost:3002
       reverse_proxy /media* localhost:9000
       reverse_proxy * localhost:3001
