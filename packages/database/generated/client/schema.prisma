@@ -2622,16 +2622,18 @@ model ApiKey {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model ChatConversation {
-  id        String   @id @default(cuid())
-  companyId String
-  userId    String
-  title     String   @default("New Chat")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  companyId         String
+  userId            String
+  whatsappAccountId String? // Set when this chat is linked to a WhatsApp account (staff AI chat via WhatsApp)
+  title             String   @default("New Chat")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   messages ChatMessage[]
 
   @@index([companyId, userId, updatedAt])
+  @@index([companyId, userId, whatsappAccountId])
 }
 
 model ChatMessage {

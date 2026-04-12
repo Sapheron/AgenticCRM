@@ -1357,6 +1357,7 @@ exports.Prisma.ChatConversationScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
   userId: 'userId',
+  whatsappAccountId: 'whatsappAccountId',
   title: 'title',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
