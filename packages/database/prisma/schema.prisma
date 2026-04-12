@@ -2277,41 +2277,128 @@ model WorkflowExecution {
 // PHASE 7: CUSTOMER SUPPORT
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketSource {
+  WHATSAPP
+  EMAIL
+  WEB
+  MANUAL
+  AI_CHAT
+  FORM
+}
+
+enum TicketActivityType {
+  CREATED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  ESCALATED
+  COMMENT_ADDED
+  INTERNAL_NOTE_ADDED
+  FIELD_UPDATED
+  MERGED
+  SLA_BREACHED
+  FIRST_RESPONSE
+  RESOLVED
+  CLOSED
+  REOPENED
+  NOTE_ADDED
+  ERROR
+}
+
 model Ticket {
-  id           String    @id @default(cuid())
-  companyId    String
-  contactId    String?
-  assignedToId String?
-  title        String
-  description  String?
-  status       String    @default("OPEN") // OPEN, IN_PROGRESS, WAITING, RESOLVED, CLOSED
-  priority     String    @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
-  category     String?   // bug, feature, billing, general
-  source       String    @default("whatsapp") // whatsapp, email, web, manual
+  id              String         @id @default(cuid())
+  companyId       String
+  contactId       String?
+  assignedToId    String?
+  /// Unique per company, auto-generated: TKT-YYMMDD-XXX
+  ticketNumber    String
+  title           String
+  description     String?
+  status          TicketStatus   @default(OPEN)
+  priority        TicketPriority @default(MEDIUM)
+  category        String?
+  source          TicketSource   @default(WHATSAPP)
+  tags            String[]       @default([])
+
+  /// SLA tracking
+  slaPolicyId       String?
+  slaFirstResponseDue DateTime?
+  slaResolutionDue    DateTime?
+  slaFirstResponseBreached Boolean @default(false)
+  slaResolutionBreached    Boolean @default(false)
+
   firstResponseAt DateTime?
-  resolvedAt   DateTime?
-  closedAt     DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  escalatedAt     DateTime?
+  /// If this ticket was merged into another, store the target id.
+  mergedIntoId    String?
 
-  comments TicketComment[]
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
+  comments   TicketComment[]
+  activities TicketActivity[]
+
+  @@unique([companyId, ticketNumber])
   @@index([companyId, status])
   @@index([companyId, assignedToId])
   @@index([companyId, priority])
+  @@index([companyId, contactId])
+  @@index([companyId, createdAt])
 }
 
 model TicketComment {
   id         String   @id @default(cuid())
   ticketId   String
+  companyId  String
   authorId   String?
+  authorType String   @default("user") // "user" | "ai" | "system" | "customer"
   content    String
-  isInternal Boolean  @default(false) // internal notes not visible to customer
+  isInternal Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
+  @@index([ticketId, createdAt])
+}
+
+model TicketActivity {
+  id        String             @id @default(cuid())
+  ticketId  String
+  companyId String
+  type      TicketActivityType
+  actorType String             // "user" | "ai" | "system" | "worker" | "customer"
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json               @default("{}")
+  createdAt DateTime           @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@index([companyId, type, createdAt])
 }
 
 model KnowledgeBaseArticle {

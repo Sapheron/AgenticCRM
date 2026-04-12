@@ -1165,15 +1165,26 @@ exports.Prisma.TicketScalarFieldEnum = {
   companyId: 'companyId',
   contactId: 'contactId',
   assignedToId: 'assignedToId',
+  ticketNumber: 'ticketNumber',
   title: 'title',
   description: 'description',
   status: 'status',
   priority: 'priority',
   category: 'category',
   source: 'source',
+  tags: 'tags',
+  slaPolicyId: 'slaPolicyId',
+  slaFirstResponseDue: 'slaFirstResponseDue',
+  slaResolutionDue: 'slaResolutionDue',
+  slaFirstResponseBreached: 'slaFirstResponseBreached',
+  slaResolutionBreached: 'slaResolutionBreached',
   firstResponseAt: 'firstResponseAt',
   resolvedAt: 'resolvedAt',
   closedAt: 'closedAt',
+  escalatedAt: 'escalatedAt',
+  mergedIntoId: 'mergedIntoId',
+  notes: 'notes',
+  createdByUserId: 'createdByUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1181,9 +1192,24 @@ exports.Prisma.TicketScalarFieldEnum = {
 exports.Prisma.TicketCommentScalarFieldEnum = {
   id: 'id',
   ticketId: 'ticketId',
+  companyId: 'companyId',
   authorId: 'authorId',
+  authorType: 'authorType',
   content: 'content',
   isInternal: 'isInternal',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TicketActivityScalarFieldEnum = {
+  id: 'id',
+  ticketId: 'ticketId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
   createdAt: 'createdAt'
 };
 
@@ -2028,6 +2054,51 @@ exports.FormActivityType = exports.$Enums.FormActivityType = {
   ERROR: 'ERROR'
 };
 
+exports.TicketStatus = exports.$Enums.TicketStatus = {
+  OPEN: 'OPEN',
+  IN_PROGRESS: 'IN_PROGRESS',
+  WAITING: 'WAITING',
+  ESCALATED: 'ESCALATED',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED'
+};
+
+exports.TicketPriority = exports.$Enums.TicketPriority = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+};
+
+exports.TicketSource = exports.$Enums.TicketSource = {
+  WHATSAPP: 'WHATSAPP',
+  EMAIL: 'EMAIL',
+  WEB: 'WEB',
+  MANUAL: 'MANUAL',
+  AI_CHAT: 'AI_CHAT',
+  FORM: 'FORM'
+};
+
+exports.TicketActivityType = exports.$Enums.TicketActivityType = {
+  CREATED: 'CREATED',
+  STATUS_CHANGED: 'STATUS_CHANGED',
+  PRIORITY_CHANGED: 'PRIORITY_CHANGED',
+  ASSIGNED: 'ASSIGNED',
+  UNASSIGNED: 'UNASSIGNED',
+  ESCALATED: 'ESCALATED',
+  COMMENT_ADDED: 'COMMENT_ADDED',
+  INTERNAL_NOTE_ADDED: 'INTERNAL_NOTE_ADDED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  MERGED: 'MERGED',
+  SLA_BREACHED: 'SLA_BREACHED',
+  FIRST_RESPONSE: 'FIRST_RESPONSE',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED',
+  REOPENED: 'REOPENED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  ERROR: 'ERROR'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   User: 'User',
@@ -2091,6 +2162,7 @@ exports.Prisma.ModelName = {
   WorkflowExecution: 'WorkflowExecution',
   Ticket: 'Ticket',
   TicketComment: 'TicketComment',
+  TicketActivity: 'TicketActivity',
   KnowledgeBaseArticle: 'KnowledgeBaseArticle',
   SlaPolicy: 'SlaPolicy',
   CustomReport: 'CustomReport',

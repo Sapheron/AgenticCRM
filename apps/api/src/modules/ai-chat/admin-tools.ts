@@ -63,6 +63,13 @@ import type {
   RefundPaymentDto,
   ListPaymentsFilters,
 } from '../payments/payments.types';
+import { TicketsService } from '../tickets/tickets.service';
+import type {
+  TicketActor,
+  CreateTicketDto,
+  UpdateTicketDto,
+  ListTicketsFilters,
+} from '../tickets/tickets.types';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -88,6 +95,7 @@ const invoicesService = new InvoicesService();
 // PaymentsService needs an InvoicesService for auto-reconciliation.
 // Reuse the same singleton so the activity log is consistent.
 const paymentsService = new PaymentsService(invoicesService);
+const ticketsService = new TicketsService();
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -107,6 +115,7 @@ const AI_FORM_ACTOR: FormActor = { type: 'ai' };
 const AI_QUOTE_ACTOR: QuoteActor = { type: 'ai' };
 const AI_INVOICE_ACTOR: InvoiceActor = { type: 'ai' };
 const AI_PAYMENT_ACTOR: PaymentActor = { type: 'ai' };
+const AI_TICKET_ACTOR: TicketActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -6809,41 +6818,422 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Tickets ───────────────────────────────────────────────────────────────
+  // ── Tickets (full lifecycle — 20 tools) ───────────────────────────────────
   {
-    definition: { name: 'create_ticket', description: 'Create a support ticket.', parameters: { type: 'object', properties: { title: { type: 'string' }, description: { type: 'string' }, priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] }, category: { type: 'string' }, contactId: { type: 'string' } }, required: ['title'] } },
+    definition: {
+      name: 'list_tickets',
+      description: 'List support tickets with rich filters.',
+      parameters: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', description: 'Comma-separated: OPEN, IN_PROGRESS, WAITING, ESCALATED, RESOLVED, CLOSED' },
+          priority: { type: 'string', description: 'Comma-separated: LOW, MEDIUM, HIGH, CRITICAL' },
+          assignedToId: { type: 'string', description: 'Pass "null" for unassigned' },
+          contactId: { type: 'string' },
+          category: { type: 'string' },
+          tag: { type: 'string' },
+          search: { type: 'string' },
+          slaBreached: { type: 'boolean', description: 'Only tickets with SLA breaches' },
+          sort: { type: 'string', enum: ['recent', 'priority', 'updated', 'oldest'] },
+          page: { type: 'number' },
+          limit: { type: 'number' },
+        },
+      },
+    },
     execute: async (args, companyId) => {
-      const t = await prisma.ticket.create({ data: { companyId, title: args.title as string, description: (args.description as string) || undefined, priority: (args.priority as string) || 'MEDIUM', category: (args.category as string) || undefined, contactId: (args.contactId as string) || undefined } });
-      return `Created ticket #${t.id.slice(-6)} — "${t.title}" [${t.priority}]`;
+      const filters: ListTicketsFilters = {
+        status: args.status ? (String(args.status).split(',') as never) : undefined,
+        priority: args.priority ? (String(args.priority).split(',') as never) : undefined,
+        assignedToId: args.assignedToId === 'null' ? null : args.assignedToId as string | undefined,
+        contactId: args.contactId as string | undefined,
+        category: args.category as string | undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        slaBreached: args.slaBreached as boolean | undefined,
+        sort: args.sort as ListTicketsFilters['sort'],
+        page: typeof args.page === 'number' ? args.page : undefined,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      const { items, total } = await ticketsService.list(companyId, filters);
+      if (items.length === 0) return 'No tickets match.';
+      return `${items.length}/${total} tickets:\n` + items
+        .map((t) => `- [${t.status}/${t.priority}] ${t.ticketNumber} "${t.title}" · ${t.category ?? 'general'}${t.assignedToId ? ' → assigned' : ' (unassigned)'}${t.slaFirstResponseBreached || t.slaResolutionBreached ? ' ⚠ SLA BREACHED' : ''} (id: ${t.id})`)
+        .join('\n');
     },
   },
   {
-    definition: { name: 'update_ticket', description: 'Update ticket status, priority, or assignee.', parameters: { type: 'object', properties: { ticketId: { type: 'string' }, status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'WAITING', 'RESOLVED', 'CLOSED'] }, priority: { type: 'string' }, assignedToId: { type: 'string' } }, required: ['ticketId'] } },
-    execute: async (args, _companyId) => {
-      const data: Record<string, unknown> = {};
-      if (args.status) { data.status = args.status; if (args.status === 'RESOLVED') data.resolvedAt = new Date(); if (args.status === 'CLOSED') data.closedAt = new Date(); }
-      if (args.priority) data.priority = args.priority;
-      if (args.assignedToId) data.assignedToId = args.assignedToId;
-      const t = await prisma.ticket.update({ where: { id: args.ticketId as string }, data });
-      return `Updated ticket "${t.title}" — status: ${t.status}, priority: ${t.priority}`;
+    definition: {
+      name: 'get_ticket',
+      description: 'Get full ticket details including comments, SLA status, and recent activity.',
+      parameters: { type: 'object', properties: { ticketId: { type: 'string' } }, required: ['ticketId'] },
     },
-  },
-  {
-    definition: { name: 'list_tickets', description: 'List support tickets.', parameters: { type: 'object', properties: { status: { type: 'string' }, priority: { type: 'string' } }, required: [] } },
     execute: async (args, companyId) => {
-      const where: Record<string, unknown> = { companyId };
-      if (args.status) where.status = args.status;
-      if (args.priority) where.priority = args.priority;
-      const tickets = await prisma.ticket.findMany({ where: where as any, take: 20, orderBy: { createdAt: 'desc' } });
-      if (!tickets.length) return 'No tickets found';
-      return tickets.map((t) => `- #${t.id.slice(-6)} "${t.title}" | ${t.status} | ${t.priority} | ${t.category || 'general'}`).join('\n');
+      const t = await ticketsService.get(companyId, args.ticketId as string);
+      return JSON.stringify({
+        id: t.id,
+        ticketNumber: t.ticketNumber,
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        priority: t.priority,
+        category: t.category,
+        source: t.source,
+        contactId: t.contactId,
+        assignedToId: t.assignedToId,
+        tags: t.tags,
+        sla: {
+          policyId: t.slaPolicyId,
+          firstResponseDue: t.slaFirstResponseDue,
+          resolutionDue: t.slaResolutionDue,
+          firstResponseBreached: t.slaFirstResponseBreached,
+          resolutionBreached: t.slaResolutionBreached,
+          firstResponseAt: t.firstResponseAt,
+        },
+        resolvedAt: t.resolvedAt,
+        closedAt: t.closedAt,
+        escalatedAt: t.escalatedAt,
+        mergedIntoId: t.mergedIntoId,
+        commentCount: t.comments.length,
+        recentActivity: t.activities.map((a) => `[${a.createdAt.toISOString()}] ${a.type} — ${a.title}`),
+      }, null, 2);
     },
   },
   {
-    definition: { name: 'add_ticket_comment', description: 'Add a comment to a ticket.', parameters: { type: 'object', properties: { ticketId: { type: 'string' }, content: { type: 'string' }, isInternal: { type: 'boolean', description: 'Internal note (not visible to customer)' } }, required: ['ticketId', 'content'] } },
-    execute: async (args, _companyId) => {
-      await prisma.ticketComment.create({ data: { ticketId: args.ticketId as string, content: args.content as string, isInternal: (args.isInternal as boolean) ?? false } });
-      return `Comment added to ticket`;
+    definition: {
+      name: 'create_ticket',
+      description: 'Create a support ticket. Optionally link to a contact and assign to an agent.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
+          category: { type: 'string', description: 'bug, feature, billing, general, etc.' },
+          source: { type: 'string', enum: ['WHATSAPP', 'EMAIL', 'WEB', 'MANUAL', 'AI_CHAT', 'FORM'] },
+          contactId: { type: 'string' },
+          assignedToId: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+          slaPolicyId: { type: 'string', description: 'SLA policy to apply (optional)' },
+        },
+        required: ['title'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const dto: CreateTicketDto = {
+        title: args.title as string,
+        description: args.description as string | undefined,
+        priority: args.priority as CreateTicketDto['priority'],
+        category: args.category as string | undefined,
+        source: args.source as CreateTicketDto['source'],
+        contactId: args.contactId as string | undefined,
+        assignedToId: args.assignedToId as string | undefined,
+        tags: (args.tags as string[] | undefined) ?? undefined,
+        notes: args.notes as string | undefined,
+        slaPolicyId: args.slaPolicyId as string | undefined,
+      };
+      const t = await ticketsService.create(companyId, AI_TICKET_ACTOR, dto);
+      return `Created ticket ${t.ticketNumber} — "${t.title}" [${t.priority}/${t.status}]. id: ${t.id}`;
+    },
+  },
+  {
+    definition: {
+      name: 'update_ticket',
+      description: 'Update ticket fields (title, description, priority, category, tags). Use change_ticket_status for status changes and assign_ticket for assignment.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          title: { type: 'string' },
+          description: { type: 'string' },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] },
+          category: { type: 'string' },
+          tags: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+        },
+        required: ['ticketId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const { ticketId, ...rest } = args;
+      const t = await ticketsService.update(
+        companyId,
+        ticketId as string,
+        AI_TICKET_ACTOR,
+        rest as UpdateTicketDto,
+      );
+      return `Updated ticket "${t.title}" — [${t.priority}]`;
+    },
+  },
+  {
+    definition: {
+      name: 'change_ticket_status',
+      description: 'Change the status of a ticket. Valid transitions: OPEN, IN_PROGRESS, WAITING, ESCALATED, RESOLVED, CLOSED. Reopening a RESOLVED/CLOSED ticket sets it back to OPEN.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          status: { type: 'string', enum: ['OPEN', 'IN_PROGRESS', 'WAITING', 'ESCALATED', 'RESOLVED', 'CLOSED'] },
+          reason: { type: 'string' },
+        },
+        required: ['ticketId', 'status'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const t = await ticketsService.changeStatus(
+        companyId,
+        args.ticketId as string,
+        AI_TICKET_ACTOR,
+        args.status as never,
+        args.reason as string | undefined,
+      );
+      return `Ticket "${t.title}" → ${t.status}`;
+    },
+  },
+  {
+    definition: {
+      name: 'assign_ticket',
+      description: 'Assign a ticket to an agent (userId) or unassign (pass null). Also stamps first-response if this is the first assignment.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          assignedToId: { type: 'string', description: 'User id, or null to unassign' },
+        },
+        required: ['ticketId', 'assignedToId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const assignedTo = args.assignedToId === 'null' ? null : args.assignedToId as string;
+      const t = await ticketsService.assign(
+        companyId,
+        args.ticketId as string,
+        AI_TICKET_ACTOR,
+        assignedTo,
+      );
+      return assignedTo
+        ? `Assigned ticket "${t.title}" to ${assignedTo}`
+        : `Unassigned ticket "${t.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'escalate_ticket',
+      description: 'Escalate a ticket — changes status to ESCALATED. Always pass a reason.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['ticketId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const t = await ticketsService.escalate(
+        companyId,
+        args.ticketId as string,
+        AI_TICKET_ACTOR,
+        args.reason as string | undefined,
+      );
+      return `Escalated ticket "${t.title}"`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_ticket_comment',
+      description: 'Add a comment to a ticket. Set isInternal=true for internal notes not visible to the customer.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          content: { type: 'string' },
+          isInternal: { type: 'boolean', description: 'Internal note (default false)' },
+        },
+        required: ['ticketId', 'content'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await ticketsService.addComment(
+        companyId,
+        args.ticketId as string,
+        AI_TICKET_ACTOR,
+        args.content as string,
+        (args.isInternal as boolean) ?? false,
+      );
+      return `Comment added`;
+    },
+  },
+  {
+    definition: {
+      name: 'list_ticket_comments',
+      description: 'List all comments on a ticket (oldest first).',
+      parameters: { type: 'object', properties: { ticketId: { type: 'string' } }, required: ['ticketId'] },
+    },
+    execute: async (args, companyId) => {
+      const comments = await ticketsService.listComments(companyId, args.ticketId as string);
+      if (comments.length === 0) return 'No comments.';
+      return comments
+        .map((c) => `[${c.createdAt.toISOString()}] (${c.authorType}${c.isInternal ? ', INTERNAL' : ''}) ${c.content.slice(0, 200)}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'merge_tickets',
+      description: 'Merge a source ticket into a target ticket. Comments move to the target; source is closed with a mergedIntoId reference.',
+      parameters: {
+        type: 'object',
+        properties: {
+          sourceTicketId: { type: 'string' },
+          targetTicketId: { type: 'string' },
+        },
+        required: ['sourceTicketId', 'targetTicketId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const t = await ticketsService.merge(
+        companyId,
+        args.sourceTicketId as string,
+        args.targetTicketId as string,
+        AI_TICKET_ACTOR,
+      );
+      return `Merged ${t.ticketNumber} into ${args.targetTicketId as string}`;
+    },
+  },
+  {
+    definition: {
+      name: 'add_ticket_note',
+      description: 'Drop a note on the ticket timeline (not a comment — just an activity entry).',
+      parameters: {
+        type: 'object',
+        properties: { ticketId: { type: 'string' }, body: { type: 'string' } },
+        required: ['ticketId', 'body'],
+      },
+    },
+    execute: async (args, companyId) => {
+      await ticketsService.addNote(
+        companyId,
+        args.ticketId as string,
+        AI_TICKET_ACTOR,
+        args.body as string,
+      );
+      return `Note added`;
+    },
+  },
+  {
+    definition: {
+      name: 'delete_ticket',
+      description: 'Permanently delete a ticket. Only CLOSED tickets can be deleted.',
+      parameters: { type: 'object', properties: { ticketId: { type: 'string' } }, required: ['ticketId'] },
+    },
+    execute: async (args, companyId) => {
+      await ticketsService.remove(companyId, args.ticketId as string);
+      return `Deleted`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_ticket_stats',
+      description: 'Aggregate ticket stats — open count, resolved count, avg first response time, avg resolution time, SLA breach count.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Lookback window. Default 30.' } },
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await ticketsService.stats(
+        companyId,
+        typeof args.days === 'number' ? args.days : 30,
+      );
+      return `Tickets (${s.rangeDays}d): ${s.totalTickets} total · ${s.openTickets} open · ${s.resolvedTickets} resolved\n` +
+        `Avg first response: ${s.avgFirstResponseMins !== null ? s.avgFirstResponseMins + ' min' : 'n/a'}\n` +
+        `Avg resolution: ${s.avgResolutionMins !== null ? s.avgResolutionMins + ' min' : 'n/a'}\n` +
+        `SLA breaches: ${s.slaBreachCount}\n` +
+        `By status: ${Object.entries(s.byStatus).map(([k, v]) => `${k}=${v}`).join(' · ') || '(none)'}\n` +
+        `By priority: ${Object.entries(s.byPriority).map(([k, v]) => `${k}=${v}`).join(' · ') || '(none)'}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_ticket_timeline',
+      description: 'Fetch the activity timeline for a ticket (most recent first).',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'string' },
+          limit: { type: 'number' },
+        },
+        required: ['ticketId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const events = await ticketsService.getTimeline(
+        companyId,
+        args.ticketId as string,
+        typeof args.limit === 'number' ? args.limit : 30,
+      );
+      if (events.length === 0) return 'No activity.';
+      return events
+        .map((e) => `[${e.createdAt.toISOString()}] ${e.type} (${e.actorType}) — ${e.title}${e.body ? '\n  ' + e.body : ''}`)
+        .join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_assign_tickets',
+      description: 'Assign multiple tickets to the same agent.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketIds: { type: 'array', items: { type: 'string' } },
+          assignedToId: { type: 'string' },
+        },
+        required: ['ticketIds', 'assignedToId'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await ticketsService.bulkAssign(
+        companyId,
+        args.ticketIds as string[],
+        AI_TICKET_ACTOR,
+        args.assignedToId as string,
+      );
+      return `Assigned ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_close_tickets',
+      description: 'Close multiple tickets at once.',
+      parameters: {
+        type: 'object',
+        properties: { ticketIds: { type: 'array', items: { type: 'string' } } },
+        required: ['ticketIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await ticketsService.bulkClose(
+        companyId,
+        args.ticketIds as string[],
+        AI_TICKET_ACTOR,
+      );
+      return `Closed ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: {
+      name: 'bulk_delete_tickets',
+      description: 'Permanently delete multiple closed tickets.',
+      parameters: {
+        type: 'object',
+        properties: { ticketIds: { type: 'array', items: { type: 'string' } } },
+        required: ['ticketIds'],
+      },
+    },
+    execute: async (args, companyId) => {
+      const r = await ticketsService.bulkDelete(companyId, args.ticketIds as string[]);
+      return `Deleted ${r.updated}, failed ${r.failed}.`;
     },
   },
 
@@ -7068,8 +7458,9 @@ const CORE_TOOL_NAMES = new Set([
   'send_whatsapp', 'list_conversations',
   // Analytics
   'get_analytics',
-  // Tickets
-  'create_ticket', 'list_tickets',
+  // Tickets (full lifecycle — 20 tools total, 8 exposed by default)
+  'list_tickets', 'get_ticket', 'create_ticket', 'change_ticket_status',
+  'assign_ticket', 'escalate_ticket', 'add_ticket_comment', 'get_ticket_stats',
 ]);
 
 // ── Exports ─────────────────────────────────────────────────────────────────
