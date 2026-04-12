@@ -425,6 +425,7 @@ USER_COUNT=${USER_COUNT:-0}
 
 # Write seed script to a temp file to avoid shell quoting issues with embedded single quotes
 SEED_TMP=$(mktemp /tmp/oacrm-seed-XXXXXX.js)
+chmod 644 "$SEED_TMP"
 cat > "$SEED_TMP" << 'SEEDEOF'
 const { Client } = require("pg");
 const bcrypt = require("bcryptjs");
@@ -490,6 +491,7 @@ SEEDEOF
 
 # Write permissions-fix script to a temp file
 PERM_TMP=$(mktemp /tmp/oacrm-perm-XXXXXX.js)
+chmod 644 "$PERM_TMP"
 cat > "$PERM_TMP" << 'PERMEOF'
 const { Client } = require("pg");
 const db = new Client({ connectionString: process.env.DIRECT_DATABASE_URL || process.env.DATABASE_URL });
