@@ -470,8 +470,24 @@ const slug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "-");
   if (res.rows.length === 0) {
     const hash = await bcrypt.hash(pwd, 12);
     await db.query(
-      'INSERT INTO "User" (id,"companyId",email,"passwordHash","firstName","lastName",role,"isActive","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW())',
-      [randomUUID(), companyId, email, hash, "Admin", "User", "ADMIN", true]
+      'INSERT INTO "User" (id,"companyId",email,"passwordHash","firstName","lastName",role,permissions,"isActive","createdAt","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW(),NOW())',
+      [
+        randomUUID(),
+        companyId,
+        email,
+        hash,
+        "Admin",
+        "User",
+        "ADMIN",
+        ARRAY['ai_chat','memory','contacts','leads','deals','tasks','products','broadcasts','templates','sequences','campaigns','forms','quotes','invoices','payments','tickets','kb','workflows','analytics','reports','documents','integrations','settings','team','whatsapp'],
+        true,
+      ]
+    );
+  } else {
+    // Fix existing admin users who don't have permissions
+    await db.query(
+      'UPDATE "User" SET permissions = ARRAY['ai_chat','memory','contacts','leads','deals','tasks','products','broadcasts','templates','sequences','campaigns','forms','quotes','invoices','payments','tickets','kb','workflows','analytics','reports','documents','integrations','settings','team','whatsapp'] WHERE "companyId"=$1 AND email=$2 AND (permissions IS NULL OR array_length(permissions, 1) = 0)',
+      [companyId, email]
     );
   }
   // AI config
