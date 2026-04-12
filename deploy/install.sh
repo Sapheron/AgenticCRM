@@ -418,7 +418,7 @@ source "$INSTALL_DIR/.env" 2>/dev/null || true
 
 USER_RES=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm api sh -c \
-  "NODE_PATH=/app/node_modules node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
+  "NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node -e \"const{Client}=require('pg');const c=new Client({connectionString:process.env.DIRECT_DATABASE_URL||process.env.DATABASE_URL});c.connect().then(()=>c.query('SELECT count(*)::int AS n FROM \\\"User\\\"')).then(r=>{console.log(r.rows[0].n);c.end()}).catch(()=>{console.log(0);process.exit(0)})\"" \
   2>/dev/null || echo "0")
 USER_COUNT=$(echo "$USER_RES" | grep -o '[0-9]\+' | tail -1)
 USER_COUNT=${USER_COUNT:-0}
@@ -517,7 +517,7 @@ info "Ensuring admin user has all permissions..."
 docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
   run --rm \
   -v "$PERM_TMP:/tmp/perm-fix.js:ro" \
-  api sh -c "NODE_PATH=/app/node_modules node /tmp/perm-fix.js" \
+  api sh -c "NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node /tmp/perm-fix.js" \
   && ok "Admin permissions ensured" \
   || warn "Permissions fix had issues (may already be set)"
 
@@ -528,7 +528,7 @@ if [[ "${USER_COUNT:-0}" -gt 0 ]]; then
     docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
       run --rm \
       -v "$SEED_TMP:/tmp/seed.js:ro" \
-      api sh -c "NODE_PATH=/app/node_modules node /tmp/seed.js"
+      api sh -c "NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node /tmp/seed.js"
     ok "Database re-seeded"
   fi
 else
@@ -536,7 +536,7 @@ else
   docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
     run --rm \
     -v "$SEED_TMP:/tmp/seed.js:ro" \
-    api sh -c "NODE_PATH=/app/node_modules node /tmp/seed.js"
+    api sh -c "NODE_PATH=/app/node_modules:/app/packages/database/node_modules:/app/apps/api/node_modules node /tmp/seed.js"
   ok "Admin user created"
 fi
 
