@@ -2401,19 +2401,70 @@ model TicketActivity {
   @@index([companyId, type, createdAt])
 }
 
-model KnowledgeBaseArticle {
-  id        String   @id @default(cuid())
-  companyId String
-  title     String
-  content   String
-  category  String?
-  isPublic  Boolean  @default(true)
-  viewCount Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum KBArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
 
+enum KBArticleActivityType {
+  CREATED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+  RESTORED
+  CONTENT_UPDATED
+  FIELD_UPDATED
+  NOTE_ADDED
+  DUPLICATED
+  VIEWED
+  ERROR
+}
+
+model KnowledgeBaseArticle {
+  id              String          @id @default(cuid())
+  companyId       String
+  slug            String
+  title           String
+  /// Short summary for list views and the public index page.
+  description     String?
+  /// Full article body — markdown supported.
+  content         String
+  category        String?
+  status          KBArticleStatus @default(DRAFT)
+  isPublic        Boolean         @default(true)
+  viewCount       Int             @default(0)
+  tags            String[]        @default([])
+  notes           String?
+  publishedAt     DateTime?
+  createdByUserId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  activities KBArticleActivity[]
+
+  @@unique([companyId, slug])
   @@index([companyId])
+  @@index([companyId, status])
   @@index([companyId, category])
+}
+
+model KBArticleActivity {
+  id        String                @id @default(cuid())
+  articleId String
+  companyId String
+  type      KBArticleActivityType
+  actorType String                // "user" | "ai" | "system" | "public"
+  actorId   String?
+  title     String
+  body      String?
+  metadata  Json                  @default("{}")
+  createdAt DateTime              @default(now())
+
+  article KnowledgeBaseArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, createdAt])
+  @@index([companyId, type, createdAt])
 }
 
 model SlaPolicy {

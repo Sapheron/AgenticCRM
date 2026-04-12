@@ -70,6 +70,13 @@ import type {
   UpdateTicketDto,
   ListTicketsFilters,
 } from '../tickets/tickets.types';
+import { KnowledgeBaseService } from '../knowledge-base/knowledge-base.service';
+import type {
+  KBArticleActor,
+  CreateKBArticleDto,
+  UpdateKBArticleDto,
+  ListKBArticlesFilters,
+} from '../knowledge-base/knowledge-base.types';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -96,6 +103,7 @@ const invoicesService = new InvoicesService();
 // Reuse the same singleton so the activity log is consistent.
 const paymentsService = new PaymentsService(invoicesService);
 const ticketsService = new TicketsService();
+const kbService = new KnowledgeBaseService();
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -116,6 +124,7 @@ const AI_QUOTE_ACTOR: QuoteActor = { type: 'ai' };
 const AI_INVOICE_ACTOR: InvoiceActor = { type: 'ai' };
 const AI_PAYMENT_ACTOR: PaymentActor = { type: 'ai' };
 const AI_TICKET_ACTOR: TicketActor = { type: 'ai' };
+const AI_KB_ACTOR: KBArticleActor = { type: 'ai' };
 
 /**
  * Per-call execution context — anything that isn't part of the AI's tool args
@@ -7237,23 +7246,159 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Knowledge Base ────────────────────────────────────────────────────────
+  // ── Knowledge Base (full lifecycle — 18 tools) ──────────────────────────
   {
-    definition: { name: 'create_kb_article', description: 'Create a knowledge base article.', parameters: { type: 'object', properties: { title: { type: 'string' }, content: { type: 'string' }, category: { type: 'string' } }, required: ['title', 'content'] } },
+    definition: { name: 'list_kb_articles', description: 'List knowledge base articles with filters.', parameters: { type: 'object', properties: { status: { type: 'string', description: 'Comma-separated: DRAFT, PUBLISHED, ARCHIVED' }, category: { type: 'string' }, isPublic: { type: 'boolean' }, tag: { type: 'string' }, search: { type: 'string' }, sort: { type: 'string', enum: ['recent', 'views', 'title'] }, page: { type: 'number' }, limit: { type: 'number' } } } },
     execute: async (args, companyId) => {
-      const a = await prisma.knowledgeBaseArticle.create({ data: { companyId, title: args.title as string, content: args.content as string, category: (args.category as string) || undefined } });
-      return `Created KB article "${a.title}"`;
+      const filters: ListKBArticlesFilters = {
+        status: args.status ? (String(args.status).split(',') as never) : undefined,
+        category: args.category as string | undefined,
+        isPublic: typeof args.isPublic === 'boolean' ? args.isPublic : undefined,
+        tag: args.tag as string | undefined,
+        search: args.search as string | undefined,
+        sort: args.sort as ListKBArticlesFilters['sort'],
+        page: typeof args.page === 'number' ? args.page : undefined,
+        limit: typeof args.limit === 'number' ? args.limit : undefined,
+      };
+      const { items, total } = await kbService.list(companyId, filters);
+      if (items.length === 0) return 'No articles match.';
+      return `${items.length}/${total} articles:\n` + items
+        .map((a) => `- [${a.status}] "${a.title}" · ${a.category ?? 'general'} · ${a.viewCount} views · slug: ${a.slug} (id: ${a.id})`)
+        .join('\n');
     },
   },
   {
-    definition: { name: 'search_knowledge_base', description: 'Search knowledge base articles.', parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } },
+    definition: { name: 'get_kb_article', description: 'Get full KB article details including content, activity, and public URL slug.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
     execute: async (args, companyId) => {
-      const articles = await prisma.knowledgeBaseArticle.findMany({
-        where: { companyId, OR: [{ title: { contains: args.query as string, mode: 'insensitive' as const } }, { content: { contains: args.query as string, mode: 'insensitive' as const } }] },
-        take: 5,
-      });
-      if (!articles.length) return 'No articles found';
-      return articles.map((a) => `- "${a.title}" [${a.category || 'general'}]: ${a.content.slice(0, 100)}...`).join('\n');
+      const a = await kbService.get(companyId, args.articleId as string);
+      return JSON.stringify({
+        id: a.id, slug: a.slug, title: a.title, description: a.description,
+        status: a.status, category: a.category, isPublic: a.isPublic,
+        viewCount: a.viewCount, tags: a.tags,
+        contentPreview: a.content.slice(0, 500) + (a.content.length > 500 ? '…' : ''),
+        recentActivity: a.activities.map((act) => `[${act.createdAt.toISOString()}] ${act.type} — ${act.title}`),
+      }, null, 2);
+    },
+  },
+  {
+    definition: { name: 'create_kb_article', description: 'Create a KB article in DRAFT status. Publish it with publish_kb_article after creation.', parameters: { type: 'object', properties: { title: { type: 'string' }, content: { type: 'string' }, description: { type: 'string', description: 'Short summary for list views' }, category: { type: 'string' }, isPublic: { type: 'boolean' }, tags: { type: 'array', items: { type: 'string' } } }, required: ['title', 'content'] } },
+    execute: async (args, companyId) => {
+      const dto: CreateKBArticleDto = {
+        title: args.title as string,
+        content: args.content as string,
+        description: args.description as string | undefined,
+        category: args.category as string | undefined,
+        isPublic: typeof args.isPublic === 'boolean' ? args.isPublic : undefined,
+        tags: (args.tags as string[] | undefined) ?? undefined,
+      };
+      const a = await kbService.create(companyId, AI_KB_ACTOR, dto);
+      return `Created KB article "${a.title}" (DRAFT, slug: ${a.slug}). id: ${a.id}`;
+    },
+  },
+  {
+    definition: { name: 'update_kb_article', description: 'Update KB article content or metadata. Cannot edit ARCHIVED articles.', parameters: { type: 'object', properties: { articleId: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' }, content: { type: 'string' }, category: { type: 'string' }, isPublic: { type: 'boolean' }, tags: { type: 'array', items: { type: 'string' } } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const { articleId, ...rest } = args;
+      const a = await kbService.update(companyId, articleId as string, AI_KB_ACTOR, rest as UpdateKBArticleDto);
+      return `Updated "${a.title}"`;
+    },
+  },
+  {
+    definition: { name: 'publish_kb_article', description: 'Publish a DRAFT article so it becomes visible on the public KB.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const a = await kbService.publish(companyId, args.articleId as string, AI_KB_ACTOR);
+      return `Published "${a.title}" at slug "${a.slug}"`;
+    },
+  },
+  {
+    definition: { name: 'unpublish_kb_article', description: 'Unpublish a PUBLISHED article back to DRAFT.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const a = await kbService.unpublish(companyId, args.articleId as string, AI_KB_ACTOR);
+      return `Unpublished "${a.title}"`;
+    },
+  },
+  {
+    definition: { name: 'archive_kb_article', description: 'Archive a KB article.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      await kbService.archive(companyId, args.articleId as string, AI_KB_ACTOR);
+      return `Archived`;
+    },
+  },
+  {
+    definition: { name: 'restore_kb_article', description: 'Restore an ARCHIVED article to DRAFT.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      await kbService.restore(companyId, args.articleId as string, AI_KB_ACTOR);
+      return `Restored to DRAFT`;
+    },
+  },
+  {
+    definition: { name: 'duplicate_kb_article', description: 'Duplicate a KB article as a new DRAFT.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const a = await kbService.duplicate(companyId, args.articleId as string, AI_KB_ACTOR);
+      return `Duplicated — new article id: ${a.id} (DRAFT, slug: ${a.slug})`;
+    },
+  },
+  {
+    definition: { name: 'delete_kb_article', description: 'Permanently delete a KB article. Cannot delete PUBLISHED articles — unpublish first.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      await kbService.remove(companyId, args.articleId as string);
+      return `Deleted`;
+    },
+  },
+  {
+    definition: { name: 'add_kb_note', description: 'Drop a note on the article timeline.', parameters: { type: 'object', properties: { articleId: { type: 'string' }, body: { type: 'string' } }, required: ['articleId', 'body'] } },
+    execute: async (args, companyId) => {
+      await kbService.addNote(companyId, args.articleId as string, AI_KB_ACTOR, args.body as string);
+      return `Note added`;
+    },
+  },
+  {
+    definition: { name: 'search_knowledge_base', description: 'Search published KB articles by keyword. Returns the top matches with content previews. Use this before answering customer questions to check if the KB has a relevant answer.', parameters: { type: 'object', properties: { query: { type: 'string' }, limit: { type: 'number' } }, required: ['query'] } },
+    execute: async (args, companyId) => {
+      const articles = await kbService.search(companyId, args.query as string, typeof args.limit === 'number' ? args.limit : 5);
+      if (articles.length === 0) return 'No KB articles match.';
+      return articles.map((a) => `- "${a.title}" [${a.category ?? 'general'}] (${a.viewCount} views, slug: ${a.slug})\n  ${a.content.slice(0, 200).replace(/\n/g, ' ')}…`).join('\n\n');
+    },
+  },
+  {
+    definition: { name: 'get_kb_stats', description: 'Aggregate KB stats — total, published, views, top categories.', parameters: { type: 'object', properties: { days: { type: 'number' } } } },
+    execute: async (args, companyId) => {
+      const s = await kbService.stats(companyId, typeof args.days === 'number' ? args.days : 30);
+      return `KB (${s.rangeDays}d): ${s.totalArticles} total · ${s.publishedArticles} published · ${s.totalViews} views\n` +
+        `Top categories: ${s.topCategories.map((c) => `${c.category}(${c.count})`).join(', ') || '(none)'}`;
+    },
+  },
+  {
+    definition: { name: 'get_kb_timeline', description: 'Activity timeline for a KB article.', parameters: { type: 'object', properties: { articleId: { type: 'string' }, limit: { type: 'number' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const events = await kbService.getTimeline(companyId, args.articleId as string, typeof args.limit === 'number' ? args.limit : 30);
+      if (events.length === 0) return 'No activity.';
+      return events.map((e) => `[${e.createdAt.toISOString()}] ${e.type} (${e.actorType}) — ${e.title}${e.body ? '\n  ' + e.body : ''}`).join('\n');
+    },
+  },
+  {
+    definition: { name: 'get_kb_public_url', description: 'Get the public URL for a published KB article.', parameters: { type: 'object', properties: { articleId: { type: 'string' } }, required: ['articleId'] } },
+    execute: async (args, companyId) => {
+      const a = await kbService.get(companyId, args.articleId as string);
+      if (a.status !== 'PUBLISHED') return `MEMORY_SEARCH_UNAVAILABLE: article is ${a.status}. Publish it first.`;
+      if (!a.isPublic) return `MEMORY_SEARCH_UNAVAILABLE: article is not public. Set isPublic=true via update_kb_article.`;
+      const publicUrl = process.env.API_PUBLIC_URL?.replace(/\/$/, '');
+      if (!publicUrl) return `/public/kb/${a.slug} (API_PUBLIC_URL not set)`;
+      return `${publicUrl}/public/kb/${a.slug}`;
+    },
+  },
+  {
+    definition: { name: 'bulk_publish_kb_articles', description: 'Publish multiple DRAFT articles at once.', parameters: { type: 'object', properties: { articleIds: { type: 'array', items: { type: 'string' } } }, required: ['articleIds'] } },
+    execute: async (args, companyId) => {
+      const r = await kbService.bulkPublish(companyId, args.articleIds as string[], AI_KB_ACTOR);
+      return `Published ${r.updated}, failed ${r.failed}.`;
+    },
+  },
+  {
+    definition: { name: 'bulk_archive_kb_articles', description: 'Archive multiple KB articles at once.', parameters: { type: 'object', properties: { articleIds: { type: 'array', items: { type: 'string' } } }, required: ['articleIds'] } },
+    execute: async (args, companyId) => {
+      const r = await kbService.bulkArchive(companyId, args.articleIds as string[], AI_KB_ACTOR);
+      return `Archived ${r.updated}, failed ${r.failed}.`;
     },
   },
 
@@ -7461,6 +7606,9 @@ const CORE_TOOL_NAMES = new Set([
   // Tickets (full lifecycle — 20 tools total, 8 exposed by default)
   'list_tickets', 'get_ticket', 'create_ticket', 'change_ticket_status',
   'assign_ticket', 'escalate_ticket', 'add_ticket_comment', 'get_ticket_stats',
+  // Knowledge Base (full lifecycle — 18 tools total, 7 exposed by default)
+  'list_kb_articles', 'get_kb_article', 'create_kb_article', 'publish_kb_article',
+  'search_knowledge_base', 'get_kb_stats', 'get_kb_public_url',
 ]);
 
 // ── Exports ─────────────────────────────────────────────────────────────────

@@ -1216,13 +1216,33 @@ exports.Prisma.TicketActivityScalarFieldEnum = {
 exports.Prisma.KnowledgeBaseArticleScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
+  slug: 'slug',
   title: 'title',
+  description: 'description',
   content: 'content',
   category: 'category',
+  status: 'status',
   isPublic: 'isPublic',
   viewCount: 'viewCount',
+  tags: 'tags',
+  notes: 'notes',
+  publishedAt: 'publishedAt',
+  createdByUserId: 'createdByUserId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.KBArticleActivityScalarFieldEnum = {
+  id: 'id',
+  articleId: 'articleId',
+  companyId: 'companyId',
+  type: 'type',
+  actorType: 'actorType',
+  actorId: 'actorId',
+  title: 'title',
+  body: 'body',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SlaPolicyScalarFieldEnum = {
@@ -2099,6 +2119,26 @@ exports.TicketActivityType = exports.$Enums.TicketActivityType = {
   ERROR: 'ERROR'
 };
 
+exports.KBArticleStatus = exports.$Enums.KBArticleStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.KBArticleActivityType = exports.$Enums.KBArticleActivityType = {
+  CREATED: 'CREATED',
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
+  ARCHIVED: 'ARCHIVED',
+  RESTORED: 'RESTORED',
+  CONTENT_UPDATED: 'CONTENT_UPDATED',
+  FIELD_UPDATED: 'FIELD_UPDATED',
+  NOTE_ADDED: 'NOTE_ADDED',
+  DUPLICATED: 'DUPLICATED',
+  VIEWED: 'VIEWED',
+  ERROR: 'ERROR'
+};
+
 exports.Prisma.ModelName = {
   Company: 'Company',
   User: 'User',
@@ -2164,6 +2204,7 @@ exports.Prisma.ModelName = {
   TicketComment: 'TicketComment',
   TicketActivity: 'TicketActivity',
   KnowledgeBaseArticle: 'KnowledgeBaseArticle',
+  KBArticleActivity: 'KBArticleActivity',
   SlaPolicy: 'SlaPolicy',
   CustomReport: 'CustomReport',
   ScheduledReport: 'ScheduledReport',
