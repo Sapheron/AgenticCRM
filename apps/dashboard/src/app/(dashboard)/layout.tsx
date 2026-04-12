@@ -149,7 +149,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const requiredPerm = Object.entries(ROUTE_PERMISSIONS).find(
         ([route]) => pathname === route || pathname.startsWith(route + '/'),
       )?.[1];
-      if (requiredPerm && !(user.permissions ?? []).includes(requiredPerm)) {
+      if (requiredPerm && !(user.permissions ?? []).includes(requiredPerm) && pathname !== '/chat') {
         router.push('/chat');
       }
     }
