@@ -44,6 +44,13 @@ const ROUTE_PERMISSIONS: Record<string, string> = {
 
 const ALL_NAV_SECTIONS = [
   {
+    label: 'Insights',
+    items: [
+      { href: '/analytics', icon: BarChart3, label: 'Analytics', perm: 'analytics' },
+      { href: '/reports', icon: PieChart, label: 'Reports', perm: 'reports' },
+    ],
+  },
+  {
     label: '',
     items: [
       { href: '/chat', icon: MessageSquare, label: 'AI Chat', perm: 'ai_chat' },
@@ -90,13 +97,6 @@ const ALL_NAV_SECTIONS = [
     label: 'Automate',
     items: [
       { href: '/workflows', icon: Workflow, label: 'Workflows', perm: 'workflows' },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { href: '/analytics', icon: BarChart3, label: 'Analytics', perm: 'analytics' },
-      { href: '/reports', icon: PieChart, label: 'Reports', perm: 'reports' },
     ],
   },
   {

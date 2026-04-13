@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { prisma } from '@wacrm/database';
+import { prisma, IntegrationType } from '@wacrm/database';
 
 @Injectable()
 export class IntegrationsService {
@@ -14,7 +14,7 @@ export class IntegrationsService {
   }
 
   async create(companyId: string, data: { type: string; config?: any; isActive?: boolean }) {
-    return prisma.integration.create({ data: { companyId, ...data } });
+    return prisma.integration.create({ data: { companyId, ...data, type: data.type as IntegrationType } });
   }
 
   async update(companyId: string, id: string, data: { config?: any; isActive?: boolean }) {

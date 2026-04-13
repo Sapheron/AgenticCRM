@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { prisma } from '@wacrm/database';
+import { prisma, DocumentSignatureStatus } from '@wacrm/database';
 
 @Injectable()
 export class DocumentsService {
@@ -52,11 +52,12 @@ export class DocumentsService {
     await this.get(companyId, documentId);
     const signature = await prisma.documentSignature.findFirst({ where: { id: signatureId, documentId } });
     if (!signature) throw new NotFoundException('Signature not found');
+    const status = data.status as DocumentSignatureStatus;
     return prisma.documentSignature.update({
       where: { id: signatureId },
       data: {
-        status: data.status,
-        ...(data.status === 'SIGNED' ? { signedAt: new Date() } : {}),
+        status,
+        ...(status === 'SIGNED' ? { signedAt: new Date() } : {}),
       },
     });
   }

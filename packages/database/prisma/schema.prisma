@@ -2247,39 +2247,115 @@ model FormActivity {
 // PHASE 5: AUTOMATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum WorkflowTriggerType {
+  CONTACT_CREATED
+  CONTACT_UPDATED
+  CONTACT_TAG_ADDED
+  LEAD_CREATED
+  LEAD_STATUS_CHANGED
+  DEAL_STAGE_CHANGED
+  TICKET_CREATED
+  FORM_SUBMITTED
+  PAYMENT_RECEIVED
+  SCHEDULED
+  WEBHOOK_RECEIVED
+  MANUAL
+}
+
+enum WorkflowActionType {
+  SEND_WHATSAPP
+  ADD_TAG
+  REMOVE_TAG
+  UPDATE_CONTACT_FIELD
+  CREATE_TASK
+  ENROLL_SEQUENCE
+  CREATE_LEAD
+  CREATE_TICKET
+  ADD_NOTE
+  SEND_WEBHOOK
+  WAIT
+}
+
+enum WorkflowActivityType {
+  CREATED
+  ACTIVATED
+  PAUSED
+  ARCHIVED
+  RESTORED
+  UPDATED
+  EXECUTED
+  FAILED
+  NOTE_ADDED
+  ERROR
+}
+
 model Workflow {
-  id        String   @id @default(cuid())
-  companyId String
-  name      String
-  isActive  Boolean  @default(false)
-  trigger   Json     @default("{}") // {type: "contact_created", conditions: {...}}
-  steps     Json     @default("[]") // [{type: "action", action: "send_message", config: {...}}]
-  runCount  Int      @default(0)
-  lastRunAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String          @id @default(cuid())
+  companyId       String
+  name            String
+  description     String?
+  status          WorkflowStatus  @default(DRAFT)
+  isActive        Boolean         @default(false)
+  trigger         Json            @default("{}") // {type: WorkflowTriggerType, conditions: {...}}
+  steps           Json            @default("[]") // [{type: WorkflowActionType, config: {...}}]
+  tags            String[]
+  runCount        Int             @default(0)
+  errorCount      Int             @default(0)
+  lastError       String?
+  lastRunAt       DateTime?
+  publishedAt     DateTime?
+  createdByUserId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   executions WorkflowExecution[]
+  activities WorkflowActivity[]
 
   @@unique([companyId, name])
+  @@index([companyId, status])
   @@index([companyId, isActive])
 }
 
 model WorkflowExecution {
-  id         String   @id @default(cuid())
-  workflowId String
-  companyId  String
-  contactId  String?
-  status     String   @default("RUNNING") // RUNNING, COMPLETED, FAILED
-  steps      Json     @default("[]") // [{step, status, result, timestamp}]
-  error      String?
-  startedAt  DateTime @default(now())
+  id          String    @id @default(cuid())
+  workflowId  String
+  companyId   String
+  contactId   String?
+  status      String    @default("RUNNING") // RUNNING, COMPLETED, FAILED
+  steps       Json      @default("[]") // [{step, status, result, timestamp}]
+  error       String?
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 
   workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
   @@index([workflowId])
   @@index([companyId, status])
+}
+
+model WorkflowActivity {
+  id         String               @id @default(cuid())
+  workflowId String
+  companyId  String
+  type       WorkflowActivityType
+  actorType  String               @default("user") // user | ai | system
+  actorId    String?
+  title      String
+  body       String?
+  meta       Json?
+  createdAt  DateTime             @default(now())
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, createdAt])
+  @@index([companyId, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2493,50 +2569,189 @@ model SlaPolicy {
 // PHASE 8: REPORTING
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum ReportStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum ReportType {
+  TABLE
+  CHART
+  FUNNEL
+  METRIC
+  COHORT
+}
+
+enum ReportActivityType {
+  CREATED
+  UPDATED
+  RUN
+  EXPORTED
+  SCHEDULED
+  ARCHIVED
+  RESTORED
+  NOTE_ADDED
+}
+
 model CustomReport {
-  id        String   @id @default(cuid())
-  companyId String
-  name      String
-  entity    String   // contacts, leads, deals, tickets, payments
-  filters   Json     @default("{}")
-  groupBy   String?
-  columns   String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String       @id @default(cuid())
+  companyId       String
+  name            String
+  description     String?
+  entity          String       // contacts, leads, deals, tickets, payments
+  status          ReportStatus @default(DRAFT)
+  type            ReportType   @default(TABLE)
+  filters         Json         @default("{}")
+  groupBy         String?
+  columns         String[]
+  tags            String[]
+  isPublic        Boolean      @default(false)
+  lastRunAt       DateTime?
+  lastRunResult   Json?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  activities ReportActivity[]
+  scheduled  ScheduledReport[]
 
   @@index([companyId])
+  @@index([companyId, status])
 }
 
 model ScheduledReport {
-  id        String   @id @default(cuid())
-  companyId String
-  reportId  String
-  frequency String   @default("weekly") // daily, weekly, monthly
-  recipients String[] // email addresses
+  id         String       @id @default(cuid())
+  companyId  String
+  reportId   String
+  frequency  String       @default("weekly") // daily, weekly, monthly
+  recipients String[]     // email addresses
   lastSentAt DateTime?
   nextRunAt  DateTime?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+
+  report CustomReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([companyId])
   @@index([nextRunAt, isActive])
+}
+
+model ReportActivity {
+  id        String             @id @default(cuid())
+  reportId  String
+  companyId String
+  type      ReportActivityType
+  actorType String             @default("user")
+  actorId   String?
+  title     String
+  body      String?
+  meta      Json?
+  createdAt DateTime           @default(now())
+
+  report CustomReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, createdAt])
+  @@index([companyId, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 9: INTEGRATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum IntegrationType {
+  GOOGLE_CALENDAR
+  GOOGLE_SHEETS
+  SLACK
+  ZAPIER
+  WEBHOOK
+  EMAIL_SMTP
+  FACEBOOK_ADS
+  INSTAGRAM
+  STRIPE
+  RAZORPAY
+  CUSTOM
+}
+
+enum IntegrationStatus {
+  DISCONNECTED
+  CONNECTED
+  ERROR
+  SYNCING
+}
+
+enum IntegrationActivityType {
+  CONNECTED
+  DISCONNECTED
+  SYNCED
+  SYNC_FAILED
+  WEBHOOK_SENT
+  WEBHOOK_RECEIVED
+  ERROR
+  NOTE_ADDED
+  CONFIGURED
+}
+
 model Integration {
-  id        String   @id @default(cuid())
-  companyId String
-  type      String   // google_calendar, outlook, slack, discord, telegram, instagram
-  config    Json     @default("{}") // encrypted config
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String            @id @default(cuid())
+  companyId    String
+  type         IntegrationType
+  name         String?
+  config       Json              @default("{}") // encrypted config
+  status       IntegrationStatus @default(DISCONNECTED)
+  isActive     Boolean           @default(true)
+  lastSyncAt   DateTime?
+  lastError    String?
+  syncCount    Int               @default(0)
+  webhookUrl   String?
+  webhookSecret String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  activities   IntegrationActivity[]
+  webhookLogs  WebhookLog[]
 
   @@unique([companyId, type])
   @@index([companyId])
+  @@index([companyId, status])
+}
+
+model IntegrationActivity {
+  id            String                  @id @default(cuid())
+  integrationId String
+  companyId     String
+  type          IntegrationActivityType
+  actorType     String                  @default("user")
+  actorId       String?
+  title         String
+  body          String?
+  meta          Json?
+  createdAt     DateTime                @default(now())
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@index([integrationId, createdAt])
+  @@index([companyId, createdAt])
+}
+
+model WebhookLog {
+  id            String      @id @default(cuid())
+  companyId     String
+  integrationId String?
+  direction     String      @default("OUTBOUND") // INBOUND | OUTBOUND
+  url           String
+  method        String      @default("POST")
+  statusCode    Int?
+  requestBody   Json?
+  responseBody  Json?
+  latencyMs     Int?
+  createdAt     DateTime    @default(now())
+
+  integration Integration? @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([integrationId, createdAt])
 }
 
 model CalendarEvent {
@@ -2575,36 +2790,92 @@ model ActivityLog {
 // PHASE 10: DOCUMENTS & SECURITY
 // ═══════════════════════════════════════════════════════════════════════════════
 
+enum DocumentStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum DocumentSignatureStatus {
+  PENDING
+  SIGNED
+  DECLINED
+  EXPIRED
+}
+
+enum DocumentActivityType {
+  CREATED
+  UPDATED
+  ARCHIVED
+  RESTORED
+  DELETED
+  SIGNATURE_REQUESTED
+  SIGNATURE_RECEIVED
+  SIGNATURE_DECLINED
+  NOTE_ADDED
+  SHARED
+  DOWNLOADED
+}
+
 model Document {
-  id        String   @id @default(cuid())
-  companyId String
-  contactId String?
-  dealId    String?
-  name      String
-  type      String   // proposal, contract, invoice_pdf, other
-  fileUrl   String
-  fileSize  Int?
-  mimeType  String?
-  createdAt DateTime @default(now())
+  id              String         @id @default(cuid())
+  companyId       String
+  contactId       String?
+  dealId          String?
+  name            String
+  description     String?
+  type            String         // proposal, contract, invoice_pdf, other
+  status          DocumentStatus @default(DRAFT)
+  fileUrl         String
+  fileSize        Int?
+  mimeType        String?
+  tags            String[]
+  version         Int            @default(1)
+  isTemplate      Boolean        @default(false)
+  expiresAt       DateTime?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   signatures DocumentSignature[]
+  activities DocumentActivity[]
 
   @@index([companyId])
   @@index([companyId, contactId])
+  @@index([companyId, status])
 }
 
 model DocumentSignature {
-  id         String    @id @default(cuid())
-  documentId String
-  signerName String
+  id          String                  @id @default(cuid())
+  documentId  String
+  signerName  String
   signerEmail String?
-  status     String    @default("PENDING") // PENDING, SIGNED, DECLINED
-  signedAt   DateTime?
-  createdAt  DateTime  @default(now())
+  status      DocumentSignatureStatus @default(PENDING)
+  signedAt    DateTime?
+  createdAt   DateTime                @default(now())
 
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([documentId])
+}
+
+model DocumentActivity {
+  id         String               @id @default(cuid())
+  documentId String
+  companyId  String
+  type       DocumentActivityType
+  actorType  String               @default("user")
+  actorId    String?
+  title      String
+  body       String?
+  meta       Json?
+  createdAt  DateTime             @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt])
+  @@index([companyId, createdAt])
 }
 
 model ApiKey {

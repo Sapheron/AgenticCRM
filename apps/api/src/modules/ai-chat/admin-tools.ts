@@ -77,6 +77,7 @@ import type {
   UpdateKBArticleDto,
   ListKBArticlesFilters,
 } from '../knowledge-base/knowledge-base.types';
+import { AnalyticsService } from '../analytics/analytics.service';
 import { Queue } from 'bullmq';
 import { QUEUES } from '@wacrm/shared';
 import type { ChatAttachment } from './attachments';
@@ -104,6 +105,7 @@ const invoicesService = new InvoicesService();
 const paymentsService = new PaymentsService(invoicesService);
 const ticketsService = new TicketsService();
 const kbService = new KnowledgeBaseService();
+const analyticsService = new AnalyticsService();
 
 // BroadcastService takes a BullMQ Queue. We construct one here so the AI
 // tools can drive the same single-write-path service the controller uses.
@@ -2607,30 +2609,264 @@ const tools: AdminTool[] = [
     },
   },
 
-  // ── Analytics ─────────────────────────────────────────────────────────────
+  // ── Analytics (15 tools) ──────────────────────────────────────────────────
   {
     definition: {
-      name: 'get_analytics',
-      description: 'Get CRM dashboard analytics and KPIs.',
+      name: 'get_crm_summary',
+      description: 'One-shot CRM health summary: KPI dashboard + lead funnel + deal pipeline + revenue + top agents. Use this when the user asks "how is the business doing", "how are sales", or any general health question.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+    execute: async (_args, companyId) => {
+      const s = await analyticsService.getCrmSummary(companyId);
+      const d = s.dashboard;
+      const wonStage = s.funnel.find(f => f.stage === 'WON');
+      return [
+        `CRM Summary (last 30 days):`,
+        `Contacts: ${d.contacts.total} (${d.contacts.delta > 0 ? '+' : ''}${d.contacts.delta}%)`,
+        `Active Leads: ${d.openLeads.total} | Won this month: ${d.openLeads.wonThisMonth}`,
+        `Pipeline: ₹${(d.pipelineValue.total / 100).toFixed(0)} across ${d.pipelineValue.activeDeals} deals`,
+        `Revenue (30d): ₹${(d.revenue.total / 100).toFixed(0)} (${d.revenue.delta > 0 ? '+' : ''}${d.revenue.delta}% vs prior)`,
+        `Open Tickets: ${d.openTickets.total}`,
+        `Lead Conversion: ${wonStage?.rate ?? 0}% win rate`,
+        `Top Agent: ${s.topAgents[0]?.name ?? 'N/A'} (${s.topAgents[0]?.conversationsResolved ?? 0} conversations resolved)`,
+      ].join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_analytics_dashboard',
+      description: 'Get KPI dashboard stats for a time range. Returns contacts, leads, pipeline value, revenue, tickets, and messages.',
       parameters: {
         type: 'object',
-        properties: {},
+        properties: { days: { type: 'number', description: 'Look-back window in days (default 30)' } },
         required: [],
       },
     },
+    execute: async (args, companyId) => {
+      const s = await analyticsService.getDashboardStats(companyId, (args.days as number) ?? 30);
+      return JSON.stringify(s, null, 2);
+    },
+  },
+  {
+    definition: {
+      name: 'get_revenue_trends',
+      description: 'Get revenue trends over time, grouped by day/week/month.',
+      parameters: {
+        type: 'object',
+        properties: {
+          days: { type: 'number', description: 'Look-back window (default 30)' },
+          groupBy: { type: 'string', enum: ['day', 'week', 'month'], description: 'Bucket size (default day)' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const data = await analyticsService.getRevenueTrends(companyId, (args.days as number) ?? 30, (args.groupBy as 'day' | 'week' | 'month') ?? 'day');
+      const total = data.reduce((s, d) => s + d.value, 0);
+      return `Revenue (last ${args.days ?? 30} days): ₹${(total / 100).toFixed(0)} total\n${data.map(d => `${d.date}: ₹${(d.value / 100).toFixed(0)}`).join('\n')}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_conversion_funnel',
+      description: 'Get lead-to-win conversion funnel showing rates at each stage.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const funnel = await analyticsService.getConversionFunnel(companyId, (args.days as number) ?? 30);
+      return funnel.map(f => `${f.stage}: ${f.count} leads (${f.rate}%)`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_deal_pipeline_stats',
+      description: 'Get deal pipeline stats by stage: count, total value, and share of pipeline.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
     execute: async (_args, companyId) => {
-      const [contacts, leads, deals, tasks, conversations, payments] = await Promise.all([
-        prisma.contact.count({ where: { companyId, deletedAt: null } }),
-        prisma.lead.count({ where: { companyId } }),
-        prisma.deal.findMany({ where: { companyId }, select: { stage: true, value: true } }),
-        prisma.task.count({ where: { companyId, status: { in: ['TODO', 'IN_PROGRESS'] } } }),
-        prisma.conversation.count({ where: { companyId, status: { in: ['OPEN', 'AI_HANDLING'] } } }),
-        prisma.payment.findMany({ where: { companyId, status: 'PAID' }, select: { amount: true } }),
-      ]);
-      const pipelineValue = deals.filter((d) => !['WON', 'LOST'].includes(d.stage)).reduce((s, d) => s + (d.value ?? 0), 0);
-      const revenue = payments.reduce((s, p) => s + p.amount, 0);
-      const wonDeals = deals.filter((d) => d.stage === 'WON').length;
-      return `CRM Analytics:\n- Contacts: ${contacts}\n- Leads: ${leads}\n- Active Deals: ${deals.length - wonDeals} (Pipeline: ₹${pipelineValue})\n- Won Deals: ${wonDeals}\n- Open Tasks: ${tasks}\n- Active Conversations: ${conversations}\n- Revenue: ₹${revenue / 100}`;
+      const stages = await analyticsService.getDealPipelineStats(companyId);
+      return stages.map(s => `${s.stage}: ${s.count} deals, ₹${(s.value / 100).toFixed(0)} (${s.weightedShare}%)`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_lead_source_breakdown',
+      description: 'Get lead counts broken down by source.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const data = await analyticsService.getLeadSourceBreakdown(companyId, (args.days as number) ?? 30);
+      return data.map(d => `${d.source}: ${d.count} leads (${d.rate}%)`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_contact_growth',
+      description: 'Get new contact growth over time, grouped by day/week/month.',
+      parameters: {
+        type: 'object',
+        properties: {
+          days: { type: 'number', description: 'Look-back window (default 30)' },
+          groupBy: { type: 'string', enum: ['day', 'week', 'month'] },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const data = await analyticsService.getContactGrowth(companyId, (args.days as number) ?? 30, (args.groupBy as 'day' | 'week' | 'month') ?? 'day');
+      const total = data.reduce((s, d) => s + d.value, 0);
+      return `Contact growth (last ${args.days ?? 30}d): ${total} new contacts\n${data.filter(d => d.value > 0).map(d => `${d.date}: +${d.value}`).join('\n')}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_agent_performance',
+      description: 'Get performance metrics per agent: conversations resolved, deals won, tickets resolved, messages sent.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const agents = await analyticsService.getAgentPerformance(companyId, (args.days as number) ?? 30);
+      if (!agents.length) return 'No agent performance data found.';
+      return agents.map(a =>
+        `${a.name}: ${a.conversationsResolved} convos resolved, ${a.dealsWon} deals won (₹${(a.dealsWonValue / 100).toFixed(0)}), ${a.ticketsResolved} tickets, ${a.messagesSent} msgs sent`
+      ).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_broadcast_analytics',
+      description: 'Get broadcast delivery stats: sent, delivered, read, failed rates.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await analyticsService.getBroadcastStats(companyId, (args.days as number) ?? 30);
+      return `Broadcasts (last ${args.days ?? 30}d): ${s.totalBroadcasts} broadcasts sent\nRecipients: ${s.totalRecipients} | Delivered: ${s.delivered} (${s.deliveryRate}%) | Read: ${s.read} (${s.readRate}%) | Failed: ${s.failed}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_message_volume',
+      description: 'Get inbound/outbound WhatsApp message volume over time.',
+      parameters: {
+        type: 'object',
+        properties: {
+          days: { type: 'number', description: 'Look-back window (default 30)' },
+          groupBy: { type: 'string', enum: ['day', 'week', 'month'] },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const data = await analyticsService.getMessageVolumeByChannel(companyId, (args.days as number) ?? 30, (args.groupBy as 'day' | 'week' | 'month') ?? 'day');
+      const totalIn = data.inbound.reduce((s, d) => s + d.value, 0);
+      const totalOut = data.outbound.reduce((s, d) => s + d.value, 0);
+      return `Message volume (last ${args.days ?? 30}d): ${totalIn} inbound, ${totalOut} outbound`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_ticket_analytics',
+      description: 'Get ticket stats: open, in-progress, resolved, SLA breaches.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await analyticsService.getTicketStats(companyId, (args.days as number) ?? 30);
+      return `Tickets: ${s.open} open, ${s.inProgress} in-progress, ${s.resolved} resolved (last ${args.days ?? 30}d), ${s.slaBreach} SLA breaches`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_response_time_stats',
+      description: 'Get average first-response time and average resolution time for tickets.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const s = await analyticsService.getResponseTimeStats(companyId, (args.days as number) ?? 30);
+      const fmt = (ms: number) => ms < 60000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60000)}m`;
+      return `Response times (last ${args.days ?? 30}d, ${s.count} tickets): Avg first response: ${fmt(s.avgFirstResponseMs)} | Avg resolution: ${fmt(s.avgResolutionMs)}`;
+    },
+  },
+  {
+    definition: {
+      name: 'get_top_contacts',
+      description: 'Get top contacts by message volume.',
+      parameters: {
+        type: 'object',
+        properties: {
+          days: { type: 'number', description: 'Look-back window (default 30)' },
+          limit: { type: 'number', description: 'Number of contacts to return (default 10)' },
+        },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const contacts = await analyticsService.getTopContacts(companyId, (args.days as number) ?? 30, (args.limit as number) ?? 10);
+      if (!contacts.length) return 'No contacts found.';
+      return contacts.map((c, i) => `${i + 1}. ${c.displayName} (${c.phoneNumber}): ${c.messageCount} messages`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'get_tag_analytics',
+      description: 'Get the most-used contact tags by frequency.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Look-back window (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const tags = await analyticsService.getTagAnalytics(companyId, (args.days as number) ?? 30);
+      if (!tags.length) return 'No tags found.';
+      return tags.map(t => `${t.tag}: ${t.count} contacts`).join('\n');
+    },
+  },
+  {
+    definition: {
+      name: 'compare_analytics_periods',
+      description: 'Compare current period KPIs vs the prior period. Returns deltas for contacts, leads, deals, revenue, messages.',
+      parameters: {
+        type: 'object',
+        properties: { days: { type: 'number', description: 'Period length in days (default 30)' } },
+        required: [],
+      },
+    },
+    execute: async (args, companyId) => {
+      const data = await analyticsService.comparePeriods(companyId, (args.days as number) ?? 30);
+      const d = data.delta;
+      const fmtD = (v: number) => `${v > 0 ? '+' : ''}${v}%`;
+      return [
+        `Period comparison (current vs prior ${args.days ?? 30} days):`,
+        `Contacts: ${data.current.contacts} (${fmtD(d.contacts)})`,
+        `Leads: ${data.current.leads} (${fmtD(d.leads)})`,
+        `Deals: ${data.current.deals} (${fmtD(d.deals)})`,
+        `Revenue: ₹${(data.current.revenue / 100).toFixed(0)} (${fmtD(d.revenue)})`,
+        `Messages: ${data.current.messages} (${fmtD(d.messages)})`,
+      ].join('\n');
     },
   },
 
@@ -7606,8 +7842,12 @@ const CORE_TOOL_NAMES = new Set([
   'refund_payment', 'get_payment_stats', 'list_payments_for_invoice',
   // Communication
   'send_whatsapp', 'list_conversations',
-  // Analytics
-  'get_analytics',
+  // Analytics (15 tools)
+  'get_crm_summary', 'get_analytics_dashboard', 'get_revenue_trends', 'get_conversion_funnel',
+  'get_deal_pipeline_stats', 'get_lead_source_breakdown', 'get_contact_growth',
+  'get_agent_performance', 'get_broadcast_analytics', 'get_message_volume',
+  'get_ticket_analytics', 'get_response_time_stats', 'get_top_contacts',
+  'get_tag_analytics', 'compare_analytics_periods',
   // Tickets (full lifecycle — 20 tools total, 8 exposed by default)
   'list_tickets', 'get_ticket', 'create_ticket', 'change_ticket_status',
   'assign_ticket', 'escalate_ticket', 'add_ticket_comment', 'get_ticket_stats',
@@ -7650,7 +7890,7 @@ function categorizeTool(name: string): string {
   if (m(/^memory_/)) return 'Memory';
   if (m(/^send_whatsapp|^list_conversations/)) return 'WhatsApp & Messaging';
   if (m(/^create_broadcast|^list_broadcasts|^send_broadcast/)) return 'Broadcasts';
-  if (m(/^get_analytics|^get_lead_stats/)) return 'Analytics';
+  if (m(/^get_analytics|^get_crm_summary|^get_revenue|^get_conversion|^get_deal_pipeline|^get_lead_source|^get_contact_growth|^get_agent_perf|^get_broadcast_analytics|^get_message_volume|^get_ticket_analytics|^get_response_time|^get_top_contacts|^get_tag_analytics|^compare_analytics|^get_lead_stats/)) return 'Analytics';
   if (m(/contact/)) return 'Contacts';
   if (m(/lead/)) return 'Leads';
   if (m(/deal/)) return 'Deals';
