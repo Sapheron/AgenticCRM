@@ -37,6 +37,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module';
+import { SystemModule } from './modules/system/system.module';
 import { WsGatewayModule } from './gateway/ws-gateway.module';
 import { BullModule } from '@nestjs/bullmq';
 
@@ -88,6 +89,7 @@ import { BullModule } from '@nestjs/bullmq';
     IntegrationsModule,
     DocumentsModule,
     ApiKeysModule,
+    SystemModule,
     WsGatewayModule,
   ],
   providers: [

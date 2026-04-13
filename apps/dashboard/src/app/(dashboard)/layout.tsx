@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth.store';
 import { useSocket } from '@/hooks/use-socket';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api-client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -11,7 +13,7 @@ import {
   BarChart3, Settings, Megaphone, LogOut, Zap, CreditCard,
   FileText, Repeat, Package, Receipt, FileSpreadsheet,
   Target, Clipboard, Workflow, LifeBuoy, BookOpen, PieChart,
-  Plug, FolderOpen, Brain, Terminal,
+  Plug, FolderOpen, Brain, Terminal, ArrowUpCircle, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -114,6 +116,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isAuthenticated, logout, user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [sidebarHover, setSidebarHover] = useState(false);
+  const [dismissedUpdate, setDismissedUpdate] = useState(false);
 
   // Filter nav sections by user permissions (admins see all)
   const navSections = useMemo(() => {
@@ -128,6 +131,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }))
       .filter((section) => section.items.length > 0);
   }, [user]);
+
+  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
+
+  // Check for updates every 30 minutes (admin only)
+  const { data: updateInfo } = useQuery({
+    queryKey: ['system-update-check'],
+    queryFn: () => api.get('/system/check-update').then((r) => r.data),
+    enabled: !!mounted && !!isAdmin,
+    refetchInterval: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const showUpdateBanner = updateInfo?.updateAvailable && !dismissedUpdate;
 
   useEffect(() => setMounted(true), []);
   useSocket();
@@ -253,6 +270,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
+        {showUpdateBanner && (
+          <div className="bg-violet-600 text-white px-4 py-2 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <ArrowUpCircle size={14} />
+              <span>
+                <strong>Update available</strong>
+                {updateInfo.latest?.message && (
+                  <span className="ml-1.5 opacity-80">— {updateInfo.latest.message}</span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/settings/system"
+                className="bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
+              >
+                Update Now
+              </Link>
+              <button
+                onClick={() => setDismissedUpdate(true)}
+                className="opacity-60 hover:opacity-100 transition-opacity"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
         {children}
       </main>
     </div>
