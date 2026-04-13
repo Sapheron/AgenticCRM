@@ -1,7 +1,7 @@
-import { Controller, Get, Put, Post, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Body, UseGuards, Query, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IsEnum, IsString, IsOptional, IsBoolean, IsNumber, Min, Max } from 'class-validator';
-import { AiSettingsService, UpsertAiConfigDto } from './ai-settings.service';
+import { AiSettingsService, UpsertAiConfigDto, FallbackModelEntry } from './ai-settings.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CompanyScopeGuard } from '../../common/guards/company-scope.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -68,5 +68,28 @@ export class AiSettingsController {
   @ApiOperation({ summary: 'Get available models for a provider' })
   models(@Query('provider') provider: AiProvider) {
     return this.svc.getProviderModels(provider);
+  }
+
+  // ── Fallback model chain ────────────────────────────────────────────────
+
+  @Get('fallbacks')
+  @ApiOperation({ summary: 'Get configured fallback models (keys masked)' })
+  getFallbacks(@CurrentUser() user: User) {
+    return this.svc.getFallbacks(user.companyId);
+  }
+
+  @Post('fallbacks')
+  @ApiOperation({ summary: 'Add a fallback model to the chain' })
+  addFallback(@CurrentUser() user: User, @Body() body: FallbackModelEntry) {
+    return this.svc.addFallback(user.companyId, body);
+  }
+
+  @Delete('fallbacks/:index')
+  @ApiOperation({ summary: 'Remove a fallback model by index' })
+  removeFallback(
+    @CurrentUser() user: User,
+    @Param('index', ParseIntPipe) index: number,
+  ) {
+    return this.svc.removeFallback(user.companyId, index);
   }
 }

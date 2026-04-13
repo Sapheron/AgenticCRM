@@ -9,7 +9,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { prisma } from '@wacrm/database';
 import { decrypt } from '@wacrm/shared';
-import { PROVIDER_BASE_URLS } from '../settings/ai-settings.service';
+import { PROVIDER_BASE_URLS, AiSettingsService } from '../settings/ai-settings.service';
 import { getAdminToolDefinitions, executeAdminTool } from './admin-tools';
 import { AiMemoryService } from '../ai-memory/ai-memory.service';
 import { MemoryService } from '../memory/memory.service';
@@ -23,6 +23,28 @@ import {
 } from './attachments';
 
 const MAX_TOOL_ITERATIONS = 8;
+
+/**
+ * Returns true for transient provider errors that warrant trying the next
+ * fallback model: overload (503), rate-limit (429), and common message
+ * patterns from Gemini/OpenAI/Anthropic when they're under high demand.
+ */
+function isRetryableError(msg: string): boolean {
+  const m = msg.toLowerCase();
+  return (
+    m.includes('503') ||
+    m.includes('429') ||
+    m.includes('overload') ||
+    m.includes('high demand') ||
+    m.includes('currently experiencing') ||
+    m.includes('rate limit') ||
+    m.includes('rate_limit') ||
+    m.includes('too many requests') ||
+    m.includes('capacity') ||
+    m.includes('service unavailable') ||
+    m.includes('temporarily unavailable')
+  );
+}
 
 const ADMIN_SYSTEM_PROMPT = `You are an AI assistant for a WhatsApp CRM. You have full control over the CRM and can perform any operation the user asks.
 
@@ -391,6 +413,7 @@ export class AiChatService {
     private readonly memoryService: AiMemoryService,
     private readonly memory: MemoryService,
     private readonly chatConvService: ChatConversationsService,
+    private readonly aiSettings: AiSettingsService,
   ) {}
 
   async chat(
@@ -456,40 +479,72 @@ export class AiChatService {
       });
     }
 
+    // Build the provider chain: primary + fallbacks
+    const fallbacks = await this.aiSettings.getResolvedFallbacks(companyId);
+    const providerChain = [
+      { provider: config.provider as string, model: config.model, apiKey, baseUrl: config.baseUrl },
+      ...fallbacks,
+    ];
+    // Track which provider actually responded
+    let activeProvider = config.provider as string;
+    let activeModel = config.model;
+
     // Agent loop — iterate on tool calls
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-      let response: { content?: string; toolCalls?: ToolCall[] };
+      let response: { content?: string; toolCalls?: ToolCall[] } | undefined;
       try {
-        response = await this.callWithTools(
-          config.provider, config.model, apiKey, config.baseUrl,
-          messages, tools,
-          config.maxTokens ?? 2048, config.temperature ?? 0.7,
-        );
+        // Try each provider in the chain — stop at the first success
+        let lastErr: Error | null = null;
+        let succeeded = false;
+        for (const candidate of providerChain) {
+          try {
+            response = await this.callWithTools(
+              candidate.provider, candidate.model, candidate.apiKey, candidate.baseUrl,
+              messages, tools,
+              config.maxTokens ?? 2048, config.temperature ?? 0.7,
+            );
+            activeProvider = candidate.provider;
+            activeModel = candidate.model;
+            succeeded = true;
+            if (candidate !== providerChain[0]) {
+              console.log(`[AI Chat] Fallback succeeded: ${candidate.provider}/${candidate.model}`);
+            }
+            break;
+          } catch (err: unknown) {
+            lastErr = err instanceof Error ? err : new Error(String(err));
+            if (!isRetryableError(lastErr.message)) throw lastErr; // non-retryable → fail immediately
+            console.warn(`[AI Chat] ${candidate.provider}/${candidate.model} retryable error — trying next: ${lastErr.message.slice(0, 120)}`);
+          }
+        }
+        if (!succeeded) throw lastErr ?? new Error('All providers failed');
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error('[AI Chat] Provider call failed:', msg);
+        console.error('[AI Chat] All providers failed:', msg);
         return {
           content: `AI provider error: ${msg.slice(0, 200)}`,
           actions,
-          provider: config.provider,
-          model: config.model,
+          provider: activeProvider,
+          model: activeModel,
           latencyMs: Date.now() - start,
         };
       }
 
-      console.log('[AI Chat] Response:', JSON.stringify({ content: response.content?.slice(0, 100), toolCallCount: response.toolCalls?.length ?? 0 }));
+      // catch always returns, so response is guaranteed set here
+      const res = response!;
+
+      console.log('[AI Chat] Response:', JSON.stringify({ content: res.content?.slice(0, 100), toolCallCount: res.toolCalls?.length ?? 0 }));
 
       // Tool call path
-      if (response.toolCalls?.length) {
+      if (res.toolCalls?.length) {
         // Add assistant message with tool calls to context
         messages.push({
           role: 'assistant',
           content: '',
-          tool_calls: response.toolCalls,
+          tool_calls: res.toolCalls,
         });
 
         // Execute each tool and add results
-        for (const tc of response.toolCalls) {
+        for (const tc of res.toolCalls) {
           let args: Record<string, unknown> = {};
           try { args = JSON.parse(tc.function.arguments); } catch { /* empty */ }
 
@@ -510,12 +565,12 @@ export class AiChatService {
       }
 
       // Text response path — done
-      if (response.content) {
+      if (res.content) {
         return {
-          content: response.content,
+          content: res.content,
           actions,
-          provider: config.provider,
-          model: config.model,
+          provider: activeProvider,
+          model: activeModel,
           latencyMs: Date.now() - start,
         };
       }

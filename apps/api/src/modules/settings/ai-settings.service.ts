@@ -3,6 +3,14 @@ import { prisma } from '@wacrm/database';
 import type { AiProvider } from '@wacrm/database';
 import { encrypt, decrypt } from '@wacrm/shared';
 
+export interface FallbackModelEntry {
+  provider: string;
+  model: string;
+  apiKey?: string;          // plain text — encrypted before storing
+  apiKeyEncrypted?: string; // stored form
+  baseUrl?: string;
+}
+
 export interface UpsertAiConfigDto {
   provider: AiProvider;
   model: string;
@@ -291,5 +299,67 @@ export class AiSettingsService {
     if (!res.ok) throw new Error(`Anthropic error: ${res.status} ${await res.text()}`);
     const json = await res.json() as { content?: Array<{ text?: string }> };
     return json.content?.[0]?.text ?? 'ok';
+  }
+
+  // ── Fallback model chain ────────────────────────────────────────────────────
+
+  /** Return the fallback chain (API keys masked). */
+  async getFallbacks(companyId: string): Promise<Array<{
+    provider: string; model: string; baseUrl?: string; apiKeySet: boolean;
+  }>> {
+    const config = await prisma.aiConfig.findUnique({ where: { companyId } });
+    const raw = (config?.fallbackModels ?? []) as unknown as FallbackModelEntry[];
+    return raw.map(({ provider, model, baseUrl, apiKeyEncrypted }) => ({
+      provider,
+      model,
+      baseUrl,
+      apiKeySet: !!apiKeyEncrypted,
+    }));
+  }
+
+  /** Append a fallback model entry. Max 5 fallbacks. */
+  async addFallback(companyId: string, entry: FallbackModelEntry): Promise<void> {
+    const config = await prisma.aiConfig.findUnique({ where: { companyId } });
+    const existing = (config?.fallbackModels ?? []) as unknown as FallbackModelEntry[];
+    if (existing.length >= 5) throw new Error('Maximum 5 fallback models allowed');
+
+    const stored: FallbackModelEntry = {
+      provider: entry.provider,
+      model: entry.model,
+      baseUrl: entry.baseUrl,
+      apiKeyEncrypted: entry.apiKey?.trim() ? encrypt(entry.apiKey.trim()) : undefined,
+    };
+    await prisma.aiConfig.update({
+      where: { companyId },
+      data: { fallbackModels: JSON.parse(JSON.stringify([...existing, stored])) },
+    });
+  }
+
+  /** Remove a fallback by index. */
+  async removeFallback(companyId: string, index: number): Promise<void> {
+    const config = await prisma.aiConfig.findUnique({ where: { companyId } });
+    const existing = (config?.fallbackModels ?? []) as unknown as FallbackModelEntry[];
+    existing.splice(index, 1);
+    await prisma.aiConfig.update({ where: { companyId }, data: { fallbackModels: JSON.parse(JSON.stringify(existing)) } });
+  }
+
+  /**
+   * Resolve the full fallback chain for use in ai-chat.service.ts.
+   * Returns decrypted keys — never expose this outside the API backend.
+   */
+  async getResolvedFallbacks(companyId: string): Promise<Array<{
+    provider: string; model: string; apiKey: string; baseUrl?: string | null;
+  }>> {
+    const config = await prisma.aiConfig.findUnique({ where: { companyId } });
+    if (!config) return [];
+    const primaryKey = config.apiKeyEncrypted ? decrypt(config.apiKeyEncrypted) : '';
+    const raw = (config.fallbackModels ?? []) as unknown as FallbackModelEntry[];
+    return raw.map((f) => ({
+      provider: f.provider,
+      model: f.model,
+      baseUrl: f.baseUrl,
+      // Reuse the primary key if no separate key was configured for this fallback
+      apiKey: f.apiKeyEncrypted ? decrypt(f.apiKeyEncrypted) : primaryKey,
+    }));
   }
 }

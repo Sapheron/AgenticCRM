@@ -492,6 +492,7 @@ exports.Prisma.AiConfigScalarFieldEnum = {
   toolCallingEnabled: 'toolCallingEnabled',
   testStatus: 'testStatus',
   testError: 'testError',
+  fallbackModels: 'fallbackModels',
   updatedAt: 'updatedAt'
 };
 

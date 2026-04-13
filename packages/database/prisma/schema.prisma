@@ -936,6 +936,10 @@ model AiConfig {
   toolCallingEnabled Boolean    @default(true)
   testStatus         String?
   testError          String?
+  // Fallback model chain — tried in order when the primary model fails with
+  // 503 / 429 / overloaded. Each entry: { provider, model, apiKeyEncrypted?, baseUrl? }
+  // If apiKeyEncrypted is omitted the primary apiKey is reused.
+  fallbackModels     Json?      @default("[]")
   updatedAt          DateTime   @updatedAt
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

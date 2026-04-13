@@ -5,11 +5,12 @@ import { StaffWaBridgeService } from './staff-wa-bridge.service';
 import { AiMemoryModule } from '../ai-memory/ai-memory.module';
 import { MemoryModule } from '../memory/memory.module';
 import { ChatConversationsModule } from '../chat-conversations/chat-conversations.module';
+import { AiSettingsService } from '../settings/ai-settings.service';
 
 @Module({
   imports: [AiMemoryModule, MemoryModule, ChatConversationsModule],
   controllers: [AiChatController],
-  providers: [AiChatService, StaffWaBridgeService],
+  providers: [AiChatService, StaffWaBridgeService, AiSettingsService],
   exports: [AiChatService],
 })
 export class AiChatModule {}

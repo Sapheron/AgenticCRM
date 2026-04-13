@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Bot, CheckCircle, XCircle, Loader2, Zap } from 'lucide-react';
+import { Bot, CheckCircle, XCircle, Loader2, Zap, Plus, Trash2, ArrowDown } from 'lucide-react';
 
 const PROVIDERS: Array<{ value: string; label: string; desc: string }> = [
   { value: 'GEMINI', label: 'Google Gemini', desc: 'gemini-2.5-pro/flash — free tier available' },
@@ -32,7 +32,10 @@ const PROMPT_PRESETS = [
   { label: 'Custom', prompt: '' },
 ];
 
+interface FallbackEntry { provider: string; model: string; baseUrl?: string; apiKeySet: boolean; }
+
 export default function AiSettingsPage() {
+  const qc = useQueryClient();
   const [provider, setProvider] = useState('GEMINI');
   const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -45,6 +48,53 @@ export default function AiSettingsPage() {
   const [toolCalling, setToolCalling] = useState(true);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string; latencyMs?: number; reply?: string } | null>(null);
+
+  // Fallback chain state
+  const [fbProvider, setFbProvider] = useState('GROQ');
+  const [fbModel, setFbModel] = useState('');
+  const [fbApiKey, setFbApiKey] = useState('');
+  const [fbBaseUrl, setFbBaseUrl] = useState('');
+
+  const { data: fallbacks = [] } = useQuery<FallbackEntry[]>({
+    queryKey: ['ai-fallbacks'],
+    queryFn: async () => {
+      const res = await api.get<{ data: FallbackEntry[] }>('/settings/ai/fallbacks');
+      return res.data.data;
+    },
+  });
+
+  const { data: fbModels = [] } = useQuery<string[]>({
+    queryKey: ['ai-models', fbProvider],
+    queryFn: async () => {
+      const res = await api.get<{ data: string[] }>(`/settings/ai/models?provider=${fbProvider}`);
+      return res.data.data;
+    },
+  });
+
+  useEffect(() => {
+    if (fbModels.length > 0) setFbModel(fbModels[0]);
+  }, [fbModels]);
+
+  const addFallbackMutation = useMutation({
+    mutationFn: () => api.post('/settings/ai/fallbacks', {
+      provider: fbProvider,
+      model: fbModel,
+      ...(fbApiKey ? { apiKey: fbApiKey } : {}),
+      ...(fbBaseUrl ? { baseUrl: fbBaseUrl } : {}),
+    }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['ai-fallbacks'] });
+      setFbApiKey(''); setFbBaseUrl('');
+      toast.success('Fallback model added');
+    },
+    onError: () => toast.error('Failed to add fallback'),
+  });
+
+  const removeFallbackMutation = useMutation({
+    mutationFn: (index: number) => api.delete(`/settings/ai/fallbacks/${index}`),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['ai-fallbacks'] }); toast.success('Fallback removed'); },
+    onError: () => toast.error('Failed to remove fallback'),
+  });
 
   const { data: config } = useQuery({
     queryKey: ['ai-config'],
@@ -258,6 +308,97 @@ export default function AiSettingsPage() {
                 </div>
               </label>
             </div>
+          </div>
+
+          {/* Fallback Model Chain */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Fallback Models</p>
+              <span className="text-[9px] text-gray-400">{fallbacks.length}/5</span>
+            </div>
+            <p className="text-[10px] text-gray-400 mb-3">
+              Tried in order when the primary model returns 503 / rate-limit / overloaded. Uses the primary API key unless you specify a different one.
+            </p>
+
+            {/* Current chain */}
+            {fallbacks.length > 0 && (
+              <div className="space-y-1.5 mb-3">
+                {/* Primary */}
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-violet-50 border border-violet-100">
+                  <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />
+                  <span className="text-[11px] font-medium text-violet-700 flex-1">
+                    {provider} / {model} <span className="font-normal text-violet-400">(primary)</span>
+                  </span>
+                </div>
+                {fallbacks.map((fb, i) => (
+                  <div key={i}>
+                    <div className="flex justify-center my-0.5">
+                      <ArrowDown size={10} className="text-gray-300" />
+                    </div>
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-gray-50 border border-gray-200">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                      <span className="text-[11px] text-gray-700 flex-1">
+                        {fb.provider} / {fb.model}
+                        {fb.apiKeySet && <span className="text-[9px] text-gray-400 ml-1">(own key)</span>}
+                      </span>
+                      <button
+                        onClick={() => removeFallbackMutation.mutate(i)}
+                        disabled={removeFallbackMutation.isPending}
+                        className="text-red-400 hover:text-red-600 disabled:opacity-40"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add fallback form */}
+            {fallbacks.length < 5 && (
+              <div className="border border-dashed border-gray-200 rounded p-3 space-y-2">
+                <p className="text-[10px] font-medium text-gray-500">Add fallback</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={fbProvider}
+                    onChange={(e) => setFbProvider(e.target.value)}
+                    className="border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  >
+                    {PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                  <select
+                    value={fbModel}
+                    onChange={(e) => setFbModel(e.target.value)}
+                    className="border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  >
+                    {fbModels.map((m) => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+                <input
+                  type="password"
+                  value={fbApiKey}
+                  onChange={(e) => setFbApiKey(e.target.value)}
+                  placeholder="API key (optional — uses primary key if blank)"
+                  className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-violet-400 placeholder:text-gray-300"
+                />
+                {(fbProvider === 'OLLAMA' || fbProvider === 'CUSTOM') && (
+                  <input
+                    value={fbBaseUrl}
+                    onChange={(e) => setFbBaseUrl(e.target.value)}
+                    placeholder="Base URL (e.g. http://localhost:11434/v1)"
+                    className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  />
+                )}
+                <button
+                  onClick={() => addFallbackMutation.mutate()}
+                  disabled={addFallbackMutation.isPending || !fbModel}
+                  className="flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 text-white px-3 py-1.5 rounded text-[11px] font-medium disabled:opacity-50"
+                >
+                  {addFallbackMutation.isPending ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                  Add Fallback
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Test + Save */}
