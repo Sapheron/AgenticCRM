@@ -76,43 +76,43 @@ export default function AnalyticsPage() {
 
   const dashboard = useQuery({
     queryKey: ['analytics-dashboard', days],
-    queryFn: () => api.get(`/analytics/dashboard?days=${days}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/dashboard?days=${days}`).then(r => r.data.data),
     refetchInterval: 60000,
   });
 
   const revenue = useQuery({
     queryKey: ['analytics-revenue', days],
-    queryFn: () => api.get(`/analytics/revenue?days=${days}&groupBy=${days <= 14 ? 'day' : days <= 60 ? 'day' : 'week'}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/revenue?days=${days}&groupBy=${days <= 14 ? 'day' : days <= 60 ? 'day' : 'week'}`).then(r => r.data.data),
   });
 
   const funnel = useQuery({
     queryKey: ['analytics-funnel', days],
-    queryFn: () => api.get(`/analytics/funnel?days=${days}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/funnel?days=${days}`).then(r => r.data.data),
   });
 
   const pipeline = useQuery({
     queryKey: ['analytics-pipeline'],
-    queryFn: () => api.get('/analytics/pipeline').then(r => r.data),
+    queryFn: () => api.get('/analytics/pipeline').then(r => r.data.data),
   });
 
   const sources = useQuery({
     queryKey: ['analytics-sources', days],
-    queryFn: () => api.get(`/analytics/leads/sources?days=${days}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/leads/sources?days=${days}`).then(r => r.data.data),
   });
 
   const agents = useQuery({
     queryKey: ['analytics-agents', days],
-    queryFn: () => api.get(`/analytics/agents?days=${days}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/agents?days=${days}`).then(r => r.data.data),
   });
 
   const contactGrowth = useQuery({
     queryKey: ['analytics-contact-growth', days],
-    queryFn: () => api.get(`/analytics/contacts/growth?days=${days}&groupBy=day`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/contacts/growth?days=${days}&groupBy=day`).then(r => r.data.data),
   });
 
   const compare = useQuery({
     queryKey: ['analytics-compare', days],
-    queryFn: () => api.get(`/analytics/compare?days=${days}`).then(r => r.data),
+    queryFn: () => api.get(`/analytics/compare?days=${days}`).then(r => r.data.data),
   });
 
   const d = dashboard.data;
@@ -206,9 +206,9 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={180}>
                 <LineChart data={revenue.data ?? []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false}
-                    tickFormatter={v => v.slice(5)} />
+                    tickFormatter={(v: unknown) => typeof v === 'string' ? v.slice(5) : String(v)} />
                   <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false}
-                    tickFormatter={v => fmtCurrency(v)} width={52} />
+                    tickFormatter={(v: unknown) => fmtCurrency(v as number)} width={52} />
                   <Tooltip
                     formatter={(v: unknown) => [fmtCurrency(v as number), 'Revenue']}
                     labelStyle={{ fontSize: 10 }}
@@ -314,7 +314,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={contactGrowth.data ?? []} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <XAxis dataKey="date" tick={{ fontSize: 9 }} tickLine={false} axisLine={false}
-                    tickFormatter={v => v.slice(5)} />
+                    tickFormatter={(v: unknown) => typeof v === 'string' ? v.slice(5) : String(v)} />
                   <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={28} />
                   <Tooltip
                     formatter={(v: unknown) => [v as number, 'New Contacts']}
