@@ -89,6 +89,13 @@ export class InboundMonitor {
     logger.info({ accountId: this.accountId }, 'Inbound monitor started');
   }
 
+  /** Clean up Redis connections and BullMQ queue on reconnect (OpenClaw: closeCurrentConnection) */
+  async close(): Promise<void> {
+    try { await this.aiQueue.close(); } catch { /* best-effort */ }
+    try { this.redis.disconnect(); } catch { /* best-effort */ }
+    logger.info({ accountId: this.accountId }, 'Inbound monitor closed');
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async handleMessage(msg: any) {
     const normalized = normalizeMessage(msg as Parameters<typeof normalizeMessage>[0]);

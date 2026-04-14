@@ -21,6 +21,8 @@ const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
 // Active socket map: accountId → WASocket
 const activeSockets = new Map<string, WASocket>();
+// Active monitor map: accountId → InboundMonitor (for cleanup on reconnect)
+const activeMonitors = new Map<string, InboundMonitor>();
 
 // Track last inbound activity per account for stale connection detection
 // Matches OpenClaw's WhatsAppConnectionController.lastInboundAt
@@ -84,6 +86,16 @@ export async function startSession(accountId: string): Promise<void> {
         const displayName = sock.user?.name ?? '';
         logger.info({ accountId, phone }, 'WhatsApp connected');
 
+        // CRITICAL: Send "available" presence on connect (OpenClaw: monitor.ts:108-111)
+        // Without this, WhatsApp considers the session inactive and stops delivering messages.
+        // This is the root cause of "works for 5 minutes then stops listening".
+        try {
+          await sock.sendPresenceUpdate('available');
+          logger.info({ accountId }, 'Sent presence "available" on connect');
+        } catch (err) {
+          logger.warn({ accountId, err }, 'Failed to send presence update');
+        }
+
         // Mark connection time as initial activity baseline (OpenClaw pattern)
         lastInboundAt.set(accountId, Date.now());
 
@@ -112,6 +124,12 @@ export async function startSession(accountId: string): Promise<void> {
 
       if (connection === 'close') {
         activeSockets.delete(accountId);
+        // Clean up old monitor's Redis/BullMQ connections (OpenClaw: closeCurrentConnection)
+        const oldMonitor = activeMonitors.get(accountId);
+        if (oldMonitor) {
+          await oldMonitor.close().catch(() => null);
+          activeMonitors.delete(accountId);
+        }
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const reason = (DisconnectReason as any)[statusCode] ?? 'unknown';
@@ -140,7 +158,13 @@ export async function startSession(accountId: string): Promise<void> {
     });
 
     // ── Inbound messages ────────────────────────────────────────
+    // Clean up any previous monitor before creating a new one
+    const prevMonitor = activeMonitors.get(accountId);
+    if (prevMonitor) {
+      await prevMonitor.close().catch(() => null);
+    }
     const monitor = new InboundMonitor(sock, accountId);
+    activeMonitors.set(accountId, monitor);
     await monitor.init();
     monitor.start();
   };
