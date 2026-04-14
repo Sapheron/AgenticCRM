@@ -50,7 +50,12 @@ const MODEL_MAX_TOKENS: Record<string, number> = {
 };
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
-const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
+const redis = new Redis(process.env.REDIS_URL!);
+
+// Retry config for transient AI errors (503, 429, timeouts)
+const AI_RETRY_ATTEMPTS = 2;
+const AI_RETRY_DELAY_MS = 3000;
+const RETRYABLE_STATUS = /503|429|529|overloaded|rate.?limit|too many|high demand|temporarily/i;
 
 const AI_CONFIG_TTL = 600; // 10 min cache
 const MAX_TOOL_ITERATIONS = 5;
@@ -123,7 +128,7 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
     });
   }
 
-  // 4. Build provider
+  // 4. Build provider + fallback chain
   const apiKey = decrypt(aiConfig.apiKeyEncrypted);
   const provider = ProviderFactory.create({
     provider: aiConfig.provider,
@@ -131,6 +136,25 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
     apiKey,
     baseUrl: aiConfig.baseUrl ?? undefined,
   });
+
+  // Load fallback providers from the configured chain
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fallbackModels = ((aiConfig as any).fallbackModels ?? []) as Array<{
+    provider: string; model: string; apiKeyEncrypted: string; baseUrl?: string;
+  }>;
+  const fallbackProviders = fallbackModels
+    .filter((fb) => fb.apiKeyEncrypted)
+    .map((fb) => {
+      try {
+        return ProviderFactory.create({
+          provider: fb.provider,
+          model: fb.model,
+          apiKey: decrypt(fb.apiKeyEncrypted),
+          baseUrl: fb.baseUrl ?? undefined,
+        });
+      } catch { return null; }
+    })
+    .filter(Boolean);
 
   // 5. Build context
   const messages = await buildContext(
@@ -160,19 +184,54 @@ export async function runAgentLoop(data: AgentJobData): Promise<void> {
 
   // 6. Agent loop (tool call iterations)
   for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+    // Try primary provider with retries, then fallbacks
     let response;
-    try {
-      response = await callWithBreaker(companyId, provider, iterationMessages, tools, {
-        maxTokens: MODEL_MAX_TOKENS[aiConfig.model] ?? 16384,
-        temperature: aiConfig.temperature,
-      });
-    } catch (err: unknown) {
-      logger.error({ ...logCtx, err }, 'AI call failed');
-      await redis.publish('wa:typing', JSON.stringify({ accountId, toPhone: contactPhone, action: 'paused' })).catch(() => null);
-      await escalateToHuman(conversationId, 'AI provider error');
-      return;
+    const allProviders = [provider, ...fallbackProviders];
+    let succeeded = false;
+
+    for (let pIdx = 0; pIdx < allProviders.length && !succeeded; pIdx++) {
+      const currentProvider = allProviders[pIdx]!;
+      const isFallback = pIdx > 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentModel = isFallback ? (fallbackModels[pIdx - 1]?.model ?? 'fallback') : aiConfig.model;
+
+      for (let attempt = 0; attempt <= AI_RETRY_ATTEMPTS; attempt++) {
+        try {
+          response = await callWithBreaker(companyId, currentProvider, iterationMessages, tools, {
+            maxTokens: MODEL_MAX_TOKENS[currentModel] ?? 16384,
+            temperature: aiConfig.temperature,
+          });
+          succeeded = true;
+          if (isFallback) {
+            logger.info({ ...logCtx, fallbackModel: currentModel, attempt }, 'Succeeded with fallback provider');
+          }
+          break;
+        } catch (err: unknown) {
+          const errMsg = String((err as Error)?.message ?? err);
+          const isRetryable = RETRYABLE_STATUS.test(errMsg);
+
+          if (isRetryable && attempt < AI_RETRY_ATTEMPTS) {
+            const delay = AI_RETRY_DELAY_MS * (attempt + 1);
+            logger.warn({ ...logCtx, attempt: attempt + 1, delay, model: currentModel }, 'AI call failed (retryable) — retrying');
+            await new Promise((r) => setTimeout(r, delay));
+            continue;
+          }
+
+          if (pIdx < allProviders.length - 1) {
+            logger.warn({ ...logCtx, model: currentModel, err: errMsg }, 'Provider failed, trying fallback');
+            break; // try next provider
+          }
+
+          // All providers exhausted
+          logger.error({ ...logCtx, err }, 'All AI providers failed');
+          await redis.publish('wa:typing', JSON.stringify({ accountId, toPhone: contactPhone, action: 'paused' })).catch(() => null);
+          await escalateToHuman(conversationId, `AI provider error: ${errMsg.slice(0, 200)}`);
+          return;
+        }
+      }
     }
 
+    if (!response) break; // should not happen — providers return or throw
     totalTokens += response.tokensUsed;
 
     // Tool call path

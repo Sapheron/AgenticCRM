@@ -236,5 +236,5 @@ export async function resumeAllSessions(): Promise<void> {
     } catch (err: unknown) {
       logger.warn({ err }, 'Watchdog check failed');
     }
-  }, 2 * 60 * 1000);
+  }, WATCHDOG_CHECK_MS);
 }
