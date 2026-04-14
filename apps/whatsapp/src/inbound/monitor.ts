@@ -18,9 +18,16 @@ const redisUrl = (process.env.REDIS_URL || '').trim();
 
 const STAFF_AI_REQUEST_CHANNEL = 'staff.ai.request';
 
+// Grace window for 'append' messages (matches OpenClaw's APPEND_RECENT_GRACE_MS).
+// After reconnect, Baileys delivers offline messages as type='append'. We only
+// process those within 60s of connection time — older ones are history catch-up
+// that shouldn't trigger AI replies.
+const APPEND_GRACE_MS = 60_000;
+
 export class InboundMonitor {
   private readonly aiQueue: Queue;
   private readonly redis: Redis;
+  private connectedAtMs = Date.now();
 
   constructor(
     private readonly sock: WASocket,
@@ -37,6 +44,8 @@ export class InboundMonitor {
   }
 
   start() {
+    this.connectedAtMs = Date.now();
+
     this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
       for (const msg of messages) {
         // Skip protocol-only messages (read receipts, key distribution, etc.)
@@ -52,8 +61,19 @@ export class InboundMonitor {
         }
 
         // Accept both 'notify' (real-time) and 'append' (history sync, reconnect catch-up).
-        // Only skip type=undefined or other internal Baileys types.
         if (type !== 'notify' && type !== 'append') continue;
+
+        // For 'append' type: only process messages within the grace window.
+        // Older messages are history sync — store but don't trigger AI replies.
+        // Matches OpenClaw's APPEND_RECENT_GRACE_MS pattern.
+        if (type === 'append') {
+          const msgTs = msg.messageTimestamp;
+          const msgTsMs = msgTs != null ? Number(msgTs) * 1000 : 0;
+          if (msgTsMs < this.connectedAtMs - APPEND_GRACE_MS) {
+            logger.debug({ accountId: this.accountId, msgTs }, 'Skipping old append message (outside grace window)');
+            continue;
+          }
+        }
 
         await this.handleMessage(msg).catch((err: unknown) => {
           logger.error({ accountId: this.accountId, err }, 'Error handling inbound message');
@@ -449,14 +469,18 @@ export class InboundMonitor {
     const remotePhone = (msg.key.remoteJid as string).split('@')[0].split(':')[0].replace(/\D/g, '');
     if (!ownPhone || remotePhone !== ownPhone) return;
 
-    // Unwrap container types (ephemeral, view-once, etc.) then extract text
+    // Unwrap container types using the same wrapper keys as normalizer.ts
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let content = msg.message as Record<string, any> | undefined;
     if (!content) return;
-    if (content.ephemeralMessage?.message) content = content.ephemeralMessage.message;
-    if (content.viewOnceMessageV2?.message) content = content.viewOnceMessageV2.message;
-    if (content.viewOnceMessage?.message) content = content.viewOnceMessage.message;
-    if (content.editedMessage?.message) content = content.editedMessage.message;
+    const WRAPPER_KEYS = ['botInvokeMessage', 'ephemeralMessage', 'viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'documentWithCaptionMessage', 'groupMentionedMessage', 'editedMessage'];
+    for (let depth = 0; depth < 4; depth++) {
+      let unwrapped = false;
+      for (const key of WRAPPER_KEYS) {
+        if (content[key]?.message) { content = content[key].message; unwrapped = true; break; }
+      }
+      if (!unwrapped) break;
+    }
 
     const text: string | undefined =
       content.conversation ??

@@ -20,17 +20,36 @@ export interface InternalMessage {
 
 /**
  * Unwrap Baileys container message types to get the real content.
+ * Mirrors OpenClaw's MESSAGE_WRAPPER_KEYS list + recursive unwrap loop.
  * Disappearing chats wrap in ephemeralMessage, view-once in viewOnceMessageV2, etc.
  */
+const MESSAGE_WRAPPER_KEYS = [
+  'botInvokeMessage',
+  'ephemeralMessage',
+  'viewOnceMessage',
+  'viewOnceMessageV2',
+  'viewOnceMessageV2Extension',
+  'documentWithCaptionMessage',
+  'groupMentionedMessage',
+  'editedMessage',
+] as const;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function unwrapContent(raw: Record<string, any>): Record<string, any> {
-  let content = raw;
-  if (content.ephemeralMessage?.message) content = content.ephemeralMessage.message;
-  if (content.viewOnceMessageV2?.message) content = content.viewOnceMessageV2.message;
-  if (content.viewOnceMessage?.message) content = content.viewOnceMessage.message;
-  if (content.documentWithCaptionMessage?.message) content = content.documentWithCaptionMessage.message;
-  if (content.editedMessage?.message) content = content.editedMessage.message;
-  return content;
+  let current = raw;
+  // Loop to handle nested wrappers (up to 4 levels, matching OpenClaw's buildMessageChain)
+  for (let depth = 0; depth < 4; depth++) {
+    let unwrapped = false;
+    for (const key of MESSAGE_WRAPPER_KEYS) {
+      if (current[key]?.message) {
+        current = current[key].message;
+        unwrapped = true;
+        break;
+      }
+    }
+    if (!unwrapped) break;
+  }
+  return current;
 }
 
 export function normalizeMessage(msg: WAMessage): InternalMessage | null {
