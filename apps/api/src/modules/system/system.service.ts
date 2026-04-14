@@ -211,6 +211,8 @@ export class SystemService {
       env: { ...process.env, INSTALL_DIR: installDir },
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
+      uid: 0, // Run as root — update needs git write access + docker.sock access
+      gid: 0,
     });
 
     let log = '';
