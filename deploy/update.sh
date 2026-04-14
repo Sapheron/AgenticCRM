@@ -58,6 +58,14 @@ cd "$INSTALL_DIR" || fail "Cannot cd to $INSTALL_DIR"
 git config --global --add safe.directory "$INSTALL_DIR" 2>/dev/null || true
 git config --global --add safe.directory /host 2>/dev/null || true
 
+# ── Auto-fix: ensure remote points to the correct repo ───────────────────────
+CORRECT_REPO="https://github.com/Sapheron/AgenticCRM.git"
+CURRENT_REMOTE=$(git remote get-url origin 2>/dev/null || echo "")
+if [[ "$CURRENT_REMOTE" != "$CORRECT_REPO" && -n "$CURRENT_REMOTE" ]]; then
+  info "Updating git remote: $CURRENT_REMOTE → $CORRECT_REPO"
+  git remote set-url origin "$CORRECT_REPO"
+fi
+
 # ── Step 1: Current version ───────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[1/6]${NC}  Reading current version..."
 OLD_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")

@@ -187,6 +187,12 @@ ok "Docker Compose $COMPOSE_VER ready"
 step 3 "Download code"
 
 if [[ -d "$INSTALL_DIR/.git" ]]; then
+  # Auto-fix: ensure remote points to the correct repo
+  CURRENT_REMOTE=$(git -C "$INSTALL_DIR" remote get-url origin 2>/dev/null || echo "")
+  if [[ "$CURRENT_REMOTE" != "$REPO_URL" && -n "$CURRENT_REMOTE" ]]; then
+    git -C "$INSTALL_DIR" remote set-url origin "$REPO_URL"
+    info "Updated git remote → $REPO_URL"
+  fi
   if ask_skip "Code already at $INSTALL_DIR"; then
     ok "Using existing code"
   else
