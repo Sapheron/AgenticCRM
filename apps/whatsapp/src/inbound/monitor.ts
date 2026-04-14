@@ -13,6 +13,7 @@ import { normalizeMessage } from './normalizer';
 import { isAlreadyProcessed } from './dedup';
 import { isRecentOutboundMessage } from './outbound-dedupe';
 import { uploadMedia, mimeToExtension, ensureBucket } from '../media/media-storage';
+import { noteInboundActivity } from '../session/session.manager';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const redisUrl = (process.env.REDIS_URL || '').trim();
@@ -49,6 +50,9 @@ export class InboundMonitor {
 
     this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
       for (const msg of messages) {
+        // Track inbound activity for stale connection watchdog (OpenClaw pattern)
+        noteInboundActivity(this.accountId);
+
         // Skip protocol-only messages (read receipts, key distribution, etc.)
         if (!msg.message) continue;
 

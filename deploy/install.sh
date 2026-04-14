@@ -210,9 +210,9 @@ fi
 
 cd "$INSTALL_DIR"
 
-# Make .git writable by all — the API container runs as uid 1001 (nestjs)
-# and needs to write .git/FETCH_HEAD during in-app updates.
-chmod -R a+rw "$INSTALL_DIR/.git" 2>/dev/null || true
+# Make install dir writable by all — the API container runs as uid 1001 (nestjs)
+# and needs to write to .git/ AND source files during in-app updates.
+chmod -R a+rw "$INSTALL_DIR" 2>/dev/null || true
 
 # ════════════════════════════════════════════════════════════════════════════
 # STEP 4 — ENVIRONMENT CONFIG

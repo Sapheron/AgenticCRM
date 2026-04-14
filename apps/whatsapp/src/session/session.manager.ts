@@ -22,6 +22,19 @@ const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 // Active socket map: accountId → WASocket
 const activeSockets = new Map<string, WASocket>();
 
+// Track last inbound activity per account for stale connection detection
+// Matches OpenClaw's WhatsAppConnectionController.lastInboundAt
+const lastInboundAt = new Map<string, number>();
+
+// Stale connection watchdog config (matches OpenClaw's defaults)
+const WATCHDOG_CHECK_MS = 2 * 60 * 1000;  // check every 2 minutes
+const STALE_TIMEOUT_MS = 5 * 60 * 1000;   // force reconnect if no activity for 5 minutes
+
+/** Called by InboundMonitor when any message arrives */
+export function noteInboundActivity(accountId: string): void {
+  lastInboundAt.set(accountId, Date.now());
+}
+
 export async function startSession(accountId: string): Promise<void> {
   if (activeSockets.has(accountId)) {
     logger.info({ accountId }, 'Session already active, skipping');
@@ -70,6 +83,9 @@ export async function startSession(accountId: string): Promise<void> {
         const phone = sock.user?.id ? jidToPhone(sock.user.id) : '';
         const displayName = sock.user?.name ?? '';
         logger.info({ accountId, phone }, 'WhatsApp connected');
+
+        // Mark connection time as initial activity baseline (OpenClaw pattern)
+        lastInboundAt.set(accountId, Date.now());
 
         // Auto-add connected number to allowlist if empty (first connection default)
         const existing = await prisma.whatsAppAccount.findUnique({
@@ -180,8 +196,10 @@ export async function resumeAllSessions(): Promise<void> {
     });
   }
 
-  // Watchdog: every 2 minutes, check DB for CONNECTED accounts that lost their socket
-  // and attempt reconnect. Guards against silent disconnects that miss connection.update.
+  // Watchdog: every 2 minutes, check for:
+  // 1. CONNECTED accounts that lost their socket (silent disconnect)
+  // 2. Stale connections — socket exists but no inbound activity for 5+ minutes
+  //    (matches OpenClaw's WhatsAppConnectionController.watchdogTimer)
   setInterval(async () => {
     try {
       const connected = await prisma.whatsAppAccount.findMany({
@@ -189,11 +207,30 @@ export async function resumeAllSessions(): Promise<void> {
         select: { id: true },
       });
       for (const acc of connected) {
-        if (!activeSockets.has(acc.id)) {
+        const sock = activeSockets.get(acc.id);
+        if (!sock) {
+          // Case 1: Socket completely missing
           logger.warn({ accountId: acc.id }, 'Watchdog: socket missing for CONNECTED account — reconnecting');
           await startSession(acc.id).catch((err: unknown) =>
             logger.error({ accountId: acc.id, err }, 'Watchdog reconnect failed'),
           );
+        } else {
+          // Case 2: Socket exists but stale — no inbound activity
+          // OpenClaw force-closes stale sockets to trigger reconnect
+          const lastActivity = lastInboundAt.get(acc.id) ?? 0;
+          const staleMs = Date.now() - lastActivity;
+          if (lastActivity > 0 && staleMs > STALE_TIMEOUT_MS) {
+            logger.warn(
+              { accountId: acc.id, staleSec: Math.round(staleMs / 1000) },
+              'Watchdog: stale connection (no inbound activity) — force reconnecting',
+            );
+            activeSockets.delete(acc.id);
+            lastInboundAt.delete(acc.id);
+            try { sock.end(undefined); } catch { /* ignore */ }
+            await startSession(acc.id).catch((err: unknown) =>
+              logger.error({ accountId: acc.id, err }, 'Watchdog stale reconnect failed'),
+            );
+          }
         }
       }
     } catch (err: unknown) {
