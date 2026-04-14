@@ -652,6 +652,23 @@ for i in $(seq 1 10); do
   sleep 3
 done
 
+# Auto-patch nginx timeouts if nginx is installed (prevents 504 on AI chat)
+if command -v nginx &>/dev/null; then
+  PATCHED=0
+  for conf in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*; do
+    [ -f "$conf" ] || continue
+    if grep -q "proxy_pass.*127.0.0.1:3000" "$conf" 2>/dev/null; then
+      if ! grep -q "proxy_read_timeout" "$conf" 2>/dev/null; then
+        sed -i '/proxy_pass.*127.0.0.1:3000/a\        proxy_read_timeout 300s;\n        proxy_send_timeout 300s;' "$conf" 2>/dev/null && PATCHED=1
+      fi
+    fi
+  done
+  if [ "$PATCHED" -eq 1 ]; then
+    nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null
+    ok "Nginx timeouts auto-patched (prevents 504 on AI chat)"
+  fi
+fi
+
 # ════════════════════════════════════════════════════════════════════════════
 # DONE
 # ════════════════════════════════════════════════════════════════════════════

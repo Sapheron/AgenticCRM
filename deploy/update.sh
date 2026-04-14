@@ -172,6 +172,27 @@ if [ -f "$COMPOSE_FILE" ]; then
   echo -e "  ${G}✔${NC}  Services restarted"
 fi
 
+# ── Step 5b: Auto-patch nginx timeouts (prevents 504 on AI chat) ─────────────
+if command -v nginx &>/dev/null; then
+  PATCHED=0
+  for conf in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*; do
+    [ -f "$conf" ] || continue
+    # Only patch configs that proxy to our API port (3000)
+    if grep -q "proxy_pass.*127.0.0.1:3000" "$conf" 2>/dev/null; then
+      # Add proxy_read_timeout if missing in /api location block
+      if ! grep -q "proxy_read_timeout" "$conf" 2>/dev/null; then
+        # Insert proxy_read_timeout after proxy_pass lines pointing to :3000
+        sed -i '/proxy_pass.*127.0.0.1:3000/a\        proxy_read_timeout 300s;\n        proxy_send_timeout 300s;' "$conf" 2>/dev/null && PATCHED=1
+      fi
+    fi
+  done
+  if [ "$PATCHED" -eq 1 ]; then
+    nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null
+    ok "Nginx timeouts patched (proxy_read_timeout 300s)"
+    echo -e "  ${G}✔${NC}  Nginx config patched"
+  fi
+fi
+
 # ── Step 6: Health check ──────────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[6/6]${NC}  Health check..."
 spinner_start "Waiting for API..."
