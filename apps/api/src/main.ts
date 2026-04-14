@@ -71,6 +71,12 @@ async function bootstrap() {
 
   const port = process.env.API_PORT ?? 3000;
   await app.listen(port);
+
+  // Increase server timeouts for long AI chat calls (tool iterations can take 2+ minutes)
+  const server = app.getHttpServer();
+  server.keepAliveTimeout = 300_000;  // 5 minutes
+  server.headersTimeout = 305_000;    // slightly above keepAliveTimeout
+
   console.log(`API running on http://localhost:${port}/api`);
   console.log(`Swagger at http://localhost:${port}/api/docs`);
 }
