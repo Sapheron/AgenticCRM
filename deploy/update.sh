@@ -69,7 +69,7 @@ fi
 # ── Step 1: Current version ───────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[1/6]${NC}  Reading current version..."
 OLD_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-OLD_VERSION=$(node -e "console.log(require('./package.json').version)" 2>/dev/null || echo "unknown")
+OLD_VERSION=$(grep -oP '"version":\s*"\K[^"]+' ./package.json 2>/dev/null | head -1 || echo "unknown")
 info "Current: v$OLD_VERSION ($OLD_HASH)"
 echo -e "  ${DIM}Current version : v$OLD_VERSION ($OLD_HASH)${NC}"
 
@@ -84,7 +84,7 @@ NEW_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 NEW_HASH_FULL=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 NEW_DATE=$(git log -1 --format=%cI 2>/dev/null || echo "unknown")
 NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-NEW_VERSION=$(node -e "console.log(require('./package.json').version)" 2>/dev/null || echo "1.0.0")
+NEW_VERSION=$(grep -oP '"version":\s*"\K[^"]+' ./package.json 2>/dev/null | head -1 || echo "1.0.0")
 
 echo -e "  ${G}✔${NC}  Updated to v$NEW_VERSION ($NEW_HASH)"
 info "Updated to: v$NEW_VERSION ($NEW_HASH)"
