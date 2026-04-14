@@ -53,6 +53,22 @@ const GITHUB_BRANCH = 'main';
 const VERSION_FILE = 'version.json'; // baked at build time
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// ── Semver comparison ─────────────────────────────────────────────────────────
+
+/**
+ * Returns positive if a > b, negative if a < b, 0 if equal.
+ * Handles "1.2.3" style strings. Non-numeric parts are treated as 0.
+ */
+function compareSemver(a: string, b: string): number {
+  const pa = String(a).split('.').map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split('.').map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 /**
  * SystemService — works in both Docker containers (no git) and local dev (has git).
  *
@@ -101,32 +117,55 @@ export class SystemService {
     const current = this.versionInfo;
 
     try {
-      const url = `https://api.github.com/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`;
-      const res = await fetch(url, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'OpenAgentCRM-Updater',
-        },
+      // 1. Fetch the remote package.json to get the released version number.
+      //    Using raw.githubusercontent instead of the API avoids rate-limit headers.
+      const pkgUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/package.json`;
+      const pkgRes = await fetch(pkgUrl, {
+        headers: { 'User-Agent': 'OpenAgentCRM-Updater' },
         signal: AbortSignal.timeout(10_000),
       });
 
-      if (!res.ok) {
-        this.logger.warn(`GitHub API returned ${res.status}`);
+      if (!pkgRes.ok) {
+        this.logger.warn(`Failed to fetch remote package.json: ${pkgRes.status}`);
         return this.noUpdateResult(current);
       }
 
-      const data = (await res.json()) as GitHubCommit;
-      const remoteHash = data.sha.substring(0, 7);
-      const updateAvailable = current.commitHash !== remoteHash && current.commitHash !== 'unknown';
+      const remotePkg = (await pkgRes.json()) as { version?: string };
+      const remoteVersion = remotePkg.version ?? '0.0.0';
+
+      // Update is available only when the remote version is strictly greater
+      // than the installed version. Pushing test commits doesn't matter —
+      // only bumping package.json version triggers the update banner.
+      const updateAvailable = compareSemver(remoteVersion, current.version) > 0;
 
       let latest: LatestInfo | null = null;
       if (updateAvailable) {
-        latest = {
-          commitHash: remoteHash,
-          commitDate: data.commit.committer.date,
-          message: data.commit.message.split('\n')[0], // first line only
-          author: data.commit.author.name,
-        };
+        // 2. Fetch latest commit metadata for the changelog message/author.
+        const commitUrl = `https://api.github.com/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`;
+        const commitRes = await fetch(commitUrl, {
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'OpenAgentCRM-Updater',
+          },
+          signal: AbortSignal.timeout(10_000),
+        }).catch(() => null);
+
+        if (commitRes?.ok) {
+          const data = (await commitRes.json()) as GitHubCommit;
+          latest = {
+            commitHash: data.sha.substring(0, 7),
+            commitDate: data.commit.committer.date,
+            message: `v${remoteVersion} — ${data.commit.message.split('\n')[0]}`,
+            author: data.commit.author.name,
+          };
+        } else {
+          latest = {
+            commitHash: 'unknown',
+            commitDate: new Date().toISOString(),
+            message: `v${remoteVersion} is available`,
+            author: '',
+          };
+        }
       }
 
       const result: UpdateCheck = { current, latest, updateAvailable, checkedAt: new Date().toISOString() };

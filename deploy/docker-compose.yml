@@ -20,7 +20,7 @@ services:
         GIT_HASH: ${GIT_HASH:-unknown}
         GIT_DATE: ${GIT_DATE:-unknown}
         GIT_BRANCH: ${GIT_BRANCH:-main}
-        APP_VERSION: "1.0.0"
+        APP_VERSION: ${APP_VERSION:-1.0.0}
     ports:
       - "127.0.0.1:3000:3000"
     env_file:
