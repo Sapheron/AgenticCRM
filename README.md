@@ -1,8 +1,20 @@
-# AgenticCRM
+<p align="center">
+  <img src="full_logo_w.png" alt="AgenticCRM" width="500" />
+</p>
 
-A self-hosted, AI-powered CRM built around WhatsApp. Connect your WhatsApp number, configure an AI provider, and your AI agent handles customer conversations, creates leads, manages deals, sends invoices, and controls the entire CRM — autonomously or on demand from the dashboard.
+<p align="center">
+  <strong>Self-hosted, AI-powered WhatsApp CRM</strong><br/>
+  <sub>A <a href="https://sapheron.com">Sapheron</a> Project · From <a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
+</p>
 
-**A [Sapheron](https://sapheron.com) Project** · From [TechnoTaLim Platform and Services LLP](https://technotalim.com)
+<p align="center">
+  <a href="https://agenticcrm.sapheron.com"><img src="https://img.shields.io/badge/Install-curl_|_bash-black?style=for-the-badge" alt="Install" /></a>
+  <a href="https://github.com/Sapheron/AgenticCRM"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="MIT License" /></a>
+</p>
+
+---
+
+Connect your WhatsApp number, configure an AI provider, and your AI agent handles customer conversations, creates leads, manages deals, sends invoices, and controls the entire CRM — autonomously or on demand from the dashboard.
 
 ---
 
@@ -375,4 +387,8 @@ MIT
 
 ---
 
-**A [Sapheron](https://sapheron.com) Project** · From [TechnoTaLim Platform and Services LLP](https://technotalim.com)
+<p align="center">
+  <img src="logo_nobg.png" alt="AgenticCRM" width="60" /><br/>
+  <strong>A <a href="https://sapheron.com">Sapheron</a> Project</strong><br/>
+  <sub>From <a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
+</p>

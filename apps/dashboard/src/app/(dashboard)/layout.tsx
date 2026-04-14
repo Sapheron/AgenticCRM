@@ -10,11 +10,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   MessageSquare, Users, TrendingUp, Briefcase, CheckSquare,
-  BarChart3, Settings, Megaphone, LogOut, Zap, CreditCard,
+  BarChart3, Settings, Megaphone, LogOut, CreditCard,
   FileText, Repeat, Package, Receipt, FileSpreadsheet,
   Target, Clipboard, Workflow, LifeBuoy, BookOpen, PieChart,
   Plug, FolderOpen, Brain, Terminal, ArrowUpCircle, X,
 } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 // Permission required for each route
@@ -189,9 +190,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo */}
         <div className="h-12 flex items-center px-3 gap-2.5">
-          <div className="w-6 h-6 rounded bg-white flex items-center justify-center shrink-0">
-            <Zap size={12} className="text-black" />
-          </div>
+          <Image src="/logo.png" alt="AgenticCRM" width={24} height={24} className="shrink-0 rounded" />
           {expanded && <span className="text-white text-xs font-semibold tracking-tight truncate">AgenticCRM</span>}
         </div>
 

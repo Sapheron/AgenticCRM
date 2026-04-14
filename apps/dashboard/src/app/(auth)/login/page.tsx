@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import api from '@/lib/api-client';
 import { useAuthStore } from '@/stores/auth.store';
-import { Zap } from 'lucide-react';
+import Image from 'next/image';
 
 const schema = z.object({
   email: z.string().email(),
@@ -50,11 +50,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f0f10]">
       <div className="w-full max-w-sm">
-        <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center">
-            <Zap size={16} className="text-black" />
-          </div>
-          <span className="text-white text-sm font-semibold tracking-tight">AgenticCRM</span>
+        <div className="flex flex-col items-center mb-8">
+          <Image src="/full_logo.png" alt="AgenticCRM" width={220} height={60} className="invert" priority />
         </div>
 
         <div className="bg-white rounded-lg p-6 shadow-2xl shadow-black/20">
