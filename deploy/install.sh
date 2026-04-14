@@ -359,7 +359,8 @@ step 5 "Build Docker images"
 export GIT_HASH=$(git -C "$INSTALL_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
 export GIT_DATE=$(git -C "$INSTALL_DIR" log -1 --format=%cI 2>/dev/null || echo "unknown")
 export GIT_BRANCH=$(git -C "$INSTALL_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-export APP_VERSION=$(grep -oP '"version":\s*"\K[^"]+' "$INSTALL_DIR/package.json" 2>/dev/null | head -1 || echo "1.0.0")
+export APP_VERSION=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$INSTALL_DIR/package.json" 2>/dev/null | head -1)
+export APP_VERSION=${APP_VERSION:-1.0.0}
 export INSTALL_DIR="$INSTALL_DIR"
 
 IMAGES_EXIST=$(docker images --format "{{.Repository}}" 2>/dev/null | grep -c "agentic-crm" || true)

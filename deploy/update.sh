@@ -66,25 +66,47 @@ if [[ "$CURRENT_REMOTE" != "$CORRECT_REPO" && -n "$CURRENT_REMOTE" ]]; then
   git remote set-url origin "$CORRECT_REPO"
 fi
 
+# ── Helper: read version from package.json (POSIX-compatible, no grep -P) ─────
+read_version() {
+  sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" 2>/dev/null | head -1
+}
+
 # ── Step 1: Current version ───────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[1/6]${NC}  Reading current version..."
 OLD_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-OLD_VERSION=$(grep -oP '"version":\s*"\K[^"]+' ./package.json 2>/dev/null | head -1 || echo "unknown")
+OLD_VERSION=$(read_version ./package.json)
+OLD_VERSION=${OLD_VERSION:-unknown}
 info "Current: v$OLD_VERSION ($OLD_HASH)"
 echo -e "  ${DIM}Current version : v$OLD_VERSION ($OLD_HASH)${NC}"
 
 # ── Step 2: Pull latest ───────────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[2/6]${NC}  Pulling latest code..."
 spinner_start "Fetching from origin/main..."
-git fetch origin main 2>&1 | tee -a "$LOG_FILE" > /dev/null || { spinner_stop; fail "git fetch failed"; }
-git reset --hard origin/main 2>&1 | tee -a "$LOG_FILE" > /dev/null || { spinner_stop; fail "git reset failed"; }
+
+# Run git fetch WITHOUT piping through tee — pipes hide the exit code
+FETCH_LOG=$(git fetch origin main 2>&1) || {
+  spinner_stop
+  echo "$FETCH_LOG" >> "$LOG_FILE"
+  echo -e "  ${R}✖${NC}  git fetch failed:"
+  echo "$FETCH_LOG" | tail -5
+  fail "git fetch failed"
+}
+echo "$FETCH_LOG" >> "$LOG_FILE"
+
+RESET_LOG=$(git reset --hard origin/main 2>&1) || {
+  spinner_stop
+  echo "$RESET_LOG" >> "$LOG_FILE"
+  fail "git reset failed"
+}
+echo "$RESET_LOG" >> "$LOG_FILE"
 spinner_stop
 
 NEW_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 NEW_HASH_FULL=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 NEW_DATE=$(git log -1 --format=%cI 2>/dev/null || echo "unknown")
 NEW_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-NEW_VERSION=$(grep -oP '"version":\s*"\K[^"]+' ./package.json 2>/dev/null | head -1 || echo "1.0.0")
+NEW_VERSION=$(read_version ./package.json)
+NEW_VERSION=${NEW_VERSION:-1.0.0}
 
 echo -e "  ${G}✔${NC}  Updated to v$NEW_VERSION ($NEW_HASH)"
 info "Updated to: v$NEW_VERSION ($NEW_HASH)"
