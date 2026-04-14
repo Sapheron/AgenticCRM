@@ -73,21 +73,32 @@ Supports **fallback chains** — if the primary model fails, the system automati
 
 ## Installation
 
-**Requirements:** A Linux server with Docker and Docker Compose installed.
+Works on **Linux**, **macOS**, and **Windows**. The installer handles everything — Docker, code, config, database, and startup.
+
+### Linux / macOS
 
 ```bash
 curl -fsSL https://agenticcrm.sapheron.com/install.sh | bash
 ```
 
-The installer will:
-1. Ask for your domain, database password, and other config
-2. Clone the repository to `/opt/agenticcrm`
-3. Generate a `.env` file
-4. Build and start all Docker services
-5. Run database migrations and seed an admin user
-6. Print your login credentials
+### Windows (PowerShell)
 
-After installation, access the dashboard at `https://your-domain.com`.
+```powershell
+irm https://agenticcrm.sapheron.com/install.ps1 | iex
+```
+
+### What the installer does
+
+1. Detects your OS and installs Docker if missing
+2. Clones the repository (`/opt/agenticcrm` on Linux/macOS, `C:\agenticcrm` on Windows)
+3. Asks for company name, admin email, and admin password
+4. Auto-generates all secrets (database, JWT, encryption, MinIO)
+5. Builds all Docker images
+6. Starts infrastructure (PostgreSQL, Redis, MinIO, PgBouncer)
+7. Runs database migrations and seeds the admin user
+8. Starts all 11 services and verifies API health
+
+After installation, access the dashboard at `http://localhost:3001`. Set up a reverse proxy (nginx or Caddy) for HTTPS — instructions are printed by the installer.
 
 ---
 
