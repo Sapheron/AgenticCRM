@@ -14,9 +14,11 @@ const MAX_SIZE = 5000;
 /** key → expiry timestamp */
 const cache = new Map<string, number>();
 
-function buildKey(accountId: string, remoteJid: string, messageId: string): string | null {
-  if (!accountId || !remoteJid || !messageId || messageId === 'unknown') return null;
-  return `${accountId.trim()}:${remoteJid.trim()}:${messageId.trim()}`;
+function buildKey(accountId: string, _remoteJid: string, messageId: string): string | null {
+  if (!accountId || !messageId || messageId === 'unknown') return null;
+  // Key by accountId + messageId only (not JID) because echo JIDs can differ
+  // from the original send JID (device suffix, LID vs s.whatsapp.net, etc.)
+  return `${accountId.trim()}:${messageId.trim()}`;
 }
 
 function evict(): void {
