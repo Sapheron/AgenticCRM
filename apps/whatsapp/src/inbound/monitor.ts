@@ -168,24 +168,45 @@ export class InboundMonitor {
 
     const { companyId } = account;
 
-    // Find or create contact
+    // Find existing contact — do NOT auto-create contacts from inbound messages
     let contact = await prisma.contact.findFirst({
       where: { companyId, phoneNumber: normalized.fromPhone },
     });
 
-    if (!contact) {
-      contact = await prisma.contact.create({
-        data: {
-          companyId,
-          phoneNumber: normalized.fromPhone,
-          displayName: normalized.displayName,
-        },
-      });
-    } else if (normalized.displayName && !contact.displayName) {
+    if (contact && normalized.displayName && !contact.displayName) {
       await prisma.contact.update({
         where: { id: contact.id },
         data: { displayName: normalized.displayName, lastSeenAt: new Date() },
       });
+    }
+
+    // If no contact exists, route to AI for allowlisted numbers but skip storage
+    if (!contact) {
+      if (isAllowedNumber && normalized.body?.trim()) {
+        let staffUserId = account.userId;
+        if (!staffUserId) {
+          const admin = await prisma.user.findFirst({
+            where: { companyId, role: { in: ['ADMIN', 'SUPER_ADMIN'] }, isActive: true },
+            select: { id: true },
+          });
+          staffUserId = admin?.id ?? null;
+        }
+        if (staffUserId) {
+          await this.redis.publish(
+            STAFF_AI_REQUEST_CHANNEL,
+            JSON.stringify({
+              companyId,
+              userId: staffUserId,
+              accountId: this.accountId,
+              text: normalized.body.trim(),
+              replyToPhone: normalized.fromPhone,
+              replyToJid: isLidSender ? normalized.fromJid : undefined,
+            }),
+          );
+          logger.info({ fromPhone: normalized.fromPhone }, 'Allowed number (no contact) routed to staff AI');
+        }
+      }
+      return;
     }
 
     // Find or create conversation
@@ -198,7 +219,6 @@ export class InboundMonitor {
       },
     });
 
-    let _isNewConversation = false;
     if (!conversation) {
       conversation = await prisma.conversation.create({
         data: {
@@ -208,7 +228,6 @@ export class InboundMonitor {
           status: 'OPEN',
         },
       });
-      _isNewConversation = true;
     }
 
     // Download media from WhatsApp and upload to MinIO (mirrors OpenClaw's downloadInboundMedia)
@@ -327,9 +346,7 @@ export class InboundMonitor {
       }
     }
 
-    // ── Lead + deal + task + campaign hooks (best-effort, never block ingestion) ────
-    await this.maybeCreateLead(companyId, contact.id, normalized.body)
-      .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead auto-create failed'));
+    // ── Deal + task + campaign hooks (best-effort, never block ingestion) ────
     await this.bumpLeadScore(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'lead score bump failed'));
     await this.touchOpenDeals(companyId, contact.id)
