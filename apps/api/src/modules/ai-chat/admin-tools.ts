@@ -3502,7 +3502,7 @@ const tools: AdminTool[] = [
         type: 'object',
         properties: {
           status: { type: 'string', description: 'Filter by status: DRAFT, ACTIVE, or ARCHIVED' },
-          category: { type: 'string', description: 'Filter by category (greeting, follow_up, promotion, payment_reminder, etc.)' },
+          category: { type: 'string', description: 'Filter by category (GREETING, FOLLOW_UP, PROMOTION, PAYMENT_REMINDER, ORDER_UPDATE, SUPPORT, FEEDBACK, REVIEW, APPOINTMENT, GENERAL)' },
           type: { type: 'string', description: 'Filter by type: TEXT, IMAGE, DOCUMENT, VIDEO' },
           search: { type: 'string', description: 'Search in name and body' },
           limit: { type: 'number', description: 'Max results (default 50)' },
@@ -3562,7 +3562,7 @@ const tools: AdminTool[] = [
         properties: {
           name: { type: 'string', description: 'Unique template name' },
           body: { type: 'string', description: 'Template body with {{variable}} placeholders' },
-          category: { type: 'string', description: 'Category: greeting, follow_up, promotion, payment_reminder, order_update, support, feedback, review, appointment, general' },
+          category: { type: 'string', description: 'Category: GREETING, FOLLOW_UP, PROMOTION, PAYMENT_REMINDER, ORDER_UPDATE, SUPPORT, FEEDBACK, REVIEW, APPOINTMENT, GENERAL' },
           type: { type: 'string', description: 'Type: TEXT, IMAGE, DOCUMENT, VIDEO (default TEXT)' },
           variables: { type: 'object', description: 'Default values for variables (e.g., {firstName: "John"})' },
           tags: { type: 'array', items: { type: 'string' }, description: 'Tags for organization' },

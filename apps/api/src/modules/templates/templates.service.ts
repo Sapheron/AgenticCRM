@@ -144,7 +144,7 @@ export class TemplatesService {
         companyId,
         name: dto.name.trim(),
         type: dto.type ?? 'TEXT',
-        category: (dto.category ?? 'GENERAL') as never,
+        category: ((dto.category ?? 'GENERAL').toUpperCase()) as never,
         body: dto.body,
         mediaUrl: dto.mediaUrl,
         language: dto.language ?? 'en',
