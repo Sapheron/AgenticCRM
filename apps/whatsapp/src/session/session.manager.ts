@@ -16,6 +16,7 @@ import { usePostgresAuthState } from './session.store';
 import { publishQr, publishConnected, publishDisconnected } from '../events/redis-pubsub';
 import { InboundMonitor } from '../inbound/monitor';
 import { jidToPhone } from '@wacrm/shared';
+import { getLastInboundAt, setInboundBaseline, clearInboundActivity } from './activity';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 
@@ -24,18 +25,9 @@ const activeSockets = new Map<string, WASocket>();
 // Active monitor map: accountId → InboundMonitor (for cleanup on reconnect)
 const activeMonitors = new Map<string, InboundMonitor>();
 
-// Track last inbound activity per account for stale connection detection
-// Matches OpenClaw's WhatsAppConnectionController.lastInboundAt
-const lastInboundAt = new Map<string, number>();
-
 // Stale connection watchdog config (matches OpenClaw's defaults)
 const WATCHDOG_CHECK_MS = 2 * 60 * 1000;  // check every 2 minutes
 const STALE_TIMEOUT_MS = 5 * 60 * 1000;   // force reconnect if no activity for 5 minutes
-
-/** Called by InboundMonitor when any message arrives */
-export function noteInboundActivity(accountId: string): void {
-  lastInboundAt.set(accountId, Date.now());
-}
 
 export async function startSession(accountId: string): Promise<void> {
   if (activeSockets.has(accountId)) {
@@ -97,7 +89,7 @@ export async function startSession(accountId: string): Promise<void> {
         }
 
         // Mark connection time as initial activity baseline (OpenClaw pattern)
-        lastInboundAt.set(accountId, Date.now());
+        setInboundBaseline(accountId);
 
         // Auto-add connected number to allowlist if empty (first connection default)
         const existing = await prisma.whatsAppAccount.findUnique({
@@ -241,7 +233,7 @@ export async function resumeAllSessions(): Promise<void> {
         } else {
           // Case 2: Socket exists but stale — no inbound activity
           // OpenClaw force-closes stale sockets to trigger reconnect
-          const lastActivity = lastInboundAt.get(acc.id) ?? 0;
+          const lastActivity = getLastInboundAt(acc.id);
           const staleMs = Date.now() - lastActivity;
           if (lastActivity > 0 && staleMs > STALE_TIMEOUT_MS) {
             logger.warn(
@@ -249,7 +241,7 @@ export async function resumeAllSessions(): Promise<void> {
               'Watchdog: stale connection (no inbound activity) — force reconnecting',
             );
             activeSockets.delete(acc.id);
-            lastInboundAt.delete(acc.id);
+            clearInboundActivity(acc.id);
             try { sock.end(undefined); } catch { /* ignore */ }
             await startSession(acc.id).catch((err: unknown) =>
               logger.error({ accountId: acc.id, err }, 'Watchdog stale reconnect failed'),

@@ -104,6 +104,11 @@ export class WhatsAppSettingsService {
 
     // Tell WhatsApp service to stop this session before deleting
     await this.publishCommand('stop', accountId);
+
+    // Delete related records first (foreign key constraints)
+    await prisma.message.deleteMany({ where: { whatsappAccountId: accountId } });
+    await prisma.conversation.deleteMany({ where: { whatsappAccountId: accountId } });
+
     return prisma.whatsAppAccount.delete({ where: { id: accountId } });
   }
 

@@ -13,7 +13,7 @@ import { normalizeMessage } from './normalizer';
 import { isAlreadyProcessed } from './dedup';
 import { isRecentOutboundMessage } from './outbound-dedupe';
 import { uploadMedia, mimeToExtension, ensureBucket } from '../media/media-storage';
-import { noteInboundActivity } from '../session/session.manager';
+import { noteInboundActivity } from '../session/activity';
 
 const logger = pino({ level: process.env.LOG_LEVEL ?? 'info' });
 const redisUrl = (process.env.REDIS_URL || '').trim();
