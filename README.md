@@ -1,79 +1,88 @@
 <p align="center">
-  <img src="full_logo_w.png" alt="AgenticCRM" width="500" />
+  <img src="full_logo_w.png" alt="AgenticCRM" width="420" />
 </p>
 
 <p align="center">
-  <strong>Self-hosted, AI-powered WhatsApp CRM</strong><br/>
-  <sub>A <a href="https://sapheron.com">Sapheron</a> Project · From <a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
+  <strong>Self-hosted AI CRM that runs on WhatsApp.</strong><br/>
+  <sub>Connect your number. Configure an AI. Your agent handles the rest.</sub>
 </p>
 
 <p align="center">
-  <a href="https://agenticcrm.sapheron.com"><img src="https://img.shields.io/badge/Install-curl_|_bash-black?style=for-the-badge" alt="Install" /></a>
-  <a href="https://github.com/Sapheron/AgenticCRM"><img src="https://img.shields.io/badge/License-MIT-black?style=for-the-badge" alt="MIT License" /></a>
+  <a href="https://github.com/Sapheron/AgenticCRM/releases"><img src="https://img.shields.io/github/v/release/Sapheron/AgenticCRM?style=for-the-badge&color=000" alt="Release" /></a>
+  <a href="https://github.com/Sapheron/AgenticCRM/actions"><img src="https://img.shields.io/github/actions/workflow/status/Sapheron/AgenticCRM/ci.yml?branch=main&style=for-the-badge&color=000" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-000?style=for-the-badge" alt="MIT License" /></a>
+</p>
+
+<p align="center">
+  <a href="https://agenticcrm.sapheron.com">Website</a> ·
+  <a href="#installation">Install</a> ·
+  <a href="#ai-providers">AI Providers</a> ·
+  <a href="#whatsapp">WhatsApp</a> ·
+  <a href="#dashboard-pages">Dashboard</a> ·
+  <a href="#ai-agent-capabilities">200+ AI Tools</a>
 </p>
 
 ---
 
-Connect your WhatsApp number, configure an AI provider, and your AI agent handles customer conversations, creates leads, manages deals, sends invoices, and controls the entire CRM — autonomously or on demand from the dashboard.
+**AgenticCRM** is a full-stack, self-hosted CRM built around WhatsApp. Your AI agent autonomously handles customer conversations, creates leads, manages deals, sends invoices, and controls the entire CRM — from WhatsApp or the dashboard. One `curl` to install. MIT licensed.
+
+<p align="center">
+  <sub>A <a href="https://sapheron.com">Sapheron</a> Project · <a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
+</p>
 
 ---
 
-## What it does
+## Highlights
 
-- **Autonomous WhatsApp AI** — incoming messages are processed by an AI agent that can search contacts, create leads, update deals, send payment links, escalate to humans, and more — without any manual intervention
-- **Staff AI chat** — message your own connected WhatsApp number to control the CRM using natural language, exactly like the dashboard chat
-- **Full CRM pipeline** — Contacts → Leads → Deals → Quotes → Invoices → Payments, all linked together
-- **Engagement tools** — Broadcasts, Campaigns, Sequences, Templates, Forms
+- **Autonomous WhatsApp AI** — 200+ tools, 5-iteration tool chains, circuit breaker, fallback providers
+- **Staff AI control** — message your own WhatsApp number to run the entire CRM via natural language
+- **Full CRM pipeline** — Contacts → Leads → Deals → Quotes → Invoices → Payments
+- **Engagement suite** — Broadcasts, Campaigns, Sequences, Templates, Forms
 - **Support tools** — Tickets, Knowledge Base, Documents with e-signatures
-- **Automation** — Workflows, recurring tasks, form auto-actions, sequence enrollments
-- **Analytics & Reports** — Revenue trends, conversion funnels, agent performance, custom report builder
+- **Automation** — Workflows, recurring tasks, form auto-actions
+- **Analytics** — Revenue trends, conversion funnels, agent performance, custom reports
+- **24/7 WhatsApp** — keepalive ping, auto-reconnect, stale connection watchdog, session persistence in PostgreSQL
+- **In-app updates** — version-based checking, one-click update from the dashboard
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| API | NestJS 11, TypeScript |
-| Dashboard | Next.js 15, React 19, Tailwind CSS |
-| WhatsApp | Baileys (multi-session) |
-| Job Queue | BullMQ + Redis |
-| Database | PostgreSQL 16 + pgvector |
-| Connection Pool | PgBouncer |
-| Media Storage | MinIO (S3-compatible) |
-| Realtime | Socket.io (WebSocket) |
-| Monitoring | Prometheus + Grafana |
-| Deployment | Docker Compose |
+```
+API            NestJS 11 · TypeScript         Dashboard      Next.js 15 · React 19 · Tailwind
+WhatsApp       Baileys (multi-session)         Job Queue      BullMQ + Redis
+Database       PostgreSQL 16 + pgvector        Pool           PgBouncer
+Media          MinIO (S3-compatible)            Realtime       Socket.io (WebSocket)
+Monitoring     Prometheus + Grafana             Deploy         Docker Compose
+```
 
 ---
 
 ## AI Providers
 
-Configure any of these providers from **Settings → AI**:
+Configure from **Settings → AI**. Supports fallback chains — if the primary fails, retries with the next provider automatically.
 
 | Provider | Models |
 |---|---|
-| OpenAI | GPT-4.1, GPT-4o, o3, o3-mini, o4-mini |
-| Anthropic | Claude Opus 4.6, Sonnet 4.6, Haiku 4.5 |
-| Google | Gemini 2.5 Pro, 2.5 Flash, 2.0 Flash |
-| Groq | Llama 3.3-70b, Qwen-qwq-32b |
-| DeepSeek | deepseek-chat, deepseek-reasoner |
-| xAI | Grok-4, Grok-3, Grok-3-mini |
-| Mistral | mistral-large-latest, codestral |
-| Moonshot | Kimi K2.5, Kimi K2-thinking |
-| Alibaba | Qwen-max, Qwen-plus |
-| Together AI | All hosted models |
-| Ollama | Any local model via base URL |
-| OpenRouter | Any model via API |
-| Custom | Any OpenAI-compatible endpoint |
-
-Supports **fallback chains** — if the primary model fails, the system automatically retries with the next configured provider.
+| **OpenAI** | GPT-4.1, GPT-4o, o3, o3-mini, o4-mini |
+| **Anthropic** | Claude Opus 4.6, Sonnet 4.6, Haiku 4.5 |
+| **Google** | Gemini 2.5 Pro, 2.5 Flash, 2.0 Flash |
+| **Groq** | Llama 3.3-70b, Qwen-qwq-32b |
+| **DeepSeek** | deepseek-chat, deepseek-reasoner |
+| **xAI** | Grok-4, Grok-3, Grok-3-mini |
+| **Mistral** | mistral-large-latest, codestral |
+| **Moonshot** | Kimi K2.5, Kimi K2-thinking |
+| **Alibaba** | Qwen-max, Qwen-plus |
+| **Together AI** | All hosted models |
+| **Ollama** | Any local model via base URL |
+| **OpenRouter** | Any model via API |
+| **Custom** | Any OpenAI-compatible endpoint |
 
 ---
 
 ## Installation
 
-Works on **Linux**, **macOS**, and **Windows**. The installer handles everything — Docker, code, config, database, and startup.
+Works on **Linux**, **macOS**, and **Windows**. One command installs everything.
 
 ### Linux / macOS
 
@@ -87,191 +96,216 @@ curl -fsSL https://agenticcrm.sapheron.com/install.sh | bash
 irm https://agenticcrm.sapheron.com/install.ps1 | iex
 ```
 
-### What the installer does
+<details>
+<summary><strong>What the installer does</strong></summary>
 
-1. Detects your OS and installs Docker if missing
-2. Clones the repository (`/opt/agenticcrm` on Linux/macOS, `C:\agenticcrm` on Windows)
-3. Asks for company name, admin email, and admin password
+1. Detects OS, installs Docker if missing
+2. Clones repository to `/opt/agenticcrm` (Linux/macOS) or `C:\agenticcrm` (Windows)
+3. Asks for company name, admin email, admin password
 4. Auto-generates all secrets (database, JWT, encryption, MinIO)
 5. Builds all Docker images
 6. Starts infrastructure (PostgreSQL, Redis, MinIO, PgBouncer)
-7. Runs database migrations and seeds the admin user
-8. Starts all 11 services and verifies API health
+7. Runs database migrations, seeds admin user
+8. Starts all 11 services, verifies API health
+9. Auto-patches nginx timeouts if detected
+10. Prints reverse proxy setup instructions
 
-After installation, access the dashboard at `http://localhost:3001`. Set up a reverse proxy (nginx or Caddy) for HTTPS — instructions are printed by the installer.
+</details>
+
+After install: `http://localhost:3001` → set up reverse proxy for HTTPS (instructions printed by installer).
+
+Updating: **Settings → System → Update Now** or re-run the install command.
 
 ---
 
 ## Services
 
-The stack runs 11 Docker services:
-
-| Service | Port | Description |
-|---|---|---|
-| API (NestJS) | 3000 | REST API + WebSocket gateway |
-| Dashboard (Next.js) | 3001 | Web UI |
-| WhatsApp (Baileys) | — | WhatsApp session manager |
-| Worker (BullMQ) | — | AI agent job processor |
-| PostgreSQL 16 | 5432 | Primary database |
-| PgBouncer | 6432 | Connection pooler |
-| Redis 7 | 6379 | Pub/sub, caching, job queue |
-| MinIO | 9000/9001 | Media file storage |
-| Prometheus | 9090 | Metrics collection |
-| Grafana | 3002 | Metrics dashboard |
-| Backup | — | Nightly PostgreSQL backup |
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Docker Compose                          │
+│                                                             │
+│  ┌─────────┐  ┌───────────┐  ┌──────────┐  ┌────────┐     │
+│  │   API   │  │ Dashboard │  │ WhatsApp │  │ Worker │     │
+│  │ :3000   │  │  :3001    │  │ Baileys  │  │ BullMQ │     │
+│  └────┬────┘  └─────┬─────┘  └────┬─────┘  └───┬────┘     │
+│       │             │              │             │          │
+│  ┌────┴─────────────┴──────────────┴─────────────┴────┐    │
+│  │              Redis 7 · PgBouncer                    │    │
+│  └────────────────────┬───────────────────────────────┘    │
+│                       │                                     │
+│  ┌────────────────────┴───────────────────────────────┐    │
+│  │          PostgreSQL 16 + pgvector                   │    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ┌──────────┐  ┌─────────┐  ┌────────────┐  ┌──────────┐  │
+│  │   MinIO  │  │ Grafana │  │ Prometheus │  │  Backup  │  │
+│  │ :9000/01 │  │  :3002  │  │   :9090    │  │  Nightly │  │
+│  └──────────┘  └─────────┘  └────────────┘  └──────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Connecting WhatsApp
+## WhatsApp
 
-1. Go to **Settings → WhatsApp**
-2. Click **Add Account**
-3. Scan the QR code with your WhatsApp phone
-4. The account connects and your number is auto-added to the allowlist
+### Connect
 
-**Multi-account:** Add multiple WhatsApp numbers. Each runs an isolated Baileys session with its own auth state stored in PostgreSQL.
+1. **Settings → WhatsApp → Add Account** → scan QR
+2. Your number is auto-added to the allowlist
+3. Done — AI starts handling messages
 
-**Allowlist:** Only numbers in the allowed list trigger the AI agent or staff AI chat. Go to **Settings → WhatsApp → Allowed Numbers** to manage it.
+### Multi-account
 
-**Staff chat:** Message your own connected WhatsApp number to yourself. The AI responds with full CRM access — same as the dashboard `/chat` page.
+Each WhatsApp number runs an isolated Baileys session with auth stored in PostgreSQL.
 
-**24/7 uptime:** Three layers protect the connection — native WebSocket keepalive ping every 30s, exponential backoff reconnect on disconnect (unlimited retries), and a 2-minute watchdog for silent drops. Session credentials survive container restarts via PostgreSQL storage.
+### Staff AI control
+
+Message your connected number (self-chat) to control the CRM:
+
+```
+You:  How many open deals do we have?
+AI:   You have 12 open deals worth $184,500. Top 3:
+      1. Acme Corp — Proposal Sent — $45,000
+      2. Widget Inc — Negotiating — $32,000
+      3. DataFlow — Qualified — $28,000
+
+You:  Move Acme to Won
+AI:   Done! Deal "Acme Corp" moved to Won. Revenue: $45,000.
+
+You:  Create a follow-up task for Widget Inc next Monday
+AI:   Created task "Follow up with Widget Inc" due Monday Apr 21.
+```
+
+### Allowlist
+
+Only numbers in the allowed list trigger the AI. **Settings → WhatsApp → Allowed Numbers**. Allowlisted numbers get full admin AI access (same as self-chat).
+
+### 24/7 uptime
+
+| Layer | What it does |
+|---|---|
+| WebSocket keepalive | Ping every 30s prevents silent drops |
+| Auto-reconnect | Exponential backoff, unlimited retries |
+| Stale watchdog | Force-reconnects if no activity for 5 min |
+| Session persistence | Auth survives restarts (stored in PostgreSQL) |
+| Presence update | Sends "available" on connect so WhatsApp delivers messages |
 
 ---
 
 ## Dashboard Pages
 
-### AI
-| Page | Description |
-|---|---|
-| `/chat` | Chat with the AI agent — full CRM control via natural language |
-| `/memory` | Manage the AI's persistent memory files |
-| `/docs` | Browse all available AI commands and tools |
+<details>
+<summary><strong>AI</strong></summary>
 
-### Analytics
 | Page | Description |
 |---|---|
-| `/analytics` | Revenue trends, conversion funnel, agent performance, message volume, ticket stats |
+| `/chat` | Chat with AI — full CRM control via natural language |
+| `/memory` | Manage AI's persistent memory files |
+| `/docs` | Browse all 200+ AI commands and tools |
+
+</details>
+
+<details>
+<summary><strong>Analytics</strong></summary>
+
+| Page | Description |
+|---|---|
+| `/analytics` | Revenue trends, conversion funnel, agent performance, message volume |
 | `/reports` | Custom report builder with scheduling and export |
 
-### CRM
+</details>
+
+<details>
+<summary><strong>CRM</strong></summary>
+
 | Page | Description |
 |---|---|
-| `/contacts` | Contact list with search, tags, CSV import/export, GDPR opt-out |
+| `/contacts` | Contact list with search, tags, CSV import/export |
 | `/leads` | Lead pipeline with score, status, source, duplicate detection |
 | `/deals` | Deal pipeline with stages, line items, probability, forecasting |
-| `/tasks` | Tasks with subtasks, comments, recurrence, time logging, watchers |
-| `/products` | Product catalog with variants, stock management, and pricing |
+| `/tasks` | Tasks with subtasks, comments, recurrence, time logging |
+| `/products` | Product catalog with variants and pricing |
 
-### Engage
+</details>
+
+<details>
+<summary><strong>Engage</strong></summary>
+
 | Page | Description |
 |---|---|
 | `/broadcasts` | One-time WhatsApp blasts with audience targeting |
 | `/templates` | Reusable message templates with categories |
-| `/sequences` | Multi-step automated message sequences with enrollment management |
-| `/campaigns` | Targeted campaigns with audience builder and scheduling |
-| `/forms` | Lead capture forms with auto-actions, public links, webhook triggers |
+| `/sequences` | Multi-step automated message sequences |
+| `/campaigns` | Targeted campaigns with audience builder |
+| `/forms` | Lead capture forms with auto-actions and public links |
 
-### Sales
+</details>
+
+<details>
+<summary><strong>Sales</strong></summary>
+
 | Page | Description |
 |---|---|
-| `/quotes` | Quote builder with line items, send, accept/reject, expiry |
-| `/invoices` | Invoicing with payment recording and status tracking |
-| `/payments` | Payment link generation, manual payment entry, refunds |
+| `/quotes` | Quote builder with line items, accept/reject |
+| `/invoices` | Invoicing with payment recording |
+| `/payments` | Payment links, manual entry, refunds |
 
-### Support
+</details>
+
+<details>
+<summary><strong>Support + Automate + More</strong></summary>
+
 | Page | Description |
 |---|---|
-| `/tickets` | Support tickets with escalation, merge, SLA tracking |
-| `/kb` | Knowledge base articles — internal and public-facing |
+| `/tickets` | Support tickets with escalation, SLA tracking |
+| `/kb` | Knowledge base — internal and public-facing |
+| `/workflows` | No-code automation with triggers and actions |
+| `/documents` | Document management with e-signatures |
+| `/integrations` | Webhooks, calendar events, third-party connections |
 
-### Automate
-| Page | Description |
-|---|---|
-| `/workflows` | No-code automation workflows with triggers and actions |
-
-### More
-| Page | Description |
-|---|---|
-| `/documents` | Document management with e-signature requests and tracking |
-| `/integrations` | Third-party integrations, webhooks, calendar events |
+</details>
 
 ---
 
 ## AI Agent Capabilities
 
-The AI agent has access to **200+ tools** across every CRM module. When a customer sends a WhatsApp message, or when a staff member chats from the dashboard or their own WhatsApp, the agent can chain multiple actions in a single response.
+The agent has **200+ tools** and can chain up to **5 tool calls** per message.
 
-**Contacts & Leads**
-- Search, create, and update contacts
-- Create leads with source tracking (WhatsApp, form, webhook, etc.)
-- Adjust lead scores manually or trigger recalculation
-- Convert leads to deals
-- Detect and merge duplicate contacts
+<details>
+<summary><strong>Full tool list</strong></summary>
 
-**Deals & Pipeline**
-- Create and update deals with custom fields
-- Move deals through pipeline stages
-- Manage line items, pricing, and discount
-- Set close probability and expected value
+**Contacts & Leads** — search, create, update, delete, score, qualify, convert, merge duplicates
 
-**Tasks & Tickets**
-- Create and assign tasks with due dates
-- Create support tickets and add comments
-- Escalate tickets to senior agents
-- Log time against tasks
+**Deals & Pipeline** — create, update, move stages, manage line items, set probability, forecast
 
-**Quotes, Invoices & Payments**
-- Build quotes with line items
-- Send invoices to contacts
-- Generate payment links
-- Record manual payments and refunds
+**Tasks & Tickets** — create, assign, add comments, log time, escalate, track SLA
 
-**Engagement**
-- Enroll contacts in sequences
-- Send template messages
-- Manage broadcast recipients
+**Quotes, Invoices & Payments** — build quotes, send invoices, generate payment links, record refunds
 
-**Conversation Management**
-- Escalate conversation to human agent
-- Add internal notes
-- Resolve or reopen conversations
-- Toggle AI on/off per conversation
+**Engagement** — enroll in sequences, send templates, manage broadcasts, create campaigns
 
-**Analytics & Reports**
-- Query revenue, pipeline, and agent metrics
-- Create and run custom reports
-- Get business health summaries
+**Conversation** — escalate to human, add notes, resolve/reopen, toggle AI per conversation
 
-**Knowledge Base & Documents**
-- Search and create knowledge articles
-- Create documents and request e-signatures
+**Analytics** — query revenue, pipeline, agent metrics, create custom reports
 
-**Automation**
-- Trigger workflows manually
-- Schedule sequence steps
-- Configure form auto-actions
+**Knowledge Base & Documents** — search/create articles, create documents, request e-signatures
 
-The agent loop supports up to **5 tool call iterations** per message, so it can chain actions: search contact → find open deal → update stage → create a follow-up task — all in one reply.
+**Automation** — trigger workflows, schedule sequences, configure form actions
 
-**Circuit breaker:** If the AI provider fails repeatedly, the circuit opens and the conversation escalates to a human automatically. The breaker resets after a cooldown.
+</details>
+
+**Circuit breaker** — if the AI provider fails repeatedly, conversations escalate to human automatically.
+
+**Fallback chain** — retries with backup providers before escalating.
 
 ---
 
 ## Memory System
 
-The AI has two types of persistent memory:
-
-**Structured Memory** (`/memory → Memory tab`)
-- Named entries grouped by category
-- Survives across conversations and container restarts
-- Create, update, archive, and delete from the dashboard
-
-**File-Based Memory** (`/memory → Files tab`)
-- Store any text as a named knowledge file
-- Content is chunked and embedded with pgvector
-- Semantic similarity search at query time — relevant chunks are automatically injected into the AI context
-- Track source (user, AI, system) per chunk
+| Type | How it works |
+|---|---|
+| **Structured** | Named entries by category. Survives restarts. CRUD from dashboard. |
+| **File-based** | Text chunked and embedded with pgvector. Semantic search at query time. |
 
 ---
 
@@ -279,95 +313,66 @@ The AI has two types of persistent memory:
 
 | Role | Access |
 |---|---|
-| SUPER_ADMIN | Everything including system settings and team management |
-| ADMIN | Everything including settings |
-| AGENT | Only modules their permissions allow |
-| VIEWER | Read-only on allowed modules |
+| `SUPER_ADMIN` | Everything |
+| `ADMIN` | Everything including settings |
+| `AGENT` | Only permitted modules |
+| `VIEWER` | Read-only |
 
-Admins assign per-user permissions from **Settings → Team**. Each dashboard module maps to a permission key — users without it don't see the page and can't call the API.
+Per-user permissions from **Settings → Team**.
 
 ---
 
 ## Settings
 
-**AI (`/settings/ai`)**
-- Provider and model selection
-- Encrypted API key storage
-- Custom base URL for self-hosted models
-- System prompt and tone
-- Temperature and max tokens
-- Auto-reply toggle
-- Tool calling toggle
-- Fallback model chain configuration
-- Connection test
+<details>
+<summary><strong>All settings</strong></summary>
 
-**WhatsApp (`/settings/whatsapp`)**
-- Add and remove WhatsApp accounts
-- QR code generation and reconnection
-- Allowed numbers list per account
-- Account status monitoring
+- **AI** — provider, model, API key (encrypted), system prompt, temperature, auto-reply, tool calling, fallback chain
+- **WhatsApp** — add/remove accounts, QR, reconnect, allowed numbers
+- **Payments** — gateway config, webhook URL
+- **Team** — invite members, assign roles/permissions
+- **Webhooks** — inbound sources, secret rotation
+- **System** — version, check for updates, view changelog, trigger update
 
-**Payments (`/settings/payments`)**
-- Payment gateway configuration
-- Webhook URL for payment callbacks
-
-**Team (`/settings/team`)**
-- Invite team members
-- Assign roles and permissions
-- Change passwords
-
-**Webhooks (`/settings/webhooks`)**
-- Configure inbound webhook sources (Meta Lead Ads, custom)
-- Webhook secret rotation
-
-**System (`/settings/system`)**
-- View current installed version
-- Check for new releases (version-based — only shows update when package.json version is bumped)
-- View changelog
-- Trigger in-place update
+</details>
 
 ---
 
 ## In-App Updates
 
-Go to **Settings → System** and click **Update Now**. The system will:
-1. Pull the latest code from GitHub
-2. Rebuild Docker images with the new version baked in
-3. Run any new database migrations
-4. Restart all services
+**Settings → System → Update Now**
 
-The update banner only appears when the remote `package.json` version is greater than the installed version. Pushing test commits to the repo does not trigger update notifications — only intentional version bumps do.
+1. Pulls latest code from GitHub
+2. Rebuilds Docker images (cached layers — fast)
+3. Runs database migrations
+4. Restarts all services
+5. Auto-patches nginx timeouts
 
----
-
-## Monitoring
-
-- **Prometheus** scrapes metrics from all services at port 9090
-- **Grafana** dashboards available at port 3002
-- All services run with `restart: unless-stopped` and Docker health checks
-- Nightly PostgreSQL backups retained for 30 days in a named volume
-- WhatsApp sessions include a watchdog that detects silent disconnects and reconnects automatically
+Update banner only appears when `package.json` version is bumped — test commits don't trigger it.
 
 ---
 
 ## Environment Variables
 
-Key variables in `.env` (generated by the installer):
+<details>
+<summary><strong>Key variables in <code>.env</code></strong></summary>
 
 ```env
-DATABASE_URL=           # PostgreSQL connection string (via PgBouncer)
-REDIS_URL=              # Redis connection string
-JWT_SECRET=             # JWT signing secret
-JWT_REFRESH_SECRET=     # Refresh token signing secret
-ENCRYPTION_KEY=         # AES key for encrypting AI provider API keys
+DATABASE_URL=           # PostgreSQL (via PgBouncer)
+REDIS_URL=              # Redis
+JWT_SECRET=             # JWT signing
+JWT_REFRESH_SECRET=     # Refresh token
+ENCRYPTION_KEY=         # AES key for AI provider keys
 MINIO_ENDPOINT=         # MinIO host
-MINIO_ACCESS_KEY=       # MinIO access key
-MINIO_SECRET_KEY=       # MinIO secret key
-MINIO_BUCKET=           # Media storage bucket name
-NEXT_PUBLIC_API_URL=    # Public URL the dashboard uses to reach the API
+MINIO_ACCESS_KEY=       # MinIO access
+MINIO_SECRET_KEY=       # MinIO secret
+MINIO_BUCKET=           # Media bucket
+NEXT_PUBLIC_API_URL=    # Dashboard → API URL
 ```
 
-AI provider API keys are stored encrypted in the database, configured from **Settings → AI** — not in `.env`.
+AI provider keys are encrypted in the database, configured from **Settings → AI** — not in `.env`.
+
+</details>
 
 ---
 
@@ -376,13 +381,13 @@ AI provider API keys are stored encrypted in the database, configured from **Set
 ```
 agenticcrm/
 ├── apps/
-│   ├── api/           # NestJS REST API + WebSocket gateway
-│   ├── dashboard/     # Next.js dashboard (React, Tailwind)
-│   ├── whatsapp/      # Baileys WhatsApp session manager
-│   └── worker/        # BullMQ job processor + AI agent loop
+│   ├── api/              NestJS REST API + WebSocket gateway
+│   ├── dashboard/         Next.js dashboard (React, Tailwind)
+│   ├── whatsapp/          Baileys WhatsApp session manager
+│   └── worker/            BullMQ job processor + AI agent loop
 ├── packages/
-│   ├── database/      # Prisma schema + migrations
-│   └── shared/        # Shared utilities, types, constants
+│   ├── database/          Prisma schema + migrations
+│   └── shared/            Shared utilities, types, constants
 └── deploy/
     ├── docker-compose.yml
     ├── install.sh
@@ -399,7 +404,7 @@ MIT
 ---
 
 <p align="center">
-  <img src="logo_nobg.png" alt="AgenticCRM" width="60" /><br/>
-  <strong>A <a href="https://sapheron.com">Sapheron</a> Project</strong><br/>
-  <sub>From <a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
+  <img src="logo_nobg.png" alt="AgenticCRM" width="50" /><br/>
+  <strong><a href="https://sapheron.com">Sapheron</a></strong><br/>
+  <sub><a href="https://technotalim.com">TechnoTaLim Platform and Services LLP</a></sub>
 </p>
