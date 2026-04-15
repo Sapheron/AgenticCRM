@@ -163,7 +163,7 @@ export class InboundMonitor {
     const { companyId } = account;
 
     // Find existing contact — do NOT auto-create contacts from inbound messages
-    let contact = await prisma.contact.findFirst({
+    const contact = await prisma.contact.findFirst({
       where: { companyId, phoneNumber: normalized.fromPhone },
     });
 
@@ -547,7 +547,6 @@ export class InboundMonitor {
       if (this.processedSelfMsgIds.size > 500) {
         const iter = this.processedSelfMsgIds.values();
         for (let i = 0; i < 250; i++) iter.next();
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const remaining = new Set<string>();
         for (const v of iter) remaining.add(v);
         this.processedSelfMsgIds = remaining;
