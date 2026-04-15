@@ -130,7 +130,9 @@ export async function startSession(accountId: string): Promise<void> {
 
         // Don't reconnect if intentionally stopped via stopSession()
         const intentionallyStopped = stoppingAccounts.has(accountId);
-        const shouldReconnect = !intentionallyStopped && statusCode !== DisconnectReason.loggedOut;
+        const shouldReconnect = !intentionallyStopped
+          && statusCode !== DisconnectReason.loggedOut
+          && statusCode !== 440; // connectionReplaced — another instance took over, don't fight
 
         if (!intentionallyStopped) {
           await prisma.whatsAppAccount.update({
