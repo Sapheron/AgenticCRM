@@ -5,6 +5,16 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// ── System update detection ────────────────────────────────────────────
+// Fires a custom event when the API returns 502/503 (container restarting).
+// The UpdateOverlay component in providers.tsx listens for this.
+let _updateVisible = false;
+export function isUpdateVisible() { return _updateVisible; }
+export function setUpdateVisible(v: boolean) {
+  _updateVisible = v;
+  window.dispatchEvent(new CustomEvent('system-update', { detail: v }));
+}
+
 // Attach JWT from localStorage
 api.interceptors.request.use((config) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
@@ -12,12 +22,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
+// Auto-refresh on 401, detect 502/503 for update overlay
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // API is back — dismiss update overlay if it was showing
+    if (_updateVisible) setUpdateVisible(false);
+    return res;
+  },
   async (error) => {
+    const status = error.response?.status;
+
+    // 502/503 = API container is down (likely updating)
+    if (status === 502 || status === 503) {
+      if (!_updateVisible) setUpdateVisible(true);
+      return Promise.reject(error);
+    }
+
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    if (status === 401 && !original._retry) {
       original._retry = true;
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) {
@@ -41,6 +63,12 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
     }
+
+    // Network error (no response at all) — also likely an update
+    if (!error.response && error.code === 'ERR_NETWORK') {
+      if (!_updateVisible) setUpdateVisible(true);
+    }
+
     return Promise.reject(error);
   },
 );
