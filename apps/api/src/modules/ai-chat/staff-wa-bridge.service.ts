@@ -104,15 +104,21 @@ export class StaffWaBridgeService implements OnModuleInit, OnModuleDestroy {
         orderBy: { updatedAt: 'desc' },
       });
       if (!conv) {
+        // Use the sender's phone as the title (or the connected account's phone for self-chat)
+        const waAccount = await prisma.whatsAppAccount.findUnique({
+          where: { id: accountId },
+          select: { phoneNumber: true },
+        });
+        const chatPhone = replyToPhone || waAccount?.phoneNumber || 'WhatsApp';
         conv = await prisma.chatConversation.create({
           data: {
             companyId,
             userId: resolvedUserId,
             whatsappAccountId: accountId,
-            title: 'WhatsApp AI Chat',
+            title: `WhatsApp · ${chatPhone}`,
           },
         });
-        this.logger.log(`Created new WhatsApp ChatConversation ${conv.id} for user ${resolvedUserId}`);
+        this.logger.log(`Created new WhatsApp ChatConversation ${conv.id} for ${chatPhone}`);
       }
 
       // Load recent history (last 30 messages = ~15 turns)
