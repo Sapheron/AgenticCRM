@@ -70,6 +70,12 @@ export class InboundMonitor {
 
         // Staff self-chat: handle BEFORE the type filter because self-sent messages
         // can arrive as type='append' on some Baileys versions, not just 'notify'.
+        // Skip LID echoes of self-messages — they arrive TWICE (once via @lid, once via @s.whatsapp.net).
+        // Only process the @s.whatsapp.net version to prevent double replies.
+        if (fromMe && remoteJid.endsWith('@lid')) {
+          logger.debug({ accountId: this.accountId }, 'Skipped: LID echo of fromMe message (processed via @s.whatsapp.net)');
+          continue;
+        }
         if (fromMe && remoteJid) {
           logger.info({ accountId: this.accountId, remoteJid: remoteJid.slice(0, 20) }, 'Routing to maybeHandleStaffChat (fromMe=true)');
           await this.maybeHandleStaffChat(msg).catch((err: unknown) =>
@@ -114,6 +120,7 @@ export class InboundMonitor {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async handleMessage(msg: any) {
+    try {
     const normalized = normalizeMessage(msg as Parameters<typeof normalizeMessage>[0]);
     if (!normalized) {
       logger.info({ accountId: this.accountId }, 'handleMessage: normalizeMessage returned null');
@@ -325,6 +332,10 @@ export class InboundMonitor {
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'task touch failed'));
     await this.markCampaignRecipientsReplied(companyId, contact.id)
       .catch((err: unknown) => logger.warn({ err, contactId: contact.id }, 'campaign reply hook failed'));
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error({ accountId: this.accountId, err: errMsg, stack: (err as Error)?.stack?.split('\n').slice(0, 3).join(' | ') }, 'handleMessage FAILED');
+    }
   }
 
   /**
