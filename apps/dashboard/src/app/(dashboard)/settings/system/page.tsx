@@ -64,7 +64,12 @@ export default function SystemSettingsPage() {
     queryKey: ['system-update-status'],
     queryFn: () => api.get('/system/update-status').then((r) => r.data.data),
     // Poll every 2s while updating (for live log), every 5s when update available, otherwise stop
-    refetchInterval: updateStatus?.isUpdating ? 2000 : updateCheck?.updateAvailable ? 5000 : false,
+    refetchInterval: (query) => {
+      const status = query.state.data;
+      if (status?.isUpdating) return 2000;
+      if (updateCheck?.updateAvailable) return 5000;
+      return false;
+    },
   });
 
   const { data: changelog } = useQuery<ChangelogEntry[]>({
