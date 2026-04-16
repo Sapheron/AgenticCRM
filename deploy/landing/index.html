@@ -158,13 +158,14 @@
 
   <!-- ─── NAV ───────────────────────────────────────────────── -->
   <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-line">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-[72px] flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <img src="/assets/full_logo.png" alt="AgenticCRM" class="h-7 sm:h-8 w-auto" />
+        <img src="/assets/headerlogo.png" alt="AgenticCRM" class="h-9 sm:h-11 w-auto" />
       </a>
       <div class="flex items-center gap-3 sm:gap-5 text-[13px]">
+        <a href="#screenshots" class="hidden sm:inline text-gray-700 hover:text-ink transition">Preview</a>
         <a href="#install" class="hidden sm:inline text-gray-700 hover:text-ink transition">Install</a>
-        <a href="#features" class="hidden sm:inline text-gray-700 hover:text-ink transition">Features</a>
+        <a href="#features" class="hidden md:inline text-gray-700 hover:text-ink transition">Features</a>
         <a href="#providers" class="hidden md:inline text-gray-700 hover:text-ink transition">AI Providers</a>
         <a href="https://github.com/Sapheron/AgenticCRM" target="_blank" rel="noopener" class="flex items-center gap-1.5 text-gray-700 hover:text-ink transition">
           <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.27-1.69-1.27-1.69-1.04-.7.08-.69.08-.69 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.35.95.1-.75.4-1.25.72-1.54-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.18-3.09-.12-.3-.51-1.47.11-3.07 0 0 .96-.31 3.16 1.17a10.9 10.9 0 015.76 0c2.2-1.48 3.16-1.17 3.16-1.17.62 1.6.23 2.77.11 3.07.74.8 1.18 1.83 1.18 3.09 0 4.43-2.69 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.2.67.8.56A11.5 11.5 0 0023.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
@@ -198,15 +199,19 @@
         Chat with it from WhatsApp today; Telegram, SMS and more channels ship next.
       </p>
 
-      <!-- Brand line -->
-      <p class="mt-5 text-[12px] text-white/55">
-        A
+      <!-- Brand line: Sapheron highlighted, parent company subtle below -->
+      <div class="mt-6 flex flex-col items-center gap-1">
         <a href="https://sapheron.com" target="_blank" rel="noopener"
-           class="text-white font-semibold tracking-wide underline decoration-white/30 underline-offset-4 hover:decoration-white transition">Sapheron</a>
-        Project ·
+           class="group inline-flex items-center gap-2 px-3.5 h-8 rounded-full bg-white/10 border border-white/15 hover:bg-white/15 hover:border-white/25 transition">
+          <span class="text-[11px] code-font text-white/50 tracking-wider">A</span>
+          <span class="text-[13px] font-semibold text-white tracking-tight">Sapheron</span>
+          <span class="text-[11px] code-font text-white/50 tracking-wider">PROJECT</span>
+        </a>
         <a href="https://technotalim.com" target="_blank" rel="noopener"
-           class="text-white/80 hover:text-white underline decoration-white/20 underline-offset-4 hover:decoration-white/60 transition">TechnoTaLim Platform and Services LLP</a>
-      </p>
+           class="text-[11px] text-white/40 hover:text-white/70 transition">
+          TechnoTaLim Platform and Services LLP
+        </a>
+      </div>
 
       <!-- CTAs -->
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -238,6 +243,82 @@
       <a href="https://github.com/Sapheron/AgenticCRM/issues" target="_blank" rel="noopener" class="underline decoration-amber-400 underline-offset-2 hover:text-amber-950 font-medium">Found one that's not? Report it →</a>
     </div>
   </div>
+
+  <!-- ─── SCREENSHOTS ───────────────────────────────────────── -->
+  <section id="screenshots" class="py-16 sm:py-24 border-b border-line bg-paper">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="text-center mb-14 sm:mb-16">
+        <p class="text-[11px] code-font text-muted uppercase tracking-wider mb-3">SEE IT IN ACTION</p>
+        <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight">A real product. Not a mockup.</h2>
+        <p class="mt-3 text-sm text-gray-600 max-w-xl mx-auto">
+          The dashboard you install today. Built for operators, not demos.
+        </p>
+      </div>
+
+      <!-- Row 1: Analytics screenshot + caption -->
+      <div class="grid lg:grid-cols-5 gap-8 lg:gap-14 items-center mb-16 sm:mb-24">
+        <div class="lg:col-span-3 order-2 lg:order-1 min-w-0">
+          <figure class="rounded-lg border border-line bg-white shadow-2xl shadow-black/10 overflow-hidden ring-1 ring-black/5">
+            <figcaption class="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-white/80 backdrop-blur">
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="ml-3 text-[11px] code-font text-muted truncate min-w-0 flex-1">agenticcrm.local / analytics</span>
+            </figcaption>
+            <img src="/assets/ss1.png" alt="AgenticCRM analytics dashboard with KPI cards, revenue trend, deal pipeline, lead funnel and agent performance"
+                 class="block w-full h-auto max-w-full" loading="lazy" decoding="async" />
+          </figure>
+        </div>
+        <div class="lg:col-span-2 order-1 lg:order-2 min-w-0">
+          <p class="text-[11px] code-font text-muted uppercase tracking-wider mb-3">01 · ANALYTICS</p>
+          <h3 class="text-xl sm:text-2xl font-semibold tracking-tight mb-3 leading-snug">
+            One board. Every number that matters.
+          </h3>
+          <p class="text-sm text-gray-600 leading-relaxed">
+            Contacts, active leads, pipeline value, revenue, open tickets, messages — all on one board.
+            No add-ons, no upgrade gates. Every chart is first-class, time-range aware, and refetches on focus.
+          </p>
+          <ul class="mt-5 space-y-1.5 text-[12.5px] text-gray-700">
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">6 KPI cards · 7 / 30 / 90-day ranges</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">Revenue trend, lead funnel, deal pipeline, lead sources</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">Agent performance leaderboard — deals, tickets, msgs</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Row 2: Caption + AI Assistant screenshot -->
+      <div class="grid lg:grid-cols-5 gap-8 lg:gap-14 items-center">
+        <div class="lg:col-span-2 min-w-0">
+          <p class="text-[11px] code-font text-muted uppercase tracking-wider mb-3">02 · AI ASSISTANT</p>
+          <h3 class="text-xl sm:text-2xl font-semibold tracking-tight mb-3 leading-snug">
+            Run the CRM from a chat thread.
+          </h3>
+          <p class="text-sm text-gray-600 leading-relaxed">
+            Ask the AI to find a contact, update a field, list deals, or add a note —
+            you see the exact tool it invoked, the inputs it used, and the result it returned.
+            Transparent by design.
+          </p>
+          <ul class="mt-5 space-y-1.5 text-[12.5px] text-gray-700">
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">Tool calls rendered inline — every step is auditable</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">Swap models per thread — 15 providers supported</span></li>
+            <li class="flex gap-2"><span class="text-emerald-600 font-semibold flex-shrink-0">✓</span><span class="min-w-0 break-words">Same agent logic powers the WhatsApp channel</span></li>
+          </ul>
+        </div>
+        <div class="lg:col-span-3 min-w-0">
+          <figure class="rounded-lg border border-line bg-white shadow-2xl shadow-black/10 overflow-hidden ring-1 ring-black/5">
+            <figcaption class="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-white/80 backdrop-blur">
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-gray-200 flex-shrink-0"></span>
+              <span class="ml-3 text-[11px] code-font text-muted truncate min-w-0 flex-1">agenticcrm.local / ai-chat</span>
+            </figcaption>
+            <img src="/assets/ss2.png" alt="AgenticCRM AI Assistant chat showing tool calls for search_contacts, update_contact, and list_deals"
+                 class="block w-full h-auto max-w-full" loading="lazy" decoding="async" />
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ─── INSTALL ───────────────────────────────────────────── -->
   <section id="install" class="py-16 sm:py-24 border-b border-line">
@@ -573,10 +654,16 @@
         </div>
 
         <div>
-          <h4 class="text-white font-semibold text-[11px] code-font uppercase tracking-wider mb-3">Company</h4>
+          <h4 class="text-white font-semibold text-[11px] code-font uppercase tracking-wider mb-3">Made by</h4>
           <ul class="space-y-2">
-            <li><a href="https://sapheron.com" target="_blank" rel="noopener" class="hover:text-white transition">Sapheron</a></li>
-            <li><a href="https://technotalim.com" target="_blank" rel="noopener" class="hover:text-white transition">TechnoTaLim</a></li>
+            <li>
+              <a href="https://sapheron.com" target="_blank" rel="noopener" class="text-white hover:text-white/80 font-semibold transition">Sapheron</a>
+              <div class="text-gray-500 text-[11px] mt-0.5">Product brand</div>
+            </li>
+            <li class="pt-2">
+              <a href="https://technotalim.com" target="_blank" rel="noopener" class="hover:text-white transition">TechnoTaLim</a>
+              <div class="text-gray-500 text-[11px] mt-0.5">Parent company · Platform and Services LLP</div>
+            </li>
           </ul>
         </div>
 
@@ -592,7 +679,7 @@
       <div class="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <img src="/assets/full_logo_w.png" alt="AgenticCRM" class="h-5 w-auto opacity-90" />
-          <span class="text-[11px] code-font text-gray-500">© 2026 SAPHERON · BUILT WITH CARE IN INDIA</span>
+          <span class="text-[11px] code-font text-gray-500">© 2026 TECHNOTALIM PLATFORM AND SERVICES LLP · SAPHERON · BUILT WITH CARE IN INDIA</span>
         </div>
         <p class="text-[11px] code-font text-gray-600">
           INDEPENDENT PROJECT · NOT AFFILIATED WITH META/WHATSAPP

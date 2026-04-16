@@ -36,6 +36,21 @@
 
 ---
 
+## A peek inside
+
+<table>
+<tr>
+<td width="50%"><img src="ss1.png" alt="AgenticCRM analytics dashboard — KPIs, revenue trend, lead funnel, deal pipeline, agent performance" /></td>
+<td width="50%"><img src="ss2.png" alt="AgenticCRM AI Assistant — chat-driven CRM control with inline tool calls (search_contacts, update_contact, list_deals)" /></td>
+</tr>
+<tr>
+<td align="center"><sub><b>Analytics</b> — one board. Every number that matters.</sub></td>
+<td align="center"><sub><b>AI Assistant</b> — run the CRM from a chat thread. Tool calls rendered inline.</sub></td>
+</tr>
+</table>
+
+---
+
 ## Highlights
 
 - **WhatsApp AI agent** — 8 registered tools, 5-iteration tool chains, circuit breaker with auto-escalation, fallback providers
