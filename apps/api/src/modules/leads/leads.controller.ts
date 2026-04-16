@@ -172,6 +172,28 @@ export class LeadsController {
     return this.svc.addNote(user.companyId, id, body.body, userActor(user));
   }
 
+  @Patch(':id/notes/:activityId')
+  @ApiOperation({ summary: 'Edit a lead note (activity of type NOTE_ADDED)' })
+  updateNote(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Param('activityId') activityId: string,
+    @Body() body: NoteBody,
+  ) {
+    return this.svc.updateNote(user.companyId, id, activityId, body.body, userActor(user));
+  }
+
+  @Delete(':id/notes/:activityId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a lead note (soft-delete)' })
+  deleteNote(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Param('activityId') activityId: string,
+  ) {
+    return this.svc.deleteNote(user.companyId, id, activityId, userActor(user));
+  }
+
   @Post(':id/activities')
   addActivity(@CurrentUser() user: User, @Param('id') id: string, @Body() body: ActivityBody) {
     return this.svc.addActivity(user.companyId, id, body, userActor(user));

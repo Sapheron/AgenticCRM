@@ -24,6 +24,22 @@ export class ChatConversationsService {
   }
 
   async create(companyId: string, userId: string) {
+    // Dedupe: if this user already has a pristine, empty "New Chat" with no
+    // messages yet, reuse it instead of creating another one. This prevents
+    // the sidebar from filling up with blank "New Chat" entries when the user
+    // rapid-clicks the button.
+    const existingEmpty = await prisma.chatConversation.findFirst({
+      where: {
+        companyId,
+        userId,
+        messageCount: 0,
+        title: 'New Chat',
+        whatsappAccountId: null,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (existingEmpty) return existingEmpty;
+
     return prisma.chatConversation.create({
       data: { companyId, userId, title: 'New Chat' },
     });
@@ -127,10 +143,11 @@ export class ChatConversationsService {
       });
     }
 
-    // Touch conversation updatedAt
+    // Touch conversation updatedAt + bump the message counter so dedupe logic
+    // knows this conversation is no longer pristine.
     await prisma.chatConversation.update({
       where: { id: conversationId },
-      data: { updatedAt: new Date() },
+      data: { updatedAt: new Date(), messageCount: { increment: 1 } },
     });
 
     return msg;

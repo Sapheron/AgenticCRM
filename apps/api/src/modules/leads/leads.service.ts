@@ -76,7 +76,7 @@ export class LeadsService {
   async getTimeline(companyId: string, id: string, limit = 100) {
     await this.ensureExists(companyId, id);
     return prisma.leadActivity.findMany({
-      where: { leadId: id, companyId },
+      where: { leadId: id, companyId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       take: Math.min(500, limit),
     });
@@ -327,6 +327,52 @@ export class LeadsService {
   async addActivity(companyId: string, id: string, input: AddActivityInput, actor: LeadActor) {
     await this.ensureExists(companyId, id);
     return this.logActivity(companyId, id, actor, input);
+  }
+
+  async updateNote(
+    companyId: string,
+    leadId: string,
+    activityId: string,
+    newBody: string,
+    actor: LeadActor,
+  ) {
+    const note = (newBody ?? '').trim();
+    if (!note) throw new BadRequestException('Note content is required');
+
+    const activity = await prisma.leadActivity.findFirst({
+      where: { id: activityId, leadId, companyId, deletedAt: null },
+    });
+    if (!activity) throw new NotFoundException('Note not found');
+    if (activity.type !== 'NOTE_ADDED') {
+      throw new BadRequestException('Only note-type activities can be edited');
+    }
+    // Only the author (same user) can edit their note.
+    if (actor.type === 'user' && activity.actorId && activity.actorId !== actor.userId) {
+      throw new BadRequestException('You can only edit your own notes');
+    }
+
+    return prisma.leadActivity.update({
+      where: { id: activityId },
+      data: { title: note.slice(0, 80), body: note },
+    });
+  }
+
+  async deleteNote(companyId: string, leadId: string, activityId: string, actor: LeadActor) {
+    const activity = await prisma.leadActivity.findFirst({
+      where: { id: activityId, leadId, companyId, deletedAt: null },
+    });
+    if (!activity) throw new NotFoundException('Note not found');
+    if (activity.type !== 'NOTE_ADDED') {
+      throw new BadRequestException('Only note-type activities can be deleted');
+    }
+    if (actor.type === 'user' && activity.actorId && activity.actorId !== actor.userId) {
+      throw new BadRequestException('You can only delete your own notes');
+    }
+    await prisma.leadActivity.update({
+      where: { id: activityId },
+      data: { deletedAt: new Date() },
+    });
+    return { ok: true };
   }
 
   async setScore(

@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Phone, Mail, Building, Briefcase, MapPin,
   TrendingUp, CreditCard, CheckSquare, Save, X,
-  Plus, Trash2, UserX, StickyNote,
+  Plus, Trash2, UserX, StickyNote, Pencil, Check,
 } from 'lucide-react';
 
 interface Contact {
@@ -63,6 +63,9 @@ export default function ContactDetailPage() {
   const [noteText, setNoteText] = useState('');
   const [newTag, setNewTag] = useState('');
   const [editMode, setEditMode] = useState(false);
+  // Inline note editing — only one note at a time.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
 
   // Edit form state
   const [form, setForm] = useState<Record<string, string>>({});
@@ -123,6 +126,29 @@ export default function ContactDetailPage() {
     onError: () => toast.error('Failed'),
   });
 
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ noteId, content }: { noteId: string; content: string }) =>
+      api.patch(`/contacts/${id}/notes/${noteId}`, { content }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['contact-notes', id] });
+      void qc.invalidateQueries({ queryKey: ['contact-timeline', id] });
+      setEditingNoteId(null);
+      setEditingNoteText('');
+      toast.success('Note updated');
+    },
+    onError: () => toast.error('Failed to update'),
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (noteId: string) => api.delete(`/contacts/${id}/notes/${noteId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['contact-notes', id] });
+      void qc.invalidateQueries({ queryKey: ['contact-timeline', id] });
+      toast.success('Note deleted');
+    },
+    onError: () => toast.error('Failed to delete'),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/contacts/${id}`),
     onSuccess: () => {
@@ -172,10 +198,20 @@ export default function ContactDetailPage() {
   };
 
   const handleAddTag = () => {
-    if (!newTag.trim()) return;
-    if ((contact.tags || []).includes(newTag.trim())) { setNewTag(''); return; }
-    updateMutation.mutate({ tags: [...(contact.tags || []), newTag.trim()] });
-    setNewTag('');
+    const trimmed = newTag.trim();
+    if (!trimmed) return;
+    if ((contact.tags || []).includes(trimmed)) { setNewTag(''); return; }
+    updateMutation.mutate(
+      { tags: [...(contact.tags || []), trimmed] },
+      {
+        onSuccess: () => {
+          setNewTag('');
+          // Also refresh the tags autocomplete list — the user may have typed
+          // a brand-new tag name the backend is about to surface.
+          void qc.invalidateQueries({ queryKey: ['tags'] });
+        },
+      },
+    );
   };
 
   const handleRemoveTag = (tag: string) => {
@@ -304,17 +340,31 @@ export default function ContactDetailPage() {
                 {(contact.tags || []).length === 0 && <span className="text-[10px] text-gray-300 italic">No tags</span>}
               </div>
               <div className="flex gap-1">
-                <select
+                <input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newTag.trim()) {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  list="contact-tag-suggestions"
+                  placeholder="Add tag…"
                   className="flex-1 border border-gray-200 rounded px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-gray-400"
+                />
+                <datalist id="contact-tag-suggestions">
+                  {(tags || [])
+                    .filter((t) => !(contact.tags || []).includes(t.name))
+                    .map((t) => (
+                      <option key={t.id} value={t.name} />
+                    ))}
+                </datalist>
+                <button
+                  onClick={handleAddTag}
+                  disabled={!newTag.trim() || updateMutation.isPending}
+                  className="bg-gray-900 text-white px-2 py-1 rounded text-[10px] disabled:opacity-30"
                 >
-                  <option value="">Add tag...</option>
-                  {(tags || []).filter((t) => !(contact.tags || []).includes(t.name)).map((t) => (
-                    <option key={t.id} value={t.name}>{t.name}</option>
-                  ))}
-                </select>
-                <button onClick={handleAddTag} disabled={!newTag} className="bg-gray-900 text-white px-2 py-1 rounded text-[10px] disabled:opacity-30">
                   <Plus size={10} />
                 </button>
               </div>
@@ -392,12 +442,74 @@ export default function ContactDetailPage() {
             </div>
             <div className="space-y-2">
               {(notes || []).length === 0 && <p className="text-xs text-gray-300 italic">No notes yet</p>}
-              {(notes || []).map((note) => (
-                <div key={note.id} className="border border-gray-100 rounded p-2.5 bg-gray-50/50">
-                  <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                  <p className="text-[9px] text-gray-300 mt-1.5">{new Date(note.createdAt).toLocaleString()}</p>
-                </div>
-              ))}
+              {(notes || []).map((note) => {
+                const isEditing = editingNoteId === note.id;
+                return (
+                  <div key={note.id} className="group border border-gray-100 rounded p-2.5 bg-gray-50/50">
+                    {isEditing ? (
+                      <>
+                        <textarea
+                          value={editingNoteText}
+                          onChange={(e) => setEditingNoteText(e.target.value)}
+                          rows={3}
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400 resize-none bg-white"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <button
+                            onClick={() => {
+                              const next = editingNoteText.trim();
+                              if (!next || next === note.content) {
+                                setEditingNoteId(null);
+                                setEditingNoteText('');
+                                return;
+                              }
+                              updateNoteMutation.mutate({ noteId: note.id, content: next });
+                            }}
+                            disabled={updateNoteMutation.isPending || !editingNoteText.trim()}
+                            className="flex items-center gap-0.5 bg-gray-900 text-white px-2 py-0.5 rounded text-[10px] hover:bg-gray-800 disabled:opacity-30"
+                          >
+                            <Check size={9} /> Save
+                          </button>
+                          <button
+                            onClick={() => { setEditingNoteId(null); setEditingNoteText(''); }}
+                            className="flex items-center gap-0.5 text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded text-[10px]"
+                          >
+                            <X size={9} /> Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-2">
+                          <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed flex-1 min-w-0">
+                            {note.content}
+                          </p>
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <button
+                              onClick={() => { setEditingNoteId(note.id); setEditingNoteText(note.content); }}
+                              className="text-gray-400 hover:text-gray-700 p-1 rounded hover:bg-gray-100"
+                              title="Edit note"
+                            >
+                              <Pencil size={11} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm('Delete this note?')) deleteNoteMutation.mutate(note.id);
+                              }}
+                              className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-gray-100"
+                              title="Delete note"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[9px] text-gray-300 mt-1.5">{new Date(note.createdAt).toLocaleString()}</p>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

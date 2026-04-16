@@ -11,6 +11,10 @@ import {
   Copy, Play, MessageSquarePlus, Clock, Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  BarChart, Bar, FunnelChart, Funnel, LabelList,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts';
 
 type ReportStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 type ReportType = 'TABLE' | 'CHART' | 'FUNNEL' | 'METRIC' | 'COHORT';
@@ -285,30 +289,7 @@ export default function ReportDetailPage() {
                       <span className="text-xs font-medium text-gray-700">{runResult.total} rows from &quot;{runResult.entity}&quot;</span>
                       <span className="text-[10px] text-gray-400 ml-auto">Run at {new Date(runResult.runAt).toLocaleString()}</span>
                     </div>
-                    <div className="overflow-auto max-h-[calc(100vh-300px)]">
-                      <table className="w-full text-[11px]">
-                        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                          {runResult.rows.length > 0 && (
-                            <tr>
-                              {Object.keys(runResult.rows[0] as object).slice(0, 8).map((k) => (
-                                <th key={k} className="text-left px-2 py-1.5 text-[10px] font-medium text-gray-400 uppercase">{k}</th>
-                              ))}
-                            </tr>
-                          )}
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
-                          {runResult.rows.map((row, i) => (
-                            <tr key={i} className="hover:bg-gray-50/50">
-                              {Object.values(row as object).slice(0, 8).map((v, j) => (
-                                <td key={j} className="px-2 py-1.5 text-gray-600 truncate max-w-[120px]">
-                                  {v === null ? '—' : String(v).slice(0, 50)}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <ReportResultView type={report.type} rows={runResult.rows} />
                   </div>
                 )}
               </div>
@@ -416,6 +397,110 @@ export default function ReportDetailPage() {
           </button>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Renders a report's result payload differently per `report.type`.
+ * - TABLE:   the existing table view.
+ * - CHART:   bar chart driven by the first string column (X) and first numeric column (Y).
+ * - FUNNEL:  recharts funnel using the same column heuristic.
+ * - METRIC:  single big-number card pulled from the first numeric cell in the first row.
+ * - COHORT:  v1 fallback to TABLE.
+ *
+ * Unknown/missing data shapes fall back to TABLE so the user still sees *something*.
+ */
+function ReportResultView({ type, rows }: { type: ReportType; rows: unknown[] }) {
+  if (rows.length === 0) {
+    return <p className="text-[11px] text-gray-400 text-center py-6">No data returned for this report.</p>;
+  }
+
+  const first = rows[0] as Record<string, unknown>;
+  const keys = Object.keys(first);
+  // Pick the first string-ish column as the label, and the first numeric column as the value.
+  const labelKey = keys.find((k) => typeof first[k] === 'string') ?? keys[0];
+  const valueKey = keys.find((k) => typeof first[k] === 'number') ?? keys.find((k) => k !== labelKey) ?? keys[0];
+
+  const chartData = rows.slice(0, 50).map((r) => {
+    const row = r as Record<string, unknown>;
+    return {
+      name: String(row[labelKey] ?? ''),
+      value: Number(row[valueKey] ?? 0),
+    };
+  });
+
+  if (type === 'METRIC') {
+    const metricVal = Number((first[valueKey] as number | string) ?? 0);
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-widest text-gray-400">{valueKey}</p>
+          <p className="text-5xl font-semibold text-gray-900 mt-2 tabular-nums">
+            {Number.isFinite(metricVal) ? metricVal.toLocaleString() : String(first[valueKey] ?? '—')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'CHART') {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-3" style={{ height: 360 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 20, left: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={chartData.length > 8 ? -30 : 0} textAnchor={chartData.length > 8 ? 'end' : 'middle'} height={chartData.length > 8 ? 60 : 30} />
+            <YAxis tick={{ fontSize: 10 }} />
+            <Tooltip contentStyle={{ fontSize: 11 }} />
+            <Bar dataKey="value" fill="#111827" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  if (type === 'FUNNEL') {
+    const palette = ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db', '#e5e7eb'];
+    const funnelData = chartData.map((d, i) => ({ ...d, fill: palette[i % palette.length] }));
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-3" style={{ height: 360 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <FunnelChart>
+            <Tooltip contentStyle={{ fontSize: 11 }} />
+            <Funnel dataKey="value" data={funnelData} isAnimationActive>
+              <LabelList position="right" fill="#374151" stroke="none" dataKey="name" fontSize={11} />
+              {funnelData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+            </Funnel>
+          </FunnelChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  // TABLE / COHORT / fallback
+  return (
+    <div className="overflow-auto max-h-[calc(100vh-300px)]">
+      <table className="w-full text-[11px]">
+        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+          <tr>
+            {keys.slice(0, 8).map((k) => (
+              <th key={k} className="text-left px-2 py-1.5 text-[10px] font-medium text-gray-400 uppercase">{k}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100 bg-white">
+          {rows.map((row, i) => (
+            <tr key={i} className="hover:bg-gray-50/50">
+              {Object.values(row as object).slice(0, 8).map((v, j) => (
+                <td key={j} className="px-2 py-1.5 text-gray-600 truncate max-w-[120px]">
+                  {v === null ? '—' : String(v).slice(0, 50)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

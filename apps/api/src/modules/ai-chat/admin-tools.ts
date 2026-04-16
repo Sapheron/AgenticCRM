@@ -311,19 +311,29 @@ const tools: AdminTool[] = [
       },
     },
     execute: async (args, companyId) => {
-      const q = (args.query as string) || '';
+      const q = ((args.query as string) || '').trim();
       const where: Record<string, unknown> = { companyId, deletedAt: null };
       if (q) {
-        where.OR = [
-          { displayName: { contains: q, mode: 'insensitive' } },
-          { phoneNumber: { contains: q } },
-          { email: { contains: q, mode: 'insensitive' } },
-        ];
+        // Tokenise on whitespace so "Sofia Myers" matches a contact whose
+        // displayName is only "Sofia" but lastName is "Myers", etc. Each
+        // token must hit at least one of the searchable columns.
+        const tokens = q.split(/\s+/).filter(Boolean);
+        const orForToken = (token: string) => ({
+          OR: [
+            { displayName: { contains: token, mode: 'insensitive' as const } },
+            { firstName: { contains: token, mode: 'insensitive' as const } },
+            { lastName: { contains: token, mode: 'insensitive' as const } },
+            { phoneNumber: { contains: token } },
+            { email: { contains: token, mode: 'insensitive' as const } },
+            { companyName: { contains: token, mode: 'insensitive' as const } },
+          ],
+        });
+        where.AND = tokens.map(orForToken);
       }
       if (args.tag) where.tags = { has: args.tag as string };
       const contacts = await prisma.contact.findMany({ where: where as any, take: 10, orderBy: { createdAt: 'desc' } });
       if (!contacts.length) return 'No contacts found';
-      return contacts.map((c) => `- ${c.displayName || 'No name'} | ${c.phoneNumber} | ${c.email || 'no email'} | tags: ${c.tags.join(', ') || 'none'} | ID: ${c.id}`).join('\n');
+      return contacts.map((c) => `- ${c.displayName || [c.firstName, c.lastName].filter(Boolean).join(' ') || 'No name'} | ${c.phoneNumber} | ${c.email || 'no email'} | tags: ${c.tags.join(', ') || 'none'} | ID: ${c.id}`).join('\n');
     },
   },
   {
@@ -2099,10 +2109,26 @@ const tools: AdminTool[] = [
       const account = await prisma.whatsAppAccount.findFirst({ where: { companyId, status: 'CONNECTED' } });
       if (!account) return 'No connected WhatsApp account found';
 
+      // Guard: refuse to send when the lead/contact has no phone on file.
+      // The old code accepted empty/whitespace input and shipped it off as
+      // "+91" — landing at an unknown number.
+      const rawPhone = typeof args.phoneNumber === 'string' ? args.phoneNumber.trim() : '';
+      if (!rawPhone) {
+        return 'Cannot send: the contact or lead has no phone number on file. Ask the user to add one first.';
+      }
+      if (/[A-Za-z]/.test(rawPhone)) {
+        return `Cannot send: phone number "${rawPhone}" is not valid (contains letters).`;
+      }
+
       // Normalize phone number: remove +, spaces, dashes; add 91 prefix for 10-digit Indian numbers
-      let phone = (args.phoneNumber as string).replace(/[\s\-\+\(\)]/g, '');
+      let phone = rawPhone.replace(/[\s\-\+\(\)]/g, '');
       if (phone.startsWith('0')) phone = '91' + phone.slice(1); // 08714414424 → 918714414424
       if (phone.length === 10 && /^\d+$/.test(phone)) phone = '91' + phone; // 8714414424 → 918714414424
+
+      // After normalisation we still require at least 10 digits to be worth sending.
+      if (!/^\d{10,15}$/.test(phone)) {
+        return `Cannot send: phone number "${rawPhone}" does not look like a valid number (after normalisation: "${phone}").`;
+      }
 
       // Resolve attachment if requested
       const allAtts = context.attachments ?? [];

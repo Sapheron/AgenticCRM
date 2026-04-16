@@ -8,7 +8,7 @@
  *  Right:  Linked deals + quick actions (qualify, convert, won/lost)
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
@@ -17,6 +17,7 @@ import { cn, formatRelativeTime } from '@/lib/utils';
 import {
   ArrowLeft, Save, Phone, Award,
   StickyNote, CheckCircle, XCircle, ArrowRight, RefreshCw, Trash2,
+  Pencil, Check, X,
 } from 'lucide-react';
 import { STATUS_COLORS, type LeadStatus, type LeadSource, type LeadPriority } from '../page';
 
@@ -75,6 +76,10 @@ export default function LeadDetailPage() {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [noteText, setNoteText] = useState('');
+  // Inline note editing — only one note at a time.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
+  const [showContactEdit, setShowContactEdit] = useState(false);
 
   const { data: lead, isLoading } = useQuery({
     queryKey: ['lead', id],
@@ -113,6 +118,24 @@ export default function LeadDetailPage() {
   const noteMutation = useMutation({
     mutationFn: (body: string) => api.post(`/leads/${id}/notes`, { body }),
     onSuccess: () => { invalidate(); setNoteText(''); toast.success('Note added'); },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ activityId, body }: { activityId: string; body: string }) =>
+      api.patch(`/leads/${id}/notes/${activityId}`, { body }),
+    onSuccess: () => {
+      invalidate();
+      setEditingNoteId(null);
+      setEditingNoteText('');
+      toast.success('Note updated');
+    },
+    onError: () => toast.error('Failed to update'),
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (activityId: string) => api.delete(`/leads/${id}/notes/${activityId}`),
+    onSuccess: () => { invalidate(); toast.success('Note deleted'); },
+    onError: () => toast.error('Failed to delete'),
   });
 
   const recalcMutation = useMutation({
@@ -217,11 +240,20 @@ export default function LeadDetailPage() {
           {!editMode ? (
             <>
               <Field label="Contact" value={
-                <div className="text-[11px]">
-                  <div className="font-medium text-gray-900">{lead.contact.displayName ?? lead.contact.phoneNumber}</div>
-                  <div className="flex items-center gap-1 text-gray-400 mt-0.5">
-                    <Phone size={9} /> {lead.contact.phoneNumber}
+                <div className="text-[11px] flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{lead.contact.displayName ?? lead.contact.phoneNumber}</div>
+                    <div className="flex items-center gap-1 text-gray-400 mt-0.5">
+                      <Phone size={9} /> {lead.contact.phoneNumber}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setShowContactEdit(true)}
+                    className="text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100 shrink-0"
+                    title="Edit contact"
+                  >
+                    <Pencil size={11} />
+                  </button>
                 </div>
               } />
               <Field label="Score" value={
@@ -353,22 +385,81 @@ export default function LeadDetailPage() {
               {lead.activities.length === 0 ? (
                 <p className="text-[11px] text-gray-300 text-center py-6">No activity yet.</p>
               ) : (
-                lead.activities.map((a) => (
-                  <div key={a.id} className="flex gap-2">
-                    <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-gray-300 shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                        <span className="font-mono uppercase tracking-wider">{a.type}</span>
-                        <span>·</span>
-                        <span>{a.actorType}</span>
-                        <span>·</span>
-                        <span>{formatRelativeTime(a.createdAt)}</span>
+                lead.activities.map((a) => {
+                  const isNote = a.type === 'NOTE_ADDED';
+                  const isEditing = editingNoteId === a.id;
+                  return (
+                    <div key={a.id} className="group flex gap-2">
+                      <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-gray-300 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                          <span className="font-mono uppercase tracking-wider">{a.type}</span>
+                          <span>·</span>
+                          <span>{a.actorType}</span>
+                          <span>·</span>
+                          <span>{formatRelativeTime(a.createdAt)}</span>
+                          {isNote && !isEditing && (
+                            <span className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => { setEditingNoteId(a.id); setEditingNoteText(a.body ?? ''); }}
+                                className="text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100"
+                                title="Edit note"
+                              >
+                                <Pencil size={10} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm('Delete this note?')) deleteNoteMutation.mutate(a.id);
+                                }}
+                                className="text-gray-400 hover:text-red-500 p-0.5 rounded hover:bg-gray-100"
+                                title="Delete note"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-gray-800 mt-0.5">{a.title}</div>
+                        {isEditing ? (
+                          <div className="mt-1">
+                            <textarea
+                              value={editingNoteText}
+                              onChange={(e) => setEditingNoteText(e.target.value)}
+                              rows={3}
+                              className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-gray-400 resize-none bg-white"
+                              autoFocus
+                            />
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <button
+                                onClick={() => {
+                                  const next = editingNoteText.trim();
+                                  if (!next || next === (a.body ?? '')) {
+                                    setEditingNoteId(null);
+                                    setEditingNoteText('');
+                                    return;
+                                  }
+                                  updateNoteMutation.mutate({ activityId: a.id, body: next });
+                                }}
+                                disabled={updateNoteMutation.isPending || !editingNoteText.trim()}
+                                className="flex items-center gap-0.5 bg-gray-900 text-white px-2 py-0.5 rounded text-[10px] hover:bg-gray-800 disabled:opacity-30"
+                              >
+                                <Check size={9} /> Save
+                              </button>
+                              <button
+                                onClick={() => { setEditingNoteId(null); setEditingNoteText(''); }}
+                                className="flex items-center gap-0.5 text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded text-[10px]"
+                              >
+                                <X size={9} /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          a.body && <div className="text-[10px] text-gray-500 mt-0.5 whitespace-pre-wrap">{a.body}</div>
+                        )}
                       </div>
-                      <div className="text-[11px] text-gray-800 mt-0.5">{a.title}</div>
-                      {a.body && <div className="text-[10px] text-gray-500 mt-0.5 whitespace-pre-wrap">{a.body}</div>}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -438,6 +529,140 @@ export default function LeadDetailPage() {
             )}
           </div>
         </aside>
+      </div>
+
+      {showContactEdit && (
+        <ContactEditModal
+          contactId={lead.contact.id}
+          onClose={() => setShowContactEdit(false)}
+          onSaved={() => {
+            setShowContactEdit(false);
+            invalidate();
+            toast.success('Contact updated');
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ContactEditModal({
+  contactId,
+  onClose,
+  onSaved,
+}: {
+  contactId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState<Record<string, string>>({
+    displayName: '', firstName: '', lastName: '', phoneNumber: '',
+    email: '', companyName: '', jobTitle: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<{ data: Record<string, string | undefined> }>(`/contacts/${contactId}`)
+      .then((r) => {
+        if (cancelled) return;
+        const c = r.data.data || {};
+        setForm({
+          displayName: c.displayName ?? '',
+          firstName: c.firstName ?? '',
+          lastName: c.lastName ?? '',
+          phoneNumber: c.phoneNumber ?? '',
+          email: c.email ?? '',
+          companyName: c.companyName ?? '',
+          jobTitle: c.jobTitle ?? '',
+        });
+      })
+      .catch(() => toast.error('Failed to load contact'))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [contactId]);
+
+  // Reject letters in phone — matches backend guard.
+  const phoneValid = (() => {
+    const raw = form.phoneNumber.trim();
+    if (!raw) return false;
+    if (/[A-Za-z]/.test(raw)) return false;
+    return raw.replace(/\D/g, '').length >= 7;
+  })();
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.patch(`/contacts/${contactId}`, {
+        displayName: form.displayName || null,
+        firstName: form.firstName || null,
+        lastName: form.lastName || null,
+        phoneNumber: form.phoneNumber,
+        email: form.email || null,
+        companyName: form.companyName || null,
+        jobTitle: form.jobTitle || null,
+      });
+      onSaved();
+    } catch {
+      toast.error('Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-gray-900">Edit contact</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={14} />
+          </button>
+        </div>
+        {loading ? (
+          <div className="p-6 text-center text-[11px] text-gray-300">Loading…</div>
+        ) : (
+          <div className="p-4 space-y-2">
+            {([
+              { key: 'displayName', label: 'Display name' },
+              { key: 'firstName', label: 'First name' },
+              { key: 'lastName', label: 'Last name' },
+              { key: 'phoneNumber', label: 'Phone', type: 'tel' },
+              { key: 'email', label: 'Email', type: 'email' },
+              { key: 'companyName', label: 'Company' },
+              { key: 'jobTitle', label: 'Job title' },
+            ] as Array<{ key: string; label: string; type?: string }>).map(({ key, label, type }) => (
+              <div key={key}>
+                <label className="text-[9px] uppercase tracking-widest text-gray-400 block mb-0.5">{label}</label>
+                <input
+                  value={form[key] ?? ''}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  type={type ?? 'text'}
+                  className={cn(
+                    'w-full border rounded px-2 py-1 text-[11px] focus:outline-none focus:ring-1',
+                    key === 'phoneNumber' && form.phoneNumber.length > 0 && !phoneValid
+                      ? 'border-red-300 focus:ring-red-400'
+                      : 'border-gray-200 focus:ring-gray-400',
+                  )}
+                />
+                {key === 'phoneNumber' && form.phoneNumber.length > 0 && !phoneValid && (
+                  <span className="text-[10px] text-red-500 mt-0.5 block">Digits only — letters are not allowed.</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="border-t border-gray-200 px-4 py-2.5 flex justify-end gap-2">
+          <button onClick={onClose} className="text-[11px] text-gray-500 hover:text-gray-700 px-2 py-1">Cancel</button>
+          <button
+            onClick={save}
+            disabled={loading || saving || !phoneValid}
+            className="text-[11px] bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800 disabled:opacity-30 flex items-center gap-1"
+          >
+            <Save size={10} /> {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
       </div>
     </div>
   );

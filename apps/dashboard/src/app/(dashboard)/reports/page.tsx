@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -78,6 +79,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
 
 export default function ReportsPage() {
   const qc = useQueryClient();
+  const router = useRouter();
 
   // Filters
   const [search, setSearch]         = useState('');
@@ -141,9 +143,13 @@ export default function ReportsPage() {
   });
 
   const runMut = useMutation({
-    mutationFn: (id: string) => api.post(`/reports/${id}/run`),
-    onSuccess: (r: any) => {
-      toast.success(`Report ran — ${r.data.data?.total ?? 0} rows`);
+    mutationFn: (id: string) => api.post(`/reports/${id}/run`).then((r) => ({ id, res: r })),
+    onSuccess: ({ id, res }) => {
+      const total = (res.data as any)?.data?.total ?? 0;
+      toast.success(`Report ran — ${total} rows`);
+      // Navigate to the detail page so the user actually sees the result —
+      // the toast alone was misleading ("Run" appeared to do nothing).
+      router.push(`/reports/${id}`);
     },
     onError: () => toast.error('Failed to run'),
   });

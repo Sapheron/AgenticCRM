@@ -71,6 +71,28 @@ export class ContactsController {
     return this.svc.addNote(user.companyId, id, user.id, body.content);
   }
 
+  @Patch(':id/notes/:noteId')
+  @ApiOperation({ summary: 'Edit a contact note' })
+  updateNote(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Param('noteId') noteId: string,
+    @Body() body: { content: string },
+  ) {
+    return this.svc.updateNote(user.companyId, id, noteId, user.id, body.content);
+  }
+
+  @Delete(':id/notes/:noteId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a contact note (soft-delete)' })
+  deleteNote(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Param('noteId') noteId: string,
+  ) {
+    return this.svc.deleteNote(user.companyId, id, noteId, user.id);
+  }
+
   @Post('bulk/tag')
   @ApiOperation({ summary: 'Bulk add/remove tags' })
   bulkTag(@CurrentUser() user: User, @Body() body: { contactIds: string[]; addTags?: string[]; removeTags?: string[] }) {

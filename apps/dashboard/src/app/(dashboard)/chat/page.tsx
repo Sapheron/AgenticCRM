@@ -277,9 +277,11 @@ export default function AiChatPage() {
                   <span className="flex-1 truncate">{conv.title}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); deleteConvMutation.mutate(conv.id); }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 p-0.5"
+                    className="opacity-60 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-colors"
+                    aria-label="Delete conversation"
+                    title="Delete conversation"
                   >
-                    <Trash2 size={10} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               ))}

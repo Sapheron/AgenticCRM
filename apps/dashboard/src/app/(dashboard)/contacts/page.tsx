@@ -72,6 +72,18 @@ export default function ContactsPage() {
     },
   });
 
+  // Reject anything with letters in the phone field — the backend normaliser
+  // used to silently strip non-digits (so "ABC123" became "+91123"), which
+  // let garbage contacts into the system. Keep this regex loose: allow +,
+  // spaces, dashes, parens and digits; require at least 7 digits total.
+  const phoneValid = (() => {
+    const raw = phoneNumber.trim();
+    if (!raw) return false;
+    if (/[A-Za-z]/.test(raw)) return false;
+    const digits = raw.replace(/\D/g, '');
+    return digits.length >= 7;
+  })();
+
   const createMutation = useMutation({
     mutationFn: () => api.post('/contacts', {
       phoneNumber, displayName: displayName || undefined,
@@ -86,7 +98,10 @@ export default function ContactsPage() {
       setPhoneNumber(''); setDisplayName(''); setFirstName(''); setLastName('');
       setEmail(''); setCompanyName(''); setJobTitle('');
     },
-    onError: () => toast.error('Failed to create contact'),
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Failed to create contact';
+      toast.error(msg);
+    },
   });
 
   return (
@@ -133,7 +148,21 @@ export default function ContactsPage() {
       {showForm && (
         <div className="border-b border-gray-200 bg-white p-3 shrink-0">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-2">
-            <input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="Phone (required)" className="border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400" />
+            <div className="flex flex-col">
+              <input
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Phone (required)"
+                type="tel"
+                inputMode="tel"
+                pattern="^[+]?[0-9\s\-()]+$"
+                aria-invalid={phoneNumber.length > 0 && !phoneValid}
+                className={`border rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 ${phoneNumber.length > 0 && !phoneValid ? 'border-red-300 focus:ring-red-400' : 'border-gray-200 focus:ring-gray-400'}`}
+              />
+              {phoneNumber.length > 0 && !phoneValid && (
+                <span className="text-[10px] text-red-500 mt-0.5">Digits only — letters are not allowed.</span>
+              )}
+            </div>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display name" className="border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400" />
             <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" className="border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400" />
             <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" className="border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400" />
@@ -142,7 +171,7 @@ export default function ContactsPage() {
             <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="Job title" className="border border-gray-200 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400" />
           </div>
           <div className="flex gap-2">
-            <button onClick={() => createMutation.mutate()} disabled={!phoneNumber || createMutation.isPending} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">
+            <button onClick={() => createMutation.mutate()} disabled={!phoneValid || createMutation.isPending} className="bg-gray-900 text-white px-3 py-1 rounded text-[11px] disabled:opacity-30">
               {createMutation.isPending ? 'Creating...' : 'Create'}
             </button>
             <button onClick={() => setShowForm(false)} className="text-gray-400 text-[11px] px-2 py-1">Cancel</button>

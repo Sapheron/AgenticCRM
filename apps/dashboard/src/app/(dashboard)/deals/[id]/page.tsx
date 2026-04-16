@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import {
   ArrowLeft, Save, Phone, Award, StickyNote, CheckCircle, XCircle,
-  ArrowRight, RefreshCw, Trash2, Plus, X,
+  ArrowRight, RefreshCw, Trash2, Plus, X, Pencil, Check,
 } from 'lucide-react';
 import { DEAL_STAGE_ORDER, DEAL_STAGE_LABELS } from '@wacrm/shared';
 import { type DealStage, type DealSource, type DealPriority } from '../page';
@@ -88,6 +88,9 @@ export default function DealDetailPage() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [noteText, setNoteText] = useState('');
   const [showLineItemForm, setShowLineItemForm] = useState(false);
+  // Inline note editing — only one note at a time.
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
 
   const { data: deal, isLoading } = useQuery({
     queryKey: ['deal', id],
@@ -124,6 +127,24 @@ export default function DealDetailPage() {
   const noteMutation = useMutation({
     mutationFn: (body: string) => api.post(`/deals/${id}/notes`, { body }),
     onSuccess: () => { invalidate(); setNoteText(''); toast.success('Note added'); },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ activityId, body }: { activityId: string; body: string }) =>
+      api.patch(`/deals/${id}/notes/${activityId}`, { body }),
+    onSuccess: () => {
+      invalidate();
+      setEditingNoteId(null);
+      setEditingNoteText('');
+      toast.success('Note updated');
+    },
+    onError: () => toast.error('Failed to update'),
+  });
+
+  const deleteNoteMutation = useMutation({
+    mutationFn: (activityId: string) => api.delete(`/deals/${id}/notes/${activityId}`),
+    onSuccess: () => { invalidate(); toast.success('Note deleted'); },
+    onError: () => toast.error('Failed to delete'),
   });
 
   const reopenMutation = useMutation({
@@ -382,22 +403,81 @@ export default function DealDetailPage() {
                 {deal.activities.length === 0 ? (
                   <p className="text-[11px] text-gray-300 text-center py-6">No activity yet.</p>
                 ) : (
-                  deal.activities.map((a) => (
-                    <div key={a.id} className="flex gap-2">
-                      <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-gray-300 shrink-0" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                          <span className="font-mono uppercase tracking-wider">{a.type}</span>
-                          <span>·</span>
-                          <span>{a.actorType}</span>
-                          <span>·</span>
-                          <span>{formatRelativeTime(a.createdAt)}</span>
+                  deal.activities.map((a) => {
+                    const isNote = a.type === 'NOTE_ADDED';
+                    const isEditing = editingNoteId === a.id;
+                    return (
+                      <div key={a.id} className="group flex gap-2">
+                        <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-gray-300 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                            <span className="font-mono uppercase tracking-wider">{a.type}</span>
+                            <span>·</span>
+                            <span>{a.actorType}</span>
+                            <span>·</span>
+                            <span>{formatRelativeTime(a.createdAt)}</span>
+                            {isNote && !isEditing && (
+                              <span className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => { setEditingNoteId(a.id); setEditingNoteText(a.body ?? ''); }}
+                                  className="text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100"
+                                  title="Edit note"
+                                >
+                                  <Pencil size={10} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm('Delete this note?')) deleteNoteMutation.mutate(a.id);
+                                  }}
+                                  className="text-gray-400 hover:text-red-500 p-0.5 rounded hover:bg-gray-100"
+                                  title="Delete note"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-gray-800 mt-0.5">{a.title}</div>
+                          {isEditing ? (
+                            <div className="mt-1">
+                              <textarea
+                                value={editingNoteText}
+                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                rows={3}
+                                className="w-full border border-gray-200 rounded px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-gray-400 resize-none bg-white"
+                                autoFocus
+                              />
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <button
+                                  onClick={() => {
+                                    const next = editingNoteText.trim();
+                                    if (!next || next === (a.body ?? '')) {
+                                      setEditingNoteId(null);
+                                      setEditingNoteText('');
+                                      return;
+                                    }
+                                    updateNoteMutation.mutate({ activityId: a.id, body: next });
+                                  }}
+                                  disabled={updateNoteMutation.isPending || !editingNoteText.trim()}
+                                  className="flex items-center gap-0.5 bg-gray-900 text-white px-2 py-0.5 rounded text-[10px] hover:bg-gray-800 disabled:opacity-30"
+                                >
+                                  <Check size={9} /> Save
+                                </button>
+                                <button
+                                  onClick={() => { setEditingNoteId(null); setEditingNoteText(''); }}
+                                  className="flex items-center gap-0.5 text-gray-400 hover:text-gray-600 px-1.5 py-0.5 rounded text-[10px]"
+                                >
+                                  <X size={9} /> Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            a.body && <div className="text-[10px] text-gray-500 mt-0.5 whitespace-pre-wrap">{a.body}</div>
+                          )}
                         </div>
-                        <div className="text-[11px] text-gray-800 mt-0.5">{a.title}</div>
-                        {a.body && <div className="text-[10px] text-gray-500 mt-0.5 whitespace-pre-wrap">{a.body}</div>}
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

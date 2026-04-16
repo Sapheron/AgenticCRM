@@ -641,6 +641,8 @@ model LeadActivity {
   body      String?
   metadata  Json             @default("{}")
   createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime?        // soft-delete for note-type activities
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
@@ -762,6 +764,8 @@ model DealActivity {
   body      String?
   metadata  Json             @default("{}")
   createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime?        // soft-delete for note-type activities
 
   deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
@@ -1234,12 +1238,14 @@ model WebhookEndpoint {
 // ─── CONTACT NOTE ────────────────────────────────────────────────────────────
 
 model ContactNote {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   companyId String
   contactId String
   authorId  String?
   content   String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft-delete
 
   contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
@@ -2906,6 +2912,7 @@ model ChatConversation {
   userId            String
   whatsappAccountId String?  // Set when this chat is linked to a WhatsApp account (staff AI chat via WhatsApp)
   title             String   @default("New Chat")
+  messageCount      Int      @default(0) // used to dedupe brand-new empty conversations
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

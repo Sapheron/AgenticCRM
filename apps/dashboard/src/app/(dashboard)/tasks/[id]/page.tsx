@@ -15,6 +15,7 @@ import { cn, formatRelativeTime } from '@/lib/utils';
 import {
   ArrowLeft, Save, CheckCircle, XCircle, Play, RefreshCw, Trash2, Plus,
   X, MessageSquare, Activity as ActivityIcon, ListChecks, AlertCircle, Clock,
+  Pencil, Check,
 } from 'lucide-react';
 import { PRIORITY_COLORS, STATUS_COLORS, type TaskStatus, type TaskPriority, type TaskSource } from '../page';
 
@@ -82,6 +83,9 @@ export default function TaskDetailPage() {
   const [commentBody, setCommentBody] = useState('');
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [logHours, setLogHours] = useState('');
+  // Inline subtask title edit — only one at a time.
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState('');
 
   const { data: task, isLoading } = useQuery({
     queryKey: ['task', id],
@@ -126,6 +130,18 @@ export default function TaskDetailPage() {
   const subtaskDeleteMutation = useMutation({
     mutationFn: (subtaskId: string) => api.delete(`/tasks/${subtaskId}`),
     onSuccess: () => invalidate(),
+  });
+
+  const subtaskUpdateMutation = useMutation({
+    mutationFn: ({ subtaskId, title }: { subtaskId: string; title: string }) =>
+      api.patch(`/tasks/${subtaskId}`, { title }),
+    onSuccess: () => {
+      invalidate();
+      setEditingSubtaskId(null);
+      setEditingSubtaskTitle('');
+      toast.success('Subtask updated');
+    },
+    onError: () => toast.error('Failed to update'),
   });
 
   const logTimeMutation = useMutation({
@@ -382,29 +398,99 @@ export default function TaskDetailPage() {
                 <p className="text-[11px] text-gray-300 text-center py-6">No subtasks yet.</p>
               ) : (
                 <div className="space-y-1">
-                  {task.subtasks.map((s) => (
-                    <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50/50 group">
-                      <button
-                        onClick={() => subtaskCompleteMutation.mutate(s.id)}
-                        className={cn(
-                          'w-4 h-4 rounded border shrink-0 flex items-center justify-center',
-                          s.status === 'DONE' ? 'border-gray-400 bg-gray-50' : 'border-gray-200 hover:border-gray-400',
+                  {task.subtasks.map((s) => {
+                    const isEditing = editingSubtaskId === s.id;
+                    return (
+                      <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50/50 group">
+                        <button
+                          onClick={() => subtaskCompleteMutation.mutate(s.id)}
+                          disabled={isEditing}
+                          className={cn(
+                            'w-4 h-4 rounded border shrink-0 flex items-center justify-center',
+                            s.status === 'DONE' ? 'border-gray-400 bg-gray-50' : 'border-gray-200 hover:border-gray-400',
+                            isEditing && 'opacity-50',
+                          )}
+                        >
+                          {s.status === 'DONE' && <div className="w-2 h-2 bg-gray-800 rounded-sm" />}
+                        </button>
+                        {isEditing ? (
+                          <>
+                            <input
+                              value={editingSubtaskTitle}
+                              onChange={(e) => setEditingSubtaskTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const next = editingSubtaskTitle.trim();
+                                  if (!next || next === s.title) {
+                                    setEditingSubtaskId(null);
+                                    setEditingSubtaskTitle('');
+                                    return;
+                                  }
+                                  subtaskUpdateMutation.mutate({ subtaskId: s.id, title: next });
+                                } else if (e.key === 'Escape') {
+                                  setEditingSubtaskId(null);
+                                  setEditingSubtaskTitle('');
+                                }
+                              }}
+                              autoFocus
+                              className="flex-1 border border-gray-200 rounded px-1.5 py-0.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-gray-400 bg-white"
+                            />
+                            <button
+                              onClick={() => {
+                                const next = editingSubtaskTitle.trim();
+                                if (!next || next === s.title) {
+                                  setEditingSubtaskId(null);
+                                  setEditingSubtaskTitle('');
+                                  return;
+                                }
+                                subtaskUpdateMutation.mutate({ subtaskId: s.id, title: next });
+                              }}
+                              disabled={subtaskUpdateMutation.isPending || !editingSubtaskTitle.trim()}
+                              className="text-gray-400 hover:text-gray-900 disabled:opacity-30"
+                              title="Save"
+                            >
+                              <Check size={11} />
+                            </button>
+                            <button
+                              onClick={() => { setEditingSubtaskId(null); setEditingSubtaskTitle(''); }}
+                              className="text-gray-400 hover:text-gray-700"
+                              title="Cancel"
+                            >
+                              <X size={11} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => { setEditingSubtaskId(s.id); setEditingSubtaskTitle(s.title); }}
+                              className={cn(
+                                'text-[11px] flex-1 text-left truncate',
+                                s.status === 'DONE' && 'line-through text-gray-400',
+                              )}
+                              title="Click to edit"
+                            >
+                              {s.title}
+                            </button>
+                            <span className={cn('text-[9px] px-1 rounded border', PRIORITY_COLORS[s.priority])}>{s.priority}</span>
+                            <button
+                              onClick={() => { setEditingSubtaskId(s.id); setEditingSubtaskTitle(s.title); }}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100 transition-opacity"
+                              title="Edit subtask"
+                            >
+                              <Pencil size={10} />
+                            </button>
+                            <button
+                              onClick={() => { if (confirm('Delete subtask?')) subtaskDeleteMutation.mutate(s.id); }}
+                              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-0.5 rounded hover:bg-gray-100 transition-opacity"
+                              title="Delete subtask"
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </>
                         )}
-                      >
-                        {s.status === 'DONE' && <div className="w-2 h-2 bg-gray-800 rounded-sm" />}
-                      </button>
-                      <span className={cn('text-[11px] flex-1', s.status === 'DONE' && 'line-through text-gray-400')}>
-                        {s.title}
-                      </span>
-                      <span className={cn('text-[9px] px-1 rounded border', PRIORITY_COLORS[s.priority])}>{s.priority}</span>
-                      <button
-                        onClick={() => { if (confirm('Delete subtask?')) subtaskDeleteMutation.mutate(s.id); }}
-                        className="text-gray-300 group-hover:text-red-500 transition-colors"
-                      >
-                        <X size={11} />
-                      </button>
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

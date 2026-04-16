@@ -296,7 +296,9 @@ exports.Prisma.LeadActivityScalarFieldEnum = {
   title: 'title',
   body: 'body',
   metadata: 'metadata',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.LeadScoreEventScalarFieldEnum = {
@@ -374,7 +376,9 @@ exports.Prisma.DealActivityScalarFieldEnum = {
   title: 'title',
   body: 'body',
   metadata: 'metadata',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.DealLineItemScalarFieldEnum = {
@@ -651,7 +655,9 @@ exports.Prisma.ContactNoteScalarFieldEnum = {
   contactId: 'contactId',
   authorId: 'authorId',
   content: 'content',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.TagScalarFieldEnum = {
@@ -1460,6 +1466,7 @@ exports.Prisma.ChatConversationScalarFieldEnum = {
   userId: 'userId',
   whatsappAccountId: 'whatsappAccountId',
   title: 'title',
+  messageCount: 'messageCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

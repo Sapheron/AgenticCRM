@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { prisma } from '@wacrm/database';
-import { normalizePhone } from '@wacrm/shared';
+import { InvalidPhoneError, normalizePhone } from '@wacrm/shared';
+
+function normalizeOrBadRequest(raw: string): string {
+  try {
+    return normalizePhone(raw);
+  } catch (e) {
+    if (e instanceof InvalidPhoneError) throw new BadRequestException(e.message);
+    throw e;
+  }
+}
 
 export interface CreateContactDto {
   phoneNumber: string;
@@ -62,7 +71,7 @@ export class ContactsService {
   }
 
   async create(companyId: string, dto: CreateContactDto) {
-    const phoneNumber = normalizePhone(dto.phoneNumber);
+    const phoneNumber = normalizeOrBadRequest(dto.phoneNumber);
     return prisma.contact.upsert({
       where: { companyId_phoneNumber: { companyId, phoneNumber } },
       create: {
@@ -157,7 +166,7 @@ export class ContactsService {
         take: 20,
       }),
       prisma.contactNote.findMany({
-        where: { contactId, companyId },
+        where: { contactId, companyId, deletedAt: null },
         select: { id: true, content: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 20,
@@ -182,7 +191,7 @@ export class ContactsService {
   async getNotes(companyId: string, contactId: string) {
     await this.get(companyId, contactId); // verify access
     return prisma.contactNote.findMany({
-      where: { contactId, companyId },
+      where: { contactId, companyId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -191,6 +200,46 @@ export class ContactsService {
     return prisma.contactNote.create({
       data: { companyId, contactId, authorId, content },
     });
+  }
+
+  async updateNote(
+    companyId: string,
+    contactId: string,
+    noteId: string,
+    userId: string,
+    content: string,
+  ) {
+    const trimmed = (content ?? '').trim();
+    if (!trimmed) {
+      throw new BadRequestException('Note content is required');
+    }
+    const note = await prisma.contactNote.findFirst({
+      where: { id: noteId, contactId, companyId, deletedAt: null },
+    });
+    if (!note) throw new NotFoundException('Note not found');
+    // Only the author can edit their own notes.
+    if (note.authorId && note.authorId !== userId) {
+      throw new BadRequestException('You can only edit your own notes');
+    }
+    return prisma.contactNote.update({
+      where: { id: noteId },
+      data: { content: trimmed },
+    });
+  }
+
+  async deleteNote(companyId: string, contactId: string, noteId: string, userId: string) {
+    const note = await prisma.contactNote.findFirst({
+      where: { id: noteId, contactId, companyId, deletedAt: null },
+    });
+    if (!note) throw new NotFoundException('Note not found');
+    if (note.authorId && note.authorId !== userId) {
+      throw new BadRequestException('You can only delete your own notes');
+    }
+    await prisma.contactNote.update({
+      where: { id: noteId },
+      data: { deletedAt: new Date() },
+    });
+    return { ok: true };
   }
 
   // ── Bulk Actions ──────────────────────────────────────────────────────────
