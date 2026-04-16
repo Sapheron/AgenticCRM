@@ -32,6 +32,10 @@
 
 ---
 
+> **⚠️ A friendly note.** AgenticCRM is early-stage software under active development. You *will* find bugs. As a rule, we treat them as undocumented features — if one particularly annoys you, [open an issue](https://github.com/Sapheron/AgenticCRM/issues) and we'll graduate it from "feature" to "fixed." 🐛 → ✨
+
+---
+
 ## Highlights
 
 - **WhatsApp AI agent** — 8 registered tools, 5-iteration tool chains, circuit breaker with auto-escalation, fallback providers
