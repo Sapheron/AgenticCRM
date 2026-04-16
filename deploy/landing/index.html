@@ -3,20 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AgenticCRM — The self-hosted AI CRM that runs on WhatsApp</title>
-  <meta name="description" content="Open-source, self-hosted AI CRM built around WhatsApp. Connect your number, configure an AI, and your agent handles customer conversations, leads, deals, and payments — from WhatsApp or the dashboard." />
+  <meta name="color-scheme" content="light dark" />
+  <title>AgenticCRM — The agentic CRM, fully controlled by AI chat</title>
+  <meta name="description" content="AgenticCRM is a self-hosted, open-source agentic CRM — your entire pipeline, leads, deals, quotes, invoices, and payments, controlled by an AI chat agent. A Sapheron Project by TechnoTaLim Platform and Services LLP." />
+  <meta name="keywords" content="agentic CRM, AI CRM, self-hosted CRM, WhatsApp CRM, open source CRM, AI sales agent, AI chat CRM, Sapheron, TechnoTaLim, Baileys, NestJS CRM, Next.js CRM, AI agent, lead management, deal pipeline, chat-driven CRM, self-hosted WhatsApp" />
+  <meta name="author" content="Sapheron · TechnoTaLim Platform and Services LLP" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
   <meta name="theme-color" content="#0f0f10" />
+  <meta name="application-name" content="AgenticCRM" />
+  <meta name="apple-mobile-web-app-title" content="AgenticCRM" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="canonical" href="https://agenticcrm.sapheron.com/" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="AgenticCRM — The self-hosted AI CRM that runs on WhatsApp" />
-  <meta property="og:description" content="One curl to install. Your AI agent runs leads, deals, quotes, invoices and payments — over WhatsApp." />
-  <meta property="og:url" content="https://agenticcrm.sapheron.com" />
+  <meta property="og:site_name" content="AgenticCRM" />
+  <meta property="og:title" content="AgenticCRM — The agentic CRM, fully controlled by AI chat" />
+  <meta property="og:description" content="Self-hosted, open-source. One curl to install. Your CRM runs itself: leads, deals, quotes, invoices, payments — all driven by an AI chat agent." />
+  <meta property="og:url" content="https://agenticcrm.sapheron.com/" />
   <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_US" />
   <meta property="og:image" content="https://agenticcrm.sapheron.com/assets/full_logo.png" />
+  <meta property="og:image:alt" content="AgenticCRM — A Sapheron Project" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AgenticCRM — The agentic CRM, fully controlled by AI chat" />
+  <meta name="twitter:description" content="Self-hosted, open-source agentic CRM. One curl to install. Controlled entirely by AI chat." />
+  <meta name="twitter:image" content="https://agenticcrm.sapheron.com/assets/full_logo.png" />
+  <meta name="twitter:image:alt" content="AgenticCRM — A Sapheron Project" />
 
   <link rel="icon" href="/assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/logo.png" />
+
+  <!-- JSON-LD structured data for search engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "AgenticCRM",
+        "alternateName": "Agentic CRM",
+        "description": "Self-hosted, open-source agentic CRM fully controlled by an AI chat agent. Manages contacts, leads, deals, quotes, invoices, and payments.",
+        "url": "https://agenticcrm.sapheron.com/",
+        "image": "https://agenticcrm.sapheron.com/assets/full_logo.png",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "CRM",
+        "operatingSystem": "Linux, macOS, Windows (via Docker)",
+        "softwareVersion": "1.4.1",
+        "license": "https://github.com/Sapheron/AgenticCRM/blob/main/LICENSE",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": {
+          "@type": "Organization",
+          "name": "Sapheron",
+          "url": "https://sapheron.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "TechnoTaLim Platform and Services LLP",
+          "url": "https://technotalim.com"
+        },
+        "codeRepository": "https://github.com/Sapheron/AgenticCRM"
+      },
+      {
+        "@type": "Organization",
+        "name": "Sapheron",
+        "url": "https://sapheron.com",
+        "parentOrganization": {
+          "@type": "Organization",
+          "name": "TechnoTaLim Platform and Services LLP",
+          "url": "https://technotalim.com"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "url": "https://agenticcrm.sapheron.com/",
+        "name": "AgenticCRM",
+        "publisher": { "@type": "Organization", "name": "Sapheron" }
+      }
+    ]
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -90,7 +160,7 @@
   <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-line">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <img src="/assets/full_logo.png" alt="AgenticCRM" class="h-5 sm:h-6 w-auto" />
+        <img src="/assets/full_logo.png" alt="AgenticCRM" class="h-7 sm:h-8 w-auto" />
       </a>
       <div class="flex items-center gap-3 sm:gap-5 text-[13px]">
         <a href="#install" class="hidden sm:inline text-gray-700 hover:text-ink transition">Install</a>
@@ -119,13 +189,23 @@
       </a>
 
       <h1 class="mt-7 text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-        The self-hosted AI CRM<br class="hidden sm:block" />
-        <span class="text-white/60">that runs on WhatsApp.</span>
+        The agentic CRM.<br class="hidden sm:block" />
+        <span class="text-white/60">Fully controlled by AI chat.</span>
       </h1>
 
       <p class="mt-6 text-[15px] sm:text-base text-white/65 max-w-2xl mx-auto leading-relaxed">
-        Connect your number. Configure an AI. Your agent handles customer conversations, creates leads,
-        manages deals, sends payment links, and controls your entire CRM — from WhatsApp or the dashboard.
+        A self-hosted CRM your AI agent runs end-to-end — contacts, leads, deals, quotes, invoices, payments.
+        Chat with it from WhatsApp today; Telegram, SMS and more channels ship next.
+      </p>
+
+      <!-- Brand line -->
+      <p class="mt-5 text-[12px] text-white/55">
+        A
+        <a href="https://sapheron.com" target="_blank" rel="noopener"
+           class="text-white font-semibold tracking-wide underline decoration-white/30 underline-offset-4 hover:decoration-white transition">Sapheron</a>
+        Project ·
+        <a href="https://technotalim.com" target="_blank" rel="noopener"
+           class="text-white/80 hover:text-white underline decoration-white/20 underline-offset-4 hover:decoration-white/60 transition">TechnoTaLim Platform and Services LLP</a>
       </p>
 
       <!-- CTAs -->
@@ -337,12 +417,12 @@
           <div class="font-medium">Razorpay · Stripe · Cashfree · PhonePe · Payu</div>
         </div>
         <div class="bg-paper border border-line rounded-md p-4 text-left">
-          <div class="code-font text-[10px] uppercase tracking-wider text-muted mb-1">Integrations</div>
-          <div class="font-medium">WhatsApp (Baileys 6) · Gmail · Google Calendar</div>
+          <div class="code-font text-[10px] uppercase tracking-wider text-muted mb-1">Channels</div>
+          <div class="font-medium">WhatsApp (Baileys 6) <span class="text-muted">· Telegram <span class="text-[10px] italic">(soon)</span></span></div>
         </div>
         <div class="bg-paper border border-line rounded-md p-4 text-left">
-          <div class="code-font text-[10px] uppercase tracking-wider text-muted mb-1">Embeddings</div>
-          <div class="font-medium">OpenAI · Gemini · Ollama — pgvector search</div>
+          <div class="code-font text-[10px] uppercase tracking-wider text-muted mb-1">Lead Capture</div>
+          <div class="font-medium">Public forms · Meta Ads webhooks · Lead-capture APIs</div>
         </div>
       </div>
     </div>
