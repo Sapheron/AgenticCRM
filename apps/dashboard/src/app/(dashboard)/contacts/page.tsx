@@ -151,7 +151,7 @@ export default function ContactsPage() {
             <div className="flex flex-col">
               <input
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/[A-Za-z]/g, ''))}
                 placeholder="Phone (required)"
                 type="tel"
                 inputMode="tel"

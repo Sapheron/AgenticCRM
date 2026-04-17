@@ -637,7 +637,11 @@ function ContactEditModal({
                 <label className="text-[9px] uppercase tracking-widest text-gray-400 block mb-0.5">{label}</label>
                 <input
                   value={form[key] ?? ''}
-                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  onChange={(e) => {
+                    let v = e.target.value;
+                    if (key === 'phoneNumber') v = v.replace(/[A-Za-z]/g, '');
+                    setForm({ ...form, [key]: v });
+                  }}
                   type={type ?? 'text'}
                   className={cn(
                     'w-full border rounded px-2 py-1 text-[11px] focus:outline-none focus:ring-1',
