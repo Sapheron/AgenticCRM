@@ -248,6 +248,21 @@ fi
 # ── Step 4: Migrations ────────────────────────────────────────────────────────
 echo -e "\n  ${W}${BOLD}[4/6]${NC}  Running database migrations..."
 if [ -f "$COMPOSE_FILE" ]; then
+  # Run pre_push.sql first (idempotent backfills that prisma can't handle)
+  PRE_PUSH="$INSTALL_DIR/packages/database/prisma/migrations/pre_push.sql"
+  if [ -f "$PRE_PUSH" ]; then
+    info "Running pre_push.sql..."
+    docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" \
+      exec -T postgres sh -c \
+      "psql -U \"\${POSTGRES_USER:-crm}\" -d \"\${POSTGRES_DB:-wacrm}\" -v ON_ERROR_STOP=1" \
+      < "$PRE_PUSH" >> "$LOG_FILE" 2>&1 && {
+      ok "pre_push.sql applied"
+      echo -e "  ${G}✔${NC}  Pre-push migrations applied"
+    } || {
+      warn "pre_push.sql had issues (check $LOG_FILE)"
+    }
+  fi
+
   info "Applying schema migrations..."
   MIGRATE_LOG=$(docker compose -f "$COMPOSE_FILE" --env-file "$INSTALL_DIR/.env" run --rm api npx prisma migrate deploy \
     --schema=./node_modules/@wacrm/database/prisma/schema.prisma 2>&1) && {
