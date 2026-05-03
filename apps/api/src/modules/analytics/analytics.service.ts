@@ -223,10 +223,10 @@ export class AnalyticsService {
     const range = rangeFromDays(days);
     const [total, sent, delivered, read, failed] = await Promise.all([
       prisma.broadcast.count({ where: { companyId, createdAt: { gte: range.start } } }),
-      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: { in: ['SENT', 'DELIVERED', 'READ'] }, createdAt: { gte: range.start } } }),
-      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: { in: ['DELIVERED', 'READ'] }, createdAt: { gte: range.start } } }),
-      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: 'READ', createdAt: { gte: range.start } } }),
-      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: 'FAILED', createdAt: { gte: range.start } } }),
+      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: { in: ['SENT', 'DELIVERED', 'READ'] }, queuedAt: { gte: range.start } } }),
+      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: { in: ['DELIVERED', 'READ'] }, queuedAt: { gte: range.start } } }),
+      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: 'READ', queuedAt: { gte: range.start } } }),
+      prisma.broadcastRecipient.count({ where: { broadcast: { companyId }, status: 'FAILED', queuedAt: { gte: range.start } } }),
     ]);
     return {
       totalBroadcasts: total,
@@ -265,7 +265,7 @@ export class AnalyticsService {
       prisma.ticket.count({ where: { companyId, status: 'OPEN' } }),
       prisma.ticket.count({ where: { companyId, status: { in: ['IN_PROGRESS', 'ESCALATED'] } } }),
       prisma.ticket.count({ where: { companyId, status: 'RESOLVED', updatedAt: { gte: range.start } } }),
-      prisma.ticket.count({ where: { companyId, slaBreachedAt: { not: null }, createdAt: { gte: range.start } } }),
+      prisma.ticket.count({ where: { companyId, OR: [{ slaFirstResponseBreached: true }, { slaResolutionBreached: true }], createdAt: { gte: range.start } } }),
     ]);
     return { open, inProgress, resolved, slaBreach };
   }
