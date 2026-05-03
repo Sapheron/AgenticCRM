@@ -30,6 +30,7 @@
     "bullmq": "^5.73.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "dotenv": "^17.4.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
     "passport": "^0.7.0",

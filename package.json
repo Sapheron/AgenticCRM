@@ -55,7 +55,14 @@
       "file-type": "^21.3.2",
       "webpack": "^5.104.0",
       "path-to-regexp": "^8.4.2",
-      "@hono/node-server": "^1.19.13"
+      "@hono/node-server": "^1.19.13",
+      "protobufjs": "^7.5.5",
+      "follow-redirects": "^1.16.0",
+      "fast-xml-parser": "^5.7.0",
+      "hono": "^4.12.14",
+      "@anthropic-ai/sdk": "^0.92.0",
+      "uuid": "^14.0.0",
+      "postcss": "^8.5.13"
     }
   }
 }

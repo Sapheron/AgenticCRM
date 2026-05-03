@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.86.1",
+    "@anthropic-ai/sdk": "^0.92.0",
     "@google/generative-ai": "^0.24.1",
     "@wacrm/database": "workspace:*",
     "@wacrm/shared": "workspace:*",

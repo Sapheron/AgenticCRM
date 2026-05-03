@@ -217,7 +217,7 @@
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <a href="#install"
            class="inline-flex items-center justify-center gap-2 px-5 h-11 rounded-md bg-white text-ink font-medium text-sm hover:bg-white/90 transition w-full sm:w-auto">
-          Install in 60 seconds
+          Install in one command
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <a href="https://github.com/Sapheron/AgenticCRM" target="_blank" rel="noopener"
@@ -331,43 +331,19 @@
         </p>
       </div>
 
-      <!-- OS Tabs -->
+      <!-- Install command -->
       <div class="mx-auto max-w-2xl">
-        <div class="inline-flex p-1 bg-white border border-line rounded-md code-font text-[12px]">
-          <button id="tab-linux" onclick="switchTab('linux')" class="px-3.5 h-8 rounded-[4px] tab-active transition">
-            Linux / macOS
-          </button>
-          <button id="tab-windows" onclick="switchTab('windows')" class="px-3.5 h-8 rounded-[4px] tab-inactive transition">
-            Windows (PowerShell)
-          </button>
-        </div>
-
-        <!-- Code blocks -->
-        <div id="code-linux" class="mt-4 relative">
+        <div class="relative">
           <div class="bg-ink rounded-md overflow-hidden border border-ink">
             <div class="flex items-center justify-between px-4 py-2 border-b border-white/10">
-              <span class="text-[11px] text-white/40 code-font">bash</span>
-              <button onclick="copyCmd('linux')" id="copy-linux"
+              <span class="text-[11px] text-white/40 code-font">bash · Linux VPS</span>
+              <button onclick="copyCmd()" id="copy-cmd"
                       class="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white transition code-font">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                <span id="copy-linux-label">COPY</span>
+                <span id="copy-cmd-label">COPY</span>
               </button>
             </div>
-            <pre class="px-4 py-4 sm:py-5 text-[13px] sm:text-[14px] text-gray-100 code-font overflow-x-auto"><span class="text-emerald-400 select-none">$ </span><span id="cmd-linux">curl -fsSL https://agenticcrm.sapheron.com/install.sh | bash</span></pre>
-          </div>
-        </div>
-
-        <div id="code-windows" class="mt-4 relative hidden">
-          <div class="bg-ink rounded-md overflow-hidden border border-ink">
-            <div class="flex items-center justify-between px-4 py-2 border-b border-white/10">
-              <span class="text-[11px] text-white/40 code-font">powershell</span>
-              <button onclick="copyCmd('windows')" id="copy-windows"
-                      class="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white transition code-font">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                <span id="copy-windows-label">COPY</span>
-              </button>
-            </div>
-            <pre class="px-4 py-4 sm:py-5 text-[13px] sm:text-[14px] text-gray-100 code-font overflow-x-auto"><span class="text-emerald-400 select-none">PS&gt; </span><span id="cmd-windows">irm https://agenticcrm.sapheron.com/install.ps1 | iex</span></pre>
+            <pre class="px-4 py-4 sm:py-5 text-[13px] sm:text-[14px] text-gray-100 code-font overflow-x-auto"><span class="text-emerald-400 select-none">$ </span><span id="cmd-text">curl -fsSL https://agenticcrm.sapheron.com/install.sh | sudo bash</span></pre>
           </div>
         </div>
       </div>
@@ -618,7 +594,7 @@
         Ready? One command installs everything.
       </h2>
       <p class="mt-4 text-sm text-white/60 max-w-lg mx-auto">
-        Self-host on any VPS with Docker. 4 GB RAM. 10 GB disk. 60 seconds.
+        Self-host on any VPS with Docker. 4 GB RAM. 10 GB disk. One command.
       </p>
       <a href="#install"
          class="mt-8 inline-flex items-center justify-center gap-2 px-6 h-11 rounded-md bg-white text-ink font-medium text-sm hover:bg-white/90 transition">
@@ -690,39 +666,17 @@
 
   <!-- ─── SCRIPTS ───────────────────────────────────────────── -->
   <script>
-    const LINUX_CMD = 'curl -fsSL https://agenticcrm.sapheron.com/install.sh | bash';
-    const WINDOWS_CMD = 'irm https://agenticcrm.sapheron.com/install.ps1 | iex';
+    const INSTALL_CMD = 'curl -fsSL https://agenticcrm.sapheron.com/install.sh | sudo bash';
 
-    function switchTab(os) {
-      const linuxBtn = document.getElementById('tab-linux');
-      const winBtn = document.getElementById('tab-windows');
-      const linuxCode = document.getElementById('code-linux');
-      const winCode = document.getElementById('code-windows');
-
-      if (os === 'linux') {
-        linuxBtn.classList.remove('tab-inactive'); linuxBtn.classList.add('tab-active');
-        winBtn.classList.remove('tab-active'); winBtn.classList.add('tab-inactive');
-        linuxCode.classList.remove('hidden'); linuxCode.classList.add('fade-in');
-        winCode.classList.add('hidden');
-      } else {
-        winBtn.classList.remove('tab-inactive'); winBtn.classList.add('tab-active');
-        linuxBtn.classList.remove('tab-active'); linuxBtn.classList.add('tab-inactive');
-        winCode.classList.remove('hidden'); winCode.classList.add('fade-in');
-        linuxCode.classList.add('hidden');
-      }
-    }
-
-    async function copyCmd(os) {
-      const cmd = os === 'linux' ? LINUX_CMD : WINDOWS_CMD;
-      const label = document.getElementById(`copy-${os}-label`);
+    async function copyCmd() {
+      const label = document.getElementById('copy-cmd-label');
       try {
-        await navigator.clipboard.writeText(cmd);
+        await navigator.clipboard.writeText(INSTALL_CMD);
         label.textContent = 'COPIED!';
         setTimeout(() => { label.textContent = 'COPY'; }, 1800);
       } catch (e) {
-        // Fallback for older browsers
         const textarea = document.createElement('textarea');
-        textarea.value = cmd;
+        textarea.value = INSTALL_CMD;
         document.body.appendChild(textarea);
         textarea.select();
         try { document.execCommand('copy'); label.textContent = 'COPIED!'; }
@@ -730,12 +684,6 @@
         finally { document.body.removeChild(textarea); setTimeout(() => { label.textContent = 'COPY'; }, 1800); }
       }
     }
-
-    // Auto-detect OS and set default tab
-    (function autoSelectTab() {
-      const ua = navigator.userAgent.toLowerCase();
-      if (ua.includes('windows')) switchTab('windows');
-    })();
   </script>
 </body>
 </html>
